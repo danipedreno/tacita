@@ -56,6 +56,7 @@ function Eyes({ face, cx, cy, gap, r, look, blink, color }) {
     <g key={k} className={blink ? "mascot-eye" : undefined} style={blink ? { animationDelay: blink } : undefined}>
       <circle cx={ex} cy={cy} r={r * size} fill={MC.white} />
       <circle cx={ex + dx} cy={cy + dy} r={r * size * pupil} fill={MC.ink} />
+      <circle cx={ex + dx + r * size * pupil * 0.38} cy={cy + dy - r * size * pupil * 0.38} r={r * size * pupil * 0.32} fill={MC.white} />
     </g>
   );
   switch (face) {
@@ -86,6 +87,73 @@ function Eyes({ face, cx, cy, gap, r, look, blink, color }) {
   }
 }
 
+/* Boca, mejillas y cejas: lo que da la expresión. */
+function Features({ face, cx, cy, gap, r, color, mouth = true }) {
+  const sw = Math.max(2.2, r * 0.42);
+  const line = { stroke: MC.ink, strokeWidth: sw, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" };
+  const my = cy + r * 2.1; // altura de la boca
+  const mw = gap * 0.42; // media anchura de la boca
+  const blush = color === MC.pink ? "#ffb3d9" : MC.pink;
+  const cheeks = ["open", "happy", "wink", "dots", "sleepy"].includes(face) && (
+    <g opacity={color === MC.pink ? 0.9 : 0.75}>
+      <ellipse cx={cx - gap / 2 - r * 0.9} cy={cy + r * 1.55} rx={r * 0.85} ry={r * 0.5} fill={blush} />
+      <ellipse cx={cx + gap / 2 + r * 0.9} cy={cy + r * 1.55} rx={r * 0.85} ry={r * 0.5} fill={blush} />
+    </g>
+  );
+  let m = null;
+  if (mouth)
+    switch (face) {
+      case "happy": // boca abierta de alegría, con lengua
+        m = (
+          <g>
+            <path d={`M${cx - mw} ${my - r * 0.3}H${cx + mw}Q${cx + mw} ${my + r * 1.5} ${cx} ${my + r * 1.5}Q${cx - mw} ${my + r * 1.5} ${cx - mw} ${my - r * 0.3}Z`} fill={MC.ink} />
+            <path d={`M${cx - mw * 0.55} ${my + r * 1.12}Q${cx} ${my + r * 0.45} ${cx + mw * 0.55} ${my + r * 1.12}Q${cx} ${my + r * 1.5} ${cx - mw * 0.55} ${my + r * 1.12}Z`} fill="#ff6fb5" />
+          </g>
+        );
+        break;
+      case "open":
+      case "dots":
+        m = <path d={`M${cx - mw * 0.7} ${my}Q${cx} ${my + r * 1.1} ${cx + mw * 0.7} ${my}`} {...line} />;
+        break;
+      case "wink":
+        m = <path d={`M${cx - mw * 0.7} ${my + r * 0.2}Q${cx + mw * 0.2} ${my + r * 1.1} ${cx + mw * 0.8} ${my - r * 0.3}`} {...line} />;
+        break;
+      case "surprised":
+        m = <ellipse cx={cx} cy={my + r * 0.4} rx={r * 0.7} ry={r * 0.95} fill={MC.ink} />;
+        break;
+      case "meh":
+        m = <path d={`M${cx - mw * 0.6} ${my + r * 0.35}L${cx + mw * 0.6} ${my - r * 0.05}`} {...line} />;
+        break;
+      case "sleepy":
+        m = <ellipse cx={cx} cy={my + r * 0.2} rx={r * 0.45} ry={r * 0.55} fill={MC.ink} />;
+        break;
+      case "flat":
+        m = <path d={`M${cx - mw * 0.55} ${my}H${cx + mw * 0.55}`} {...line} />;
+        break;
+      case "dead":
+        m = <path d={`M${cx - mw * 0.8} ${my}q${mw * 0.27} ${-r * 0.7} ${mw * 0.53} 0t${mw * 0.53} 0t${mw * 0.53} 0`} {...line} />;
+        break;
+      default:
+    }
+  // Cejas: aburrido (caídas), concentrado (rectas y bajas), sorprendido (altas).
+  const by = cy - r * 1.7;
+  const brows =
+    face === "meh" ? (
+      <path d={`M${cx - gap / 2 - r} ${by + r * 0.5}L${cx - gap / 2 + r} ${by + r * 0.9}M${cx + gap / 2 + r} ${by + r * 0.5}L${cx + gap / 2 - r} ${by + r * 0.9}`} {...line} />
+    ) : face === "flat" ? (
+      <path d={`M${cx - gap / 2 - r} ${by + r * 0.7}L${cx - gap / 2 + r} ${by + r * 1.05}M${cx + gap / 2 + r} ${by + r * 0.7}L${cx + gap / 2 - r} ${by + r * 1.05}`} {...line} />
+    ) : face === "surprised" ? (
+      <path d={`M${cx - gap / 2 - r} ${by - r * 0.2}Q${cx - gap / 2} ${by - r * 1} ${cx - gap / 2 + r} ${by - r * 0.2}M${cx + gap / 2 - r} ${by - r * 0.2}Q${cx + gap / 2} ${by - r * 1} ${cx + gap / 2 + r} ${by - r * 0.2}`} {...line} />
+    ) : null;
+  return (
+    <>
+      {cheeks}
+      {brows}
+      {m}
+    </>
+  );
+}
+
 /* ---------- Un personaje ---------- */
 /** cfg: { head: { shape, color, w, h }, hat?: {...}, body?: {...}, face, look, tilt } — coordenadas en un lienzo de 120×150. */
 function Character({ cfg, x = 0, blinkDelay, look }) {
@@ -97,15 +165,16 @@ function Character({ cfg, x = 0, blinkDelay, look }) {
   const headY = bodyY - head.h + (body ? 2 : 0);
   const hatY = headY - (hat?.h || 0) + 3;
   const part = (p, y, key) => p && <path key={key} d={SHAPES[p.shape](cx - p.w / 2, y, p.w, p.h)} fill={p.color} transform={p.tilt ? `rotate(${p.tilt} ${cx} ${y + p.h / 2})` : undefined} />;
-  const eyeY = headY + head.h * (cfg.eyeY ?? (head.shape === "dome" ? 0.62 : head.shape === "pin" || head.shape === "drop" ? 0.42 : head.shape === "house" ? 0.6 : 0.5));
-  const r = Math.max(4.2, head.w * 0.085);
+  const eyeY = headY + head.h * (cfg.eyeY ?? (head.shape === "dome" ? 0.5 : head.shape === "pin" || head.shape === "drop" ? 0.36 : head.shape === "house" ? 0.55 : head.shape === "shield" ? 0.32 : head.shape === "diamond" ? 0.48 : 0.4));
+  const r = Math.max(4.6, head.w * 0.1);
   const eyeX = cx + (cfg.eyeShift || 0) * head.w;
   return (
     <g transform={cfg.tilt ? `rotate(${cfg.tilt} ${cx} 150)` : undefined}>
       {part(body, bodyY, "b")}
       {part(head, headY, "h")}
       {part(hat, hatY, "t")}
-      <Eyes face={cfg.face} cx={eyeX} cy={eyeY} gap={head.w * 0.34} r={r} look={look || cfg.look} blink={blinkDelay} color={head.color} />
+      <Features face={cfg.face} cx={eyeX} cy={eyeY} gap={head.w * 0.36} r={r} color={head.color} mouth={cfg.mouth !== false} />
+      <Eyes face={cfg.face} cx={eyeX} cy={eyeY} gap={head.w * 0.36} r={r} look={look || cfg.look} blink={blinkDelay} color={head.color} />
     </g>
   );
 }

@@ -240,6 +240,11 @@
   }
   /* Medalla del centro del carrusel: flota inclinándose en 3D, despacio (como en AllTrails) */
   /* Parpadeo de los personajes: rápido y de vez en cuando */
+  /* Los personajes «respiran»: un estirón suave desde los pies */
+  .mascot-idle {
+    transform-origin: 50% 100%;
+    animation: breathe 3.2s ease-in-out infinite;
+  }
   .mascot-eye {
     transform-box: fill-box;
     transform-origin: center;
@@ -354,6 +359,10 @@
   from { transform: translateY(60%); }
   to { transform: none; }
 }
+@keyframes breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.025, 0.975); }
+}
 @keyframes blink {
   0%, 94%, 100% { transform: scaleY(1); }
   96% { transform: scaleY(0.1); }
@@ -371,7 +380,7 @@
   .anim-rise, .anim-pop, .anim-folder, .anim-toast, .anim-q-next, .anim-q-prev, .anim-medal, .celebrate-pop, .celebrate-in {
     animation: fade 180ms ease both !important;
   }
-  .anim-shake, .anim-flicker, .anim-peek, .anim-node, .anim-hop, .medal-float, .mascot-eye, .anim-bob-x, .anim-correct, .goal-pop {
+  .anim-shake, .anim-flicker, .anim-peek, .anim-node, .anim-hop, .medal-float, .mascot-eye, .mascot-idle, .anim-bob-x, .anim-correct, .goal-pop {
     animation: none !important;
   }
   .burst-piece {
