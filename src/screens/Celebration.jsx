@@ -113,7 +113,7 @@ function testScreen(report) {
     confetti: grade.over10 >= 7,
     visual: (
       <div className="w-48 h-48 anim-hop">
-        <Illustration name={art} className="w-full" alt="" />
+        <Illustration name={art} bg={PAL.sky} className="w-full" alt="" />
       </div>
     ),
     body: (
@@ -157,7 +157,7 @@ function cardsScreen(report) {
     confetti: ratio >= 0.9,
     visual: (
       <div className="w-48 h-48 anim-hop">
-        <Illustration name="test-listo" className="w-full" alt="" />
+        <Illustration name="test-listo" bg={PAL.peach} className="w-full" alt="" />
       </div>
     ),
     body: (
@@ -198,7 +198,7 @@ function lessonScreen(report) {
     confetti: perfect || report.newUnit,
     visual: (
       <div className="w-48 h-48 anim-hop">
-        <Illustration name={perfect ? "resultado-alto" : "test-listo"} className="w-full" alt="" />
+        <Illustration name={perfect ? "resultado-alto" : "test-listo"} bg={report.newUnit ? PAL.sun : PAL.mint} className="w-full" alt="" />
       </div>
     ),
     body: (
@@ -242,7 +242,7 @@ function screenFor(item, report, store) {
       visual: (
         <div className="relative">
           <div className="w-48 h-48 anim-hop">
-            <Illustration name="racha-activa" className="w-full" alt="" />
+            <Illustration name="racha-activa" bg={PAL.sun} className="w-full" alt="" />
           </div>
           <span className="absolute -bottom-2 -right-2 w-14 h-14 blob-2 bg-ink text-sun flex items-center justify-center">
             <Fire size={30} weight="fill" className="anim-flicker" />
@@ -307,7 +307,7 @@ function screenFor(item, report, store) {
       confetti: true,
       visual: (
         <div className="w-48 h-48 anim-hop">
-          <Illustration name={a.illustration} fallback={a.fallback} className="w-full" alt="" />
+          <Illustration name={a.illustration} bg={PAL.lilac} className="w-full" alt="" />
         </div>
       ),
       body: (
@@ -354,7 +354,7 @@ function screenFor(item, report, store) {
     confetti: true,
     visual: (
       <div className="w-48 h-48 anim-hop">
-        <Illustration name={rank.illustration} className="w-full" alt="" />
+        <Illustration name={rank.illustration} bg={PAL.plum} className="w-full" alt="" />
       </div>
     ),
     body: (

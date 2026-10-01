@@ -635,7 +635,7 @@ export function ExamResults({ result, xp, pendingMistakes, onNew, onHome, onRevi
               return (
                 <div key={id} className="anim-medal" style={{ animationDelay: `${350 + k * 80}ms` }}>
                   <Paper className="p-3 flex items-center gap-3">
-                    <div className="w-16 h-16 p-1 shrink-0 bg-lilac blob">
+                    <div className="w-16 h-16 p-1 shrink-0 bg-ground-2 blob">
                       <Illustration name={a.illustration} fallback={a.fallback} className="w-full" alt="" />
                     </div>
                     <div>

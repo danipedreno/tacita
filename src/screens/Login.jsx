@@ -34,7 +34,7 @@ export default function Login({ onLogin }) {
         </header>
 
         <Paper className="p-5 anim-rise">
-          <div className="bg-sun blob p-3">
+          <div className="bg-ground-2 rounded-[22px] p-4">
             <Illustration name="bienvenida" className="w-full" alt="" />
           </div>
           <p className="display text-[30px] mt-4">Accede a tu temario</p>

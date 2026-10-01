@@ -268,6 +268,25 @@ export function characterFor(name) {
   return { ...base, ...rest, head: { ...base.head, ...(rest.head || {}) }, hat: "hat" in rest ? rest.hat : base.hat, body: "body" in rest ? rest.body : base.body };
 }
 
+/* ---------- Contraste con el fondo ---------- */
+const rgb = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
+const near = (a, b) => {
+  if (!a || !b || a[0] !== "#" || b[0] !== "#") return false;
+  const [x, y] = [rgb(a), rgb(b)];
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < 70;
+};
+/** Si alguna pieza se confunde con el fondo, la cambia por otro color de la paleta que sí contraste. */
+function avoidColor(cfg, bg) {
+  if (!bg) return cfg;
+  const used = [cfg.head, cfg.hat, cfg.body].filter(Boolean).map((p) => p.color);
+  const swap = (p, k) => {
+    if (!p || !near(p.color, bg)) return p;
+    const alt = COLORS.find((c, j) => j >= k && !near(c, bg) && !used.includes(c)) || COLORS.find((c) => !near(c, bg));
+    return { ...p, color: alt };
+  };
+  return { ...cfg, head: swap(cfg.head, 0), hat: swap(cfg.hat, 2), body: swap(cfg.body, 4) };
+}
+
 /* ---------- Componente ---------- */
 let followers = 0;
 const pointer = { x: 0, y: 0, subs: new Set() };
@@ -302,7 +321,7 @@ function usePointer(active) {
  * face / look sobrescriben la expresión (p. ej. la tutora reacciona a tus respuestas).
  * follow: las pupilas siguen el puntero (escritorio).
  */
-export function Mascot({ name = "tacita", cfg, face, look, follow = false, fit = false, className = "", title }) {
+export function Mascot({ name = "tacita", cfg, face, look, follow = false, fit = false, bg, className = "", title }) {
   const id = useId();
   const ref = useRef(null);
   usePointer(follow);
@@ -336,7 +355,7 @@ export function Mascot({ name = "tacita", cfg, face, look, follow = false, fit =
   return (
     <svg ref={ref} viewBox={viewBox} preserveAspectRatio={fit === "center" ? "xMidYMid meet" : fit ? "xMidYMax meet" : undefined} className={className} role={title ? "img" : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
       {chars.map((c, k) => (
-        <Character key={k} cfg={face ? { ...c, face } : c} x={k * 120} blinkDelay={`calc(${blink} + ${k * 0.7}s)`} look={followLook || look} />
+        <Character key={k} cfg={avoidColor(face ? { ...c, face } : c, bg)} x={k * 120} blinkDelay={`calc(${blink} + ${k * 0.7}s)`} look={followLook || look} />
       ))}
     </svg>
   );

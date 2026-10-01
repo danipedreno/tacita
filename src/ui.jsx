@@ -326,8 +326,8 @@ export function MedalBadge({ family, level, size = 64 }) {
 /* ---------------------------------------------------------------------
    Ilustraciones: personajes geométricos con ojos (src/mascots.jsx), generados en SVG
    --------------------------------------------------------------------- */
-export function Illustration({ name, className = "", alt = "", face, look, follow }) {
-  return <Mascot name={name} fit="center" face={face} look={look} follow={follow} title={alt || undefined} className={`${isGroup(name) ? "aspect-[5/2]" : "aspect-square"} w-full h-auto mascot-idle ${className}`} />;
+export function Illustration({ name, className = "", alt = "", face, look, follow, bg }) {
+  return <Mascot name={name} fit="center" face={face} look={look} follow={follow} bg={bg} title={alt || undefined} className={`${isGroup(name) ? "aspect-[5/2]" : "aspect-square"} w-full h-auto mascot-idle ${className}`} />;
 }
 
 /* ---------------------------------------------------------------------
