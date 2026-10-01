@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowCounterClockwise, BookOpen, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
 import { applyCardsResult, applyExamResult, applyLessonResult, createExam, mistakePool, rankInfo } from "./lib/logic.js";
-import { bankQuestions, temaById, temaLabel, useBank } from "./lib/bank.js";
+import { bankQuestions, getAccess, temaById, temaLabel, useBank } from "./lib/bank.js";
+import { useSync } from "./lib/sync.js";
 import { studiedTemas } from "./lib/tutor.js";
 import CardsScreen from "./screens/Cards.jsx";
 import { DEFAULT_STORE, useInstallPrompt, useNow, usePersistentStore } from "./lib/store.js";
@@ -73,7 +74,9 @@ function TabBar({ tab, onChange }) {
 }
 
 /** Barra lateral (escritorio): marca, secciones y tu rango. */
-function SideNav({ tab, onChange, xp, user }) {
+const SYNC_LABEL = { ok: "Sincronizado", syncing: "Sincronizando…", offline: "Sin conexión: se guarda aquí", off: "Solo en este dispositivo" };
+
+function SideNav({ tab, onChange, xp, user, sync }) {
   const { rank, pct } = rankInfo(xp);
   return (
     <nav className="hidden lg:flex fixed inset-y-0 left-0 w-64 z-40 flex-col gap-1 border-r border-line bg-ground px-4 py-6" aria-label="Navegación principal">
@@ -102,6 +105,10 @@ function SideNav({ tab, onChange, xp, user }) {
           <div className="h-full bg-plum rounded-full" style={{ width: `${pct}%` }} />
         </div>
         <p className="font-mono text-xs text-ink-soft mt-1.5">{xp} XP</p>
+        <p className="text-xs text-ink-soft mt-2 flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${sync === "ok" ? "bg-olive" : sync === "syncing" ? "bg-sun" : "bg-line-strong"}`} aria-hidden="true" />
+          {SYNC_LABEL[sync]}
+        </p>
       </div>
     </nav>
   );
@@ -131,6 +138,8 @@ export default function App() {
 
 function UserApp({ user, bank, logout }) {
   const [store, setStore] = usePersistentStore(user);
+  const [access] = useState(getAccess);
+  const sync = useSync(access?.user === user ? access : null, store, setStore);
   const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
   const install = useInstallPrompt();
   const [celebration, setCelebration] = useState(null); // { queue, report }
@@ -296,7 +305,7 @@ function UserApp({ user, bank, logout }) {
             <ExamRunner exam={exam} bank={bank} remainingMs={remainingMs} onSelect={onSelect} onBlank={onBlank} onGoto={onGoto} onFinish={() => finishExam("submitted")} onAbandon={onAbandon} />
           ) : (
             <>
-              <SideNav tab={tab} onChange={goTab} xp={store.xp} user={user} />
+              <SideNav tab={tab} onChange={goTab} xp={store.xp} user={user} sync={sync} />
               <main ref={mainRef} className="absolute inset-0 lg:left-64 scroll-area">
                 <div key={tab} className={`mx-auto px-4 lg:px-10 pt-safe lg:pt-10 pb-tabbar lg:pb-16 anim-rise ${tab === "home" ? "max-w-md lg:max-w-5xl" : "max-w-md lg:max-w-3xl"}`}>
                   {tab === "home" && (
@@ -311,6 +320,7 @@ function UserApp({ user, bank, logout }) {
                       onQuickTest={onQuickTest}
                       onToggleSound={onToggleSound}
                       onAction={onAction}
+                      sync={sync}
                     />
                   )}
                   {tab === "learn" && (

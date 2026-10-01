@@ -61,6 +61,9 @@ async function remoteVersion() {
 
 const loadBank = () => readJSON(BANK_KEY);
 
+/** Usuario y contraseña guardados al entrar (para sincronizar el progreso). */
+export const getAccess = () => readJSON(ACCESS_KEY);
+
 /** Comprueba que el banco tiene el formato que genera contenido/build.mjs. */
 export function validateBank(json) {
   if (!json || json.formato !== "tacita-banco") return "El banco no tiene el formato de Tacita.";

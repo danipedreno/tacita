@@ -430,7 +430,7 @@ function Missions({ store }) {
   );
 }
 
-export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onReview, onPlan, onQuickTest, onToggleSound, onAction }) {
+export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync }) {
   const intro = useRef(!introPlayed).current;
   useEffect(() => {
     introPlayed = true;
@@ -446,6 +446,12 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <h1 className="brand text-[46px] lg:hidden">Tacita</h1>
           <h1 className="hidden lg:block display text-[48px]">Inicio</h1>
           <p className="label text-ink-soft mt-1.5 first-letter:uppercase">{dateLabel}</p>
+          {sync && sync !== "off" && (
+            <p className="text-xs text-ink-soft mt-1 flex items-center gap-1.5 lg:hidden">
+              <span className={`w-2 h-2 rounded-full ${sync === "ok" ? "bg-olive" : sync === "syncing" ? "bg-sun" : "bg-line-strong"}`} aria-hidden="true" />
+              {sync === "ok" ? "Progreso sincronizado" : sync === "syncing" ? "Sincronizando…" : "Sin conexión: se guarda en este móvil"}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <IconButton
