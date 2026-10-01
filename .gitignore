@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Material de la academia y contenido derivado: privado, nunca al repositorio público.
+# Solo se publica public/banco.enc, cifrado.
+contenido/

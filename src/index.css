@@ -1,0 +1,408 @@
+@import "@fontsource-variable/bricolage-grotesque/opsz.css";
+@import "@fontsource/caprasimo/400.css";
+@import "@fontsource-variable/source-serif-4/index.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Curvas de Emil Kowalski: ease-out para entradas y respuestas; ease-in-out para lo que se desplaza. */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+    background: #fdf4df;
+    overscroll-behavior: none;
+  }
+  body {
+    @apply font-sans text-ink antialiased;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  ::selection {
+    background: #e6befb;
+    color: #222222;
+  }
+  html {
+    scrollbar-color: #d9cba8 transparent;
+    caret-color: #222222;
+  }
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px !important; /* evita el zoom automático al enfocar */
+  }
+  button {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 3px solid #222222;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Titulares: grotesca de peso medio, apretada, en caja baja (como Pelago) */
+  .display {
+    font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+    font-weight: 560;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+  /* La marca: serif gruesa y blanda */
+  .brand {
+    font-family: Caprasimo, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .label {
+    @apply text-sm font-medium;
+    letter-spacing: -0.005em;
+  }
+  .tap {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .press {
+    transition: transform 160ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  }
+  .press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .scroll-area {
+    overflow-y: auto;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Pelago es plano: nada de sombras duras, solo un filo tenue para separar del crema */
+  .folder-shadow {
+    box-shadow: none;
+  }
+  .paper-shadow {
+    box-shadow: 0 0 0 1px #ebdfc3;
+  }
+  /* Mancha orgánica detrás de las ilustraciones */
+  .blob {
+    border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%;
+  }
+  .blob-2 {
+    border-radius: 42% 58% 38% 62% / 60% 44% 56% 40%;
+  }
+  .pt-safe {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+  }
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  .pb-tabbar {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+  }
+  .tabbar-pos {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  .toast-pos {
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+  }
+}
+
+@layer utilities {
+  .anim-rise {
+    animation: rise 220ms var(--ease-out) both;
+  }
+  .anim-pop {
+    animation: pop 250ms var(--ease-out) both;
+  }
+  .anim-shake {
+    animation: shake 320ms var(--ease-out);
+  }
+  .anim-fade {
+    animation: fade 180ms var(--ease-out) both;
+  }
+  .anim-sheet {
+    animation: sheet 300ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+  .anim-toast {
+    animation: toast 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  .anim-flicker {
+    animation: flicker 1.8s ease-in-out infinite;
+    transform-origin: 50% 90%;
+  }
+  /* Pregunta siguiente / anterior (continuidad espacial) */
+  .anim-q-next {
+    animation: q-next 180ms var(--ease-out) both;
+  }
+  .anim-q-prev {
+    animation: q-prev 180ms var(--ease-out) both;
+  }
+  /* Medalla nueva: único sitio con rebote, porque es una celebración poco frecuente */
+  .anim-medal {
+    animation: medal 450ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  }
+  /* Celebraciones: poco frecuentes, así que llevan algo de rebote */
+  .celebrate-pop {
+    animation: celebrate-pop 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  }
+  .celebrate-in {
+    animation: rise 320ms var(--ease-out) both;
+  }
+  .confetti-piece {
+    position: absolute;
+    top: -24px;
+    border-radius: 2px;
+    animation-name: confetti-fall;
+    animation-timing-function: cubic-bezier(0.33, 0, 0.67, 1);
+    animation-fill-mode: both;
+  }
+  /* Tarjeta que gira: se repite decenas de veces por sesión, así que es rápida (220 ms). */
+  .flip-card {
+    perspective: 1200px;
+  }
+  .flip-inner {
+    display: grid;
+    transform-style: preserve-3d;
+    transition: transform 220ms var(--ease-out);
+  }
+  .flip-card[data-flipped="true"] .flip-inner {
+    transform: rotateY(180deg);
+  }
+  .flip-face {
+    grid-area: 1 / 1;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .flip-back {
+    transform: rotateY(180deg);
+  }
+  .anim-folder {
+    animation: folder 360ms var(--ease-out) both;
+  }
+  /* Respuesta correcta: un «pop» corto (se ve decenas de veces: 260 ms, 3 %) */
+  .anim-correct {
+    animation: correct-pop 260ms var(--ease-out);
+  }
+  /* «+XP» que sube y se desvanece junto a tu nivel (poco frecuente: puede durar más) */
+  .xp-float {
+    animation: xp-float 1200ms var(--ease-out) 250ms both;
+  }
+  /* Anillo de la meta diaria al completarla: pulso con rebote suave y ráfaga de confeti */
+  .goal-pop {
+    animation: goal-pop 560ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+  .burst-piece {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    animation: burst 800ms var(--ease-out) both;
+  }
+  /* Sellos de la tarjeta al deslizar: su opacidad la pone el gesto */
+  .swipe-stamp {
+    position: absolute;
+    top: 28px;
+    z-index: 5;
+    padding: 4px 12px;
+    border: 3px solid currentColor;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.9);
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* Medalla del centro del carrusel: flota inclinándose en 3D, despacio (como en AllTrails) */
+  .medal-float {
+    animation: medal-float 4.2s ease-in-out infinite;
+  }
+  /* Globo «¡Empieza aquí!» sobre la siguiente lección del camino */
+  .anim-bob-x {
+    animation: bob-x 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes rise {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes pop {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes toast {
+  from { transform: translateY(-130%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.1) rotate(3deg); }
+}
+@keyframes q-next {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes q-prev {
+  from { transform: translateX(-16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes correct-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+@keyframes xp-float {
+  0% { transform: translateY(8px); opacity: 0; }
+  18% { transform: translateY(0); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateY(-28px); opacity: 0; }
+}
+@keyframes goal-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes burst {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(0.9); opacity: 0; }
+}
+@keyframes medal {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes celebrate-pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(var(--drift), 105vh, 0) rotate(var(--spin)); opacity: 0; }
+}
+/* Las carpetas «se deslizan» desde abajo, como al sacarlas del archivador */
+@keyframes medal-float {
+  0%, 100% { transform: perspective(600px) rotateY(-9deg) rotateX(4deg) rotate(-2deg); }
+  50% { transform: perspective(600px) rotateY(9deg) rotateX(-3deg) rotate(2deg); }
+}
+@keyframes bob-x {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 5px 0; }
+}
+@keyframes folder {
+  from { transform: translateY(24px) rotate(-1deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .anim-pop, .anim-folder, .anim-toast, .anim-q-next, .anim-q-prev, .anim-medal, .celebrate-pop, .celebrate-in {
+    animation: fade 180ms ease both !important;
+  }
+  .anim-shake, .anim-flicker, .medal-float, .anim-bob-x, .anim-correct, .goal-pop {
+    animation: none !important;
+  }
+  .burst-piece {
+    display: none;
+  }
+  .xp-float {
+    animation: fade 180ms ease both !important;
+  }
+  .press:active:not(:disabled) {
+    transform: none;
+  }
+  /* Sin giro: la respuesta aparece con un fundido */
+  .flip-inner, .flip-card[data-flipped="true"] .flip-inner, .flip-back {
+    transform: none !important;
+    transition: none !important;
+  }
+  .flip-face { transition: opacity 150ms ease !important; }
+  .flip-card[data-flipped="true"] .flip-face:not(.flip-back),
+  .flip-card[data-flipped="false"] .flip-back { opacity: 0; }
+}
+
+/* Logo reveal de arranque (Splash.jsx) */
+.splash-logo svg { width: 100%; height: auto; display: block; overflow: visible; }
+.splash-logo .logo-blob {
+  transform-box: fill-box;
+  transform-origin: 50% 70%;
+  animation: splash-blob 420ms var(--ease-out) both;
+}
+.splash-logo .logo-fig { animation: splash-fig 640ms var(--ease-in-out) 160ms both; }
+.splash-letter { display: inline-block; animation: splash-letter 320ms var(--ease-out) both; }
+.splash { transition: opacity 260ms var(--ease-out), transform 260ms var(--ease-out); }
+.splash-out { opacity: 0; transform: scale(1.03); pointer-events: none; }
+@keyframes splash-blob {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes splash-fig {
+  from { clip-path: inset(100% 0 0 0); transform: translateY(18px); }
+  to { clip-path: inset(0 0 0 0); transform: translateY(0); }
+}
+@keyframes splash-letter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Fuego de la racha en Tarjetas */
+.fire-flow { animation: fire-flow 2s linear infinite; }
+.fire-flash { animation: fire-flash 520ms var(--ease-out); }
+.xp-gain { animation: xp-gain 900ms var(--ease-out) both; }
+.spark { width: 7px; height: 7px; border-radius: 999px; }
+@keyframes fire-flow {
+  from { background-position: 0% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes fire-flash {
+  0% { transform: scaleY(1); }
+  30% { transform: scaleY(1.9); }
+  100% { transform: scaleY(1); }
+}
+@keyframes xp-gain {
+  0% { transform: translateY(6px) scale(0.9); opacity: 0; }
+  20% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-34px) scale(1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fire-flow, .fire-flash, .splash-logo .logo-blob, .splash-logo .logo-fig, .splash-letter { animation: none !important; }
+  .xp-gain { animation: fade 180ms ease both !important; }
+}
