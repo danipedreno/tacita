@@ -263,7 +263,7 @@ function screenFor(item, report, store) {
     return {
       bg: info.cat.color,
       kicker: item.up ? "¡Subes en la liga!" : "Liga gaditana",
-      title: item.up ? tramoLabel(info) : `${item.gained >= 0 ? "+" : ""}${item.gained} ${Math.abs(item.gained) === 1 ? "punto" : "puntos"}`,
+      title: item.up ? tramoLabel(info) : item.counted === false ? "Sin puntos" : `${item.gained >= 0 ? "+" : ""}${item.gained} ${Math.abs(item.gained) === 1 ? "punto" : "puntos"}`,
       confetti: item.up,
       visual: (
         <div className="w-44 h-44 blob bg-card flex items-center justify-center">
@@ -273,7 +273,11 @@ function screenFor(item, report, store) {
       body: (
         <>
           <p className="text-base max-w-xs">
-            {item.up ? `${item.gained >= 0 ? "+" : ""}${item.gained} puntos en este examen. ` : `Sigues en ${tramoLabel(info)}. `}
+            {item.counted === false
+              ? "Este tema ya puntuó hoy en la liga: vuelve mañana para que cuente otra vez. "
+              : item.up
+                ? `${item.gained >= 0 ? "+" : ""}${item.gained} puntos en este examen. `
+                : `Sigues en ${tramoLabel(info)}. `}
             Llevas {item.after} {item.after === 1 ? "punto" : "puntos"}.
           </p>
           <p className="font-mono text-sm mt-2">{info.next ? `${tramoLabel(info.next)} a los ${info.next.min}` : "¡Lo más alto de la liga!"}</p>

@@ -47,6 +47,11 @@ const maxFields = (a = {}, b = {}) => mergeMap(a, b, (x, y) => (typeof x === "nu
 /** Fusiona el progreso de dos dispositivos. `newer` decide ajustes, plan y examen en curso. */
 export function mergeStores(local, remote, localNewer) {
   if (!remote) return local;
+  // «Reiniciar progreso» marca resetAt: el reinicio más reciente gana entero y no se fusiona con lo anterior.
+  const ra = local.resetAt || 0;
+  const rb = remote.resetAt || 0;
+  if (rb > ra) return { ...remote, installDismissed: local.installDismissed, activeExam: null, lastResult: null };
+  if (ra > rb) return local;
   const [base, other] = localNewer ? [local, remote] : [remote, local];
   const sa = local.streak || {};
   const sb = remote.streak || {};
@@ -86,6 +91,7 @@ export function mergeStores(local, remote, localNewer) {
     })),
     liga: { ...(remote.liga || {}), ...(local.liga || {}) },
     onboarded: !!(local.onboarded || remote.onboarded),
+    resetAt: ra,
   };
 }
 
@@ -193,26 +199,38 @@ export function useSync(access, store, setStore) {
 
 /* ---------- Clasificación de la liga ---------- */
 /**
- * Descarga la liga de todos los usuarios (solo con credenciales válidas).
- * Devuelve { status: "off" | "loading" | "ok" | "offline", rows: [{ usuario, liga }] }.
+ * Descarga la liga de todos los usuarios (solo con credenciales válidas). Se refresca sola cada minuto
+ * mientras la app está a la vista, al volver a ella y con `refresh()`.
+ * Devuelve { status: "off" | "loading" | "ok" | "offline", rows: [{ usuario, liga }], at, refresh }.
  */
 export function useClasificacion(access) {
-  const [state, setState] = useState({ status: enabled() && access ? "loading" : "off", rows: [] });
+  const [state, setState] = useState({ status: enabled() && access ? "loading" : "off", rows: [], at: null });
+  const busy = useRef(false);
+  const load = useRef(async () => {});
+  load.current = async () => {
+    if (!enabled() || !access || busy.current) return;
+    busy.current = true;
+    setState((s) => ({ ...s, status: s.rows.length ? s.status : "loading", refreshing: true }));
+    try {
+      const rows = await rpc("clasificacion", { p_usuario: access.user, p_secreto: await syncSecret(access.user, access.pass) });
+      setState({ status: "ok", rows: Array.isArray(rows) ? rows : [], at: Date.now(), refreshing: false });
+    } catch (e) {
+      setState((s) => ({ ...s, status: "offline", refreshing: false }));
+    } finally {
+      busy.current = false;
+    }
+  };
   useEffect(() => {
     if (!enabled() || !access) return undefined;
-    let alive = true;
-    (async () => {
-      try {
-        const rows = await rpc("clasificacion", { p_usuario: access.user, p_secreto: await syncSecret(access.user, access.pass) });
-        if (alive) setState({ status: "ok", rows: Array.isArray(rows) ? rows : [] });
-      } catch (e) {
-        if (alive) setState((s) => ({ ...s, status: "offline" }));
-      }
-    })();
+    load.current();
+    const tick = setInterval(() => document.visibilityState === "visible" && load.current(), 60000);
+    const onVisible = () => document.visibilityState === "visible" && load.current();
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
-      alive = false;
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVisible);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return state;
+  return { ...state, refresh: () => load.current() };
 }

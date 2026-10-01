@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 import { ArrowCounterClockwise, BookOpen, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
 import { applyCardsResult, applyExamResult, applyLessonResult, createExam, mistakePool, rankInfo } from "./lib/logic.js";
 import { bankQuestions, getAccess, temaById, temaLabel, useBank } from "./lib/bank.js";
-import { useSync } from "./lib/sync.js";
+import { useClasificacion, useSync } from "./lib/sync.js";
+import { ligaInfo, ligaTotals, tramoLabel } from "./lib/liga.js";
+import { FoodIcon } from "./foods.jsx";
 import { studiedTemas } from "./lib/tutor.js";
 import CardsScreen from "./screens/Cards.jsx";
 import { DEFAULT_STORE, useInstallPrompt, useNow, usePersistentStore } from "./lib/store.js";
@@ -136,10 +138,42 @@ export default function App() {
   );
 }
 
+/** Avisos de la liga: «Zaida sube a Cazón en adobo II». Se recuerda el último tramo visto de cada uno. */
+function useLigaNews(user, liga) {
+  useEffect(() => {
+    if (liga.status !== "ok") return;
+    const key = `tacita-liga-visto:${user}`;
+    let seen = null;
+    try {
+      seen = JSON.parse(localStorage.getItem(key) || "null");
+    } catch (e) {
+      /* sin almacenamiento */
+    }
+    const now = {};
+    liga.rows
+      .filter((r) => r.usuario !== user)
+      .forEach((r) => {
+        const info = ligaInfo(ligaTotals(r.liga).points);
+        now[r.usuario] = info.index;
+        if (seen && seen[r.usuario] !== undefined && info.index > seen[r.usuario]) {
+          const name = r.usuario.charAt(0).toUpperCase() + r.usuario.slice(1);
+          notify({ icon: <FoodIcon name={info.cat.icon} className="w-8 h-8" />, color: info.cat.color, kicker: "Liga gaditana", text: `${name} sube a ${tramoLabel(info)}`, duration: 6000 });
+        }
+      });
+    try {
+      localStorage.setItem(key, JSON.stringify({ ...(seen || {}), ...now }));
+    } catch (e) {
+      /* sin almacenamiento */
+    }
+  }, [liga.at]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 function UserApp({ user, bank, logout }) {
   const [store, setStore] = usePersistentStore(user);
   const [access] = useState(getAccess);
   const sync = useSync(access?.user === user ? access : null, store, setStore);
+  const liga = useClasificacion(access?.user === user ? access : null);
+  useLigaNews(user, liga);
   const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
   const install = useInstallPrompt();
   const [celebration, setCelebration] = useState(null); // { queue, report }
@@ -274,7 +308,7 @@ function UserApp({ user, bank, logout }) {
   };
   const onReset = () => {
     finishedIds.current = new Set();
-    setStore({ ...DEFAULT_STORE, installDismissed: storeRef.current.installDismissed });
+    setStore({ ...DEFAULT_STORE, installDismissed: storeRef.current.installDismissed, onboarded: true, resetAt: Date.now() });
     setTab("home");
     notify({ icon: <ArrowCounterClockwise size={24} weight="bold" />, color: PAL.sun, kicker: "Hecho", text: "Progreso reiniciado" });
   };
@@ -364,7 +398,7 @@ function UserApp({ user, bank, logout }) {
                       }}
                     />
                   )}
-                  {tab === "badges" && <Achievements store={store} user={user} access={access} onReset={onReset} />}
+                  {tab === "badges" && <Achievements store={store} user={user} liga={liga} onReset={onReset} />}
                 </div>
               </main>
               <TabBar tab={tab} onChange={goTab} />

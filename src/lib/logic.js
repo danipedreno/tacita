@@ -468,10 +468,11 @@ export function applyExamResult(store, exam, reason, date) {
   const liga = { ...(store.liga || {}) };
   let ligaReport = null;
   if (exam.temaExam && grade.n >= 10) {
-    const before = ligaTotals(liga).points;
+    const before = ligaTotals(liga);
     liga[exam.id] = { t: exam.temaExam, c: grade.correct, w: grade.wrong, b: grade.blank, d: date.toISOString() };
-    const after = ligaTotals(liga).points;
-    ligaReport = { gained: grade.correct - grade.wrong - grade.blank, before, after, up: ligaInfo(after).index > ligaInfo(before).index };
+    const after = ligaTotals(liga);
+    // Si el tema ya puntuó hoy, este intento no cuenta (counted: false).
+    ligaReport = { gained: after.points - before.points, counted: after.exams > before.exams, before: before.points, after: after.points, up: ligaInfo(after.points).index > ligaInfo(before.points).index };
   }
   const log = logActivity(store, today, { questions: grade.correct + grade.wrong });
   const nextStore = { ...store, xp, blockStats, temaStats, temaExams, liga, log, achievements, streak, totals, counters, daily, goalDays, mistakes };

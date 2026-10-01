@@ -5,7 +5,7 @@ import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { GoalRing } from "./Celebration.jsx";
 import { useCountUp } from "../lib/motion.js";
-import { greeting, missions, recommend } from "../lib/tutor.js";
+import { greeting, missions, nextLesson, recommend } from "../lib/tutor.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -396,9 +396,17 @@ function TutorCard({ bank, store, onAction }) {
 }
 
 /** Misiones del día (como las de Duolingo): tres metas pequeñas y variadas. */
-function Missions({ store }) {
+/** Misiones del día: cada una lleva directamente a hacerla. */
+function Missions({ store, bank, onAction, onQuickTest }) {
   const list = missions(store);
   const all = list.every((m) => m.done >= m.goal);
+  const go = (id) => {
+    if (id === "lessons") {
+      const next = nextLesson(bank, store);
+      if (next) onAction({ type: "lesson", temaId: next.tema.id, index: next.index });
+    } else if (id === "cards") onAction({ type: "cards" });
+    else onQuickTest();
+  };
   return (
     <section aria-labelledby="misiones-title" className="rounded-folder bg-card paper-shadow p-4">
       <div className="flex items-baseline justify-between gap-2">
@@ -407,21 +415,24 @@ function Missions({ store }) {
         </h2>
         {all && <span className="text-sm font-semibold text-olive anim-pop">¡Todas hechas!</span>}
       </div>
-      <ul className="mt-3 flex flex-col gap-3">
+      <ul className="mt-2 flex flex-col gap-1">
         {list.map((m) => {
           const ok = m.done >= m.goal;
           return (
-            <li key={m.id} className="flex items-center gap-3">
-              <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${ok ? "bg-ink text-sun" : ""}`} style={ok ? undefined : { background: m.color }} aria-hidden="true">
-                {ok ? <Check size={18} weight="bold" /> : <span className="font-mono text-xs font-semibold">{m.done}</span>}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className={`text-[15px] font-medium leading-tight ${ok ? "line-through text-ink-soft" : ""}`}>{m.label}</p>
-                <ProgressBar pct={(m.done / m.goal) * 100} color={ok ? PAL.olive : PAL.ink} className="h-1.5 mt-1.5" label={m.label} />
-              </div>
-              <span className="font-mono text-xs text-ink-soft w-12 text-right">
-                {m.done}/{m.goal}
-              </span>
+            <li key={m.id}>
+              <button type="button" onClick={() => go(m.id)} className="tap press w-full text-left flex items-center gap-3 rounded-[14px] -mx-1 px-1 py-2 hover:bg-ground-2">
+                <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${ok ? "bg-ink text-sun" : ""}`} style={ok ? undefined : { background: m.color }} aria-hidden="true">
+                  {ok ? <Check size={18} weight="bold" /> : <span className="font-mono text-xs font-semibold">{m.done}</span>}
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className={`block text-[15px] font-medium leading-tight ${ok ? "line-through text-ink-soft" : ""}`}>{m.label}</span>
+                  <ProgressBar pct={(m.done / m.goal) * 100} color={ok ? PAL.olive : PAL.ink} className="h-1.5 mt-1.5" label={m.label} />
+                </span>
+                <span className="font-mono text-xs text-ink-soft w-10 text-right">
+                  {m.done}/{m.goal}
+                </span>
+                <CaretRight size={16} weight="bold" className="text-ink-soft shrink-0" aria-hidden="true" />
+              </button>
             </li>
           );
         })}
@@ -514,7 +525,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex flex-col gap-6">
           <TutorCard bank={bank} store={store} onAction={onAction} />
-          <Missions store={store} />
+          <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6">
           <HomeCabinet store={store} onPlan={onPlan} intro={intro} />

@@ -3,6 +3,7 @@
    contraseña se descarga, se descifra en el móvil y se guarda en su propia clave de localStorage.
    Se genera con `npm run banco` (contenido/build.mjs). */
 import { useCallback, useEffect, useState } from "react";
+import { clearDocs } from "./docs.js";
 
 const BANK_KEY = "tacita-banco.v1";
 const ACCESS_KEY = "tacita-acceso.v1";
@@ -117,6 +118,7 @@ export function useBank({ onUpdated } = {}) {
     } catch (e) {
       /* nada que borrar */
     }
+    clearDocs();
     setBank(null);
     setUser(null);
   }, []);

@@ -3,7 +3,8 @@ import { CaretLeft, CaretRight, Lightbulb, SignOut } from "@phosphor-icons/react
 import { BLOCKS } from "../lib/logic.js";
 import { bankCards, bankQuestions, learnTemas, temaById } from "../lib/bank.js";
 import { unitDoneCount } from "../lib/tutor.js";
-import { Button, Folder, Paper, Sheet } from "../ui.jsx";
+import { Button, Folder, Paper, Segmented, Sheet } from "../ui.jsx";
+import { Esquemas, TextoCompleto } from "./FullNotes.jsx";
 import { Rich } from "./Lesson.jsx";
 import { unitColor } from "./Learn.jsx";
 
@@ -11,6 +12,9 @@ import { unitColor } from "./Learn.jsx";
 function TemaNotes({ bank, tema, onBack, onStartLesson }) {
   const color = unitColor(bank, tema.id);
   const cards = bankCards(bank, "all", tema.id);
+  const docs = bank.docs?.temas?.[tema.id];
+  const nEsq = docs?.esquemas?.reduce((a, e) => a + e.imgs.length, 0) || 0;
+  const [view, setView] = useState("resumen");
   useEffect(() => {
     document.querySelector("main")?.scrollTo?.({ top: 0 });
   }, [tema.id]);
@@ -24,7 +28,22 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
         <h1 className="display text-[40px] mt-1">{tema.titulo}</h1>
         <p className="text-[15px] text-ink-soft mt-2">{tema.intro}</p>
       </header>
-      {tema.lecciones.map((l, i) => (
+      {docs && (
+        <Segmented
+          label="Qué quieres leer"
+          hideLabel
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "resumen", label: "Resumen", sub: `${tema.lecciones.length} lecciones` },
+            { value: "esquemas", label: "Esquemas", sub: nEsq ? `${nEsq} imágenes` : "—" },
+            { value: "completo", label: "Temario", sub: "completo" },
+          ]}
+        />
+      )}
+      {view === "esquemas" && <Esquemas bank={bank} esquemas={docs?.esquemas} />}
+      {view === "completo" && <TextoCompleto bank={bank} textos={docs?.textos} />}
+      {view === "resumen" && tema.lecciones.map((l, i) => (
         <Folder key={i} color={color} tab={`Lección ${i + 1}`}>
           <div className="p-2.5 flex flex-col gap-2.5">
             <div className="px-2.5 pt-2 flex items-center justify-between gap-3">
@@ -49,17 +68,17 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
                     </ul>
                   )}
                   {p.truco && (
-                    <p className="mt-3 rounded-xl bg-sun px-3 py-2 text-[15px] flex gap-2">
+                    <div className="mt-3 rounded-xl bg-sun px-3 py-2 text-[15px] flex gap-2">
                       <Lightbulb size={20} weight="fill" className="shrink-0 mt-0.5" />
                       <Rich text={p.truco} />
-                    </p>
+                    </div>
                   )}
                 </Paper>
               ))}
           </div>
         </Folder>
       ))}
-      {cards.length > 0 && (
+      {view === "resumen" && cards.length > 0 && (
         <section aria-labelledby="claves-title">
           <h2 id="claves-title" className="display text-[30px] mb-3">
             Datos clave del tema
@@ -94,7 +113,7 @@ export default function Temario({ bank, store, temaId, onOpen, onBack, onStartLe
           </button>
         )}
         <h1 className="display text-[48px]">Apuntes</h1>
-        <p className="text-[15px] text-ink-soft mt-2">La teoría de todas las lecciones, tema a tema, para leerla del tirón.</p>
+        <p className="text-[15px] text-ink-soft mt-2">Cada tema con su resumen, los esquemas de la academia y el temario completo con buscador.</p>
       </header>
       {["comun", "especifico"].map((b) => (
         <section key={b} aria-labelledby={`ap-${b}`}>

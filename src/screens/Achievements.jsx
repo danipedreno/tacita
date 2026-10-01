@@ -6,7 +6,7 @@ import { PAL } from "../lib/palette.js";
 import MedalCarousel from "./MedalCarousel.jsx";
 import Liga from "./Liga.jsx";
 
-export default function Achievements({ store, user, access, onReset }) {
+export default function Achievements({ store, user, liga, onReset }) {
   const [confirm, setConfirm] = useState(false);
   const specials = ACHIEVEMENTS.filter((a) => store.achievements[a.id]).length;
   const tiers = MEDAL_FAMILIES.map((f) => ({ f, p: medalProgress(f, store) }));
@@ -33,7 +33,7 @@ export default function Achievements({ store, user, access, onReset }) {
         </p>
       </header>
 
-      <Liga store={store} user={user} access={access} />
+      <Liga store={store} user={user} remote={liga} />
 
       <MedalCarousel items={carousel} />
 
@@ -83,7 +83,7 @@ export default function Achievements({ store, user, access, onReset }) {
         title="¿Reiniciar?"
         illustration="reiniciar"
         onClose={() => setConfirm(false)}
-        body="Se borran racha, XP, medallas, lecciones hechas e historial de este dispositivo. No se puede deshacer."
+        body="Se borran racha, XP, medallas, lecciones hechas, historial y tus puntos de la liga, en todos tus dispositivos. No se puede deshacer."
         actions={
           <>
             <Button variant="red" onClick={() => { setConfirm(false); onReset(); }}>

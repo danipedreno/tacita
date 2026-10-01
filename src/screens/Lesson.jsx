@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowCounterClockwise, Check, CheckCircle, Lightbulb, X, XCircle } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, ArrowLeft, Check, CheckCircle, Lightbulb, X, XCircle } from "@phosphor-icons/react";
 import { isInteractive, shuffle } from "../lib/logic.js";
 import { Button, IconButton, Paper, ProgressBar, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
@@ -369,6 +369,15 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
     setPairsDone(null);
   };
 
+  // Volver al paso anterior (p. ej. a releer la teoría). Lo ya respondido cuenta como estaba.
+  const back = () => {
+    if (pos === 0) return;
+    setPos(pos - 1);
+    setAnswer(null);
+    setChecked(false);
+    setPairsDone(null);
+  };
+
   const check = () => {
     if (step.t === "teoria") return advance(true);
     if (checked) return advance(right);
@@ -395,12 +404,17 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
 
   // Teclado (escritorio): números o letras para elegir, Enter para comprobar/continuar.
   const keyState = useRef();
-  keyState.current = { step, checked, answer, optionOrder, check };
+  keyState.current = { step, checked, answer, optionOrder, check, back };
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (document.querySelector('[role="dialog"]')) return; // hoja de «¿Salir?» abierta
-      const { step: st, checked: ch, optionOrder: ord, check: doCheck } = keyState.current;
+      const { step: st, checked: ch, optionOrder: ord, check: doCheck, back: goBack } = keyState.current;
+      if (e.key === "ArrowLeft" && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName || "")) {
+        e.preventDefault();
+        goBack();
+        return;
+      }
       if (e.key === "Enter") {
         e.preventDefault(); // Intro siempre comprueba/continúa (no vuelve a pulsar la opción enfocada)
         doCheck();
@@ -430,8 +444,8 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
     <div className="fixed inset-0 z-[45] flex flex-col bg-ground">
       <div className="pt-safe px-4 pb-3">
         <div className="max-w-md lg:max-w-2xl mx-auto flex items-center gap-3">
-          <IconButton label="Salir de la lección" onClick={() => setConfirmExit(true)} className="bg-card paper-shadow">
-            <X size={22} weight="bold" />
+          <IconButton label="Paso anterior" onClick={back} disabled={pos === 0} className="bg-card paper-shadow disabled:opacity-35">
+            <ArrowLeft size={22} weight="bold" />
           </IconButton>
           <div className="flex-1">
             <ProgressBar pct={done * 100} color={PAL.olive} track="bg-ground-2" className="h-3.5" label="Progreso de la lección" />
@@ -441,6 +455,9 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
               ×{streak}
             </span>
           )}
+          <IconButton label="Salir de la lección" onClick={() => setConfirmExit(true)} className="bg-card paper-shadow">
+            <X size={22} weight="bold" />
+          </IconButton>
         </div>
         <p className="max-w-md lg:max-w-2xl mx-auto mt-2 text-sm text-ink-soft truncate">
           {tema.numero && <span className="font-semibold text-ink">Tema {tema.numero} · </span>}

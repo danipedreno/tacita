@@ -208,7 +208,7 @@ export function makeCharacter(name, overrides = {}) {
     head: { shape: headShape, color: headColor, w: hw, h: hh },
     body: withBody ? { shape: pick(BODY_SHAPES), color: other(), w: 58 + Math.floor(r() * 30), h: 30 + Math.floor(r() * 14) } : null,
     hat: withHat ? { shape: pick(HAT_SHAPES), color: other(), w: 22 + Math.floor(r() * 30), h: 16 + Math.floor(r() * 14), tilt: r() > 0.7 ? (r() - 0.5) * 30 : 0 } : null,
-    face: pick(["open", "open", "open", "happy", "dots", "sleepy", "flat"]),
+    face: pick(["open", "open", "open", "happy", "happy", "dots", "wink"]), // nunca enfadados: «flat» y «meh» solo donde toca
     look: [Math.round((r() - 0.5) * 2), 0],
     eyeShift: r() > 0.75 ? (r() - 0.5) * 0.3 : 0,
   };
@@ -225,7 +225,7 @@ export const CHARACTERS = {
 /** Configuración de cada ilustración de la app (mismo nombre que el antiguo registro). */
 const MOODS = {
   bienvenida: { group: ["tacita", "amigo-1", "amigo-2"], face: "open" },
-  simulacro: { group: ["sim-1", "tacita", "sim-2"], face: "flat" },
+  simulacro: { group: ["sim-1", "tacita", "sim-2"], face: "open" },
   "racha-activa": { face: "happy", hat: { shape: "drop", color: P.rust, w: 26, h: 30 } },
   "racha-pendiente": { face: "sleepy", hat: { shape: "drop", color: P.rust, w: 14, h: 18 } },
   "racha-apagada": { face: "meh", head: { color: P.slate } },
@@ -233,7 +233,7 @@ const MOODS = {
   "rango-1-novato": { face: "open", hat: null, body: { shape: "bowl", color: P.moss, w: 56, h: 26 } },
   "rango-2-practicas": { face: "happy", hat: { shape: "dome", color: P.forest, w: 40, h: 20 } },
   "rango-3-jefe-servicio": { face: "open", hat: { shape: "hex", color: P.slate, w: 56, h: 22 } },
-  "rango-4-jefe-centro": { face: "flat", hat: { shape: "house", color: P.rust, w: 56, h: 30 } },
+  "rango-4-jefe-centro": { face: "happy", hat: { shape: "house", color: P.rust, w: 56, h: 30 } },
   "rango-5-director": { face: "happy", hat: { shape: "crown", color: P.rust, w: 60, h: 30 } },
   ascenso: { face: "happy", hat: { shape: "crown", color: P.rust, w: 56, h: 28 } },
   entregar: { face: "open", look: [1, 0] },
@@ -242,8 +242,8 @@ const MOODS = {
   "resultado-alto": { face: "happy" },
   "resultado-medio": { face: "dots" },
   "resultado-bajo": { face: "meh" },
-  procesando: { face: "flat" },
-  "generando-preguntas": { face: "flat" },
+  procesando: { face: "open", look: [1, -0.6] },
+  "generando-preguntas": { face: "open", look: [-1, -0.6] },
   "test-listo": { face: "happy" },
   "todo-temario": { face: "surprised" },
   "caja-las-se": { face: "happy" },
@@ -256,8 +256,16 @@ const MOODS = {
   "bloque-conducta": { face: "dots" },
   "medalla-primer-turno": { face: "happy" },
   "medalla-madrugador": { face: "sleepy" },
-  "medalla-imbatible": { face: "flat" },
-  "medalla-estudioso-nocturno": { face: "meh", head: { color: P.forest } },
+  "medalla-imbatible": { face: "happy" },
+  "medalla-estudioso-nocturno": { face: "sleepy", head: { color: P.forest } },
+  "medalla-racha": { face: "happy" },
+  "medalla-meta": { face: "happy" },
+  "medalla-respondidas": { face: "open" },
+  "medalla-maraton": { face: "happy" },
+  "medalla-repaso": { face: "wink" },
+  "medalla-tarjetero": { face: "happy" },
+  "medalla-matricula": { face: "happy" },
+  "medalla-especialista": { face: "open" },
 };
 
 export function characterFor(name) {

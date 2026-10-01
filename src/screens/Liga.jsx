@@ -1,6 +1,5 @@
-import { CheckCircle, MinusCircle, XCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, CheckCircle, MinusCircle, XCircle } from "@phosphor-icons/react";
 import { CATEGORIES, ligaInfo, ligaTotals, tramoLabel } from "../lib/liga.js";
-import { useClasificacion } from "../lib/sync.js";
 import { FoodIcon } from "../foods.jsx";
 import { Mascot } from "../mascots.jsx";
 import { ProgressBar } from "../ui.jsx";
@@ -34,8 +33,7 @@ function Counts({ t, className = "" }) {
  * Liga gaditana: tu categoría y la clasificación por tramos. Dentro de cada categoría los usuarios van
  * por orden alfabético, no por puntos: compartir tramo es compartir puesto.
  */
-export default function Liga({ store, user, access }) {
-  const remote = useClasificacion(access?.user === user ? access : null);
+export default function Liga({ store, user, remote }) {
   const mine = ligaTotals(store.liga);
   const info = ligaInfo(mine.points);
 
@@ -66,7 +64,20 @@ export default function Liga({ store, user, access }) {
       </div>
 
       <div className="rounded-folder bg-card paper-shadow p-3">
-        <h3 className="display text-[26px] px-2 pt-1 pb-2">Clasificación</h3>
+        <div className="flex items-center justify-between gap-2 px-2 pt-1 pb-2">
+          <h3 className="display text-[26px]">Clasificación</h3>
+          {remote.status !== "off" && (
+            <button
+              type="button"
+              onClick={remote.refresh}
+              disabled={remote.refreshing}
+              className="tap press h-10 pl-3 pr-4 rounded-full bg-ground-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-60"
+            >
+              <ArrowClockwise size={18} weight="bold" className={remote.refreshing ? "animate-spin" : ""} aria-hidden="true" />
+              {remote.refreshing ? "Actualizando…" : "Actualizar"}
+            </button>
+          )}
+        </div>
         <ol className="flex flex-col gap-1">
           {[...CATEGORIES].reverse().map((cat) => {
             const here = people.filter((p) => p.info.cat.id === cat.id).sort((a, b) => a.usuario.localeCompare(b.usuario));
@@ -107,7 +118,7 @@ export default function Liga({ store, user, access }) {
               ? "Sin conexión: ahora solo se ve lo tuyo."
               : remote.status === "loading"
                 ? "Cargando la clasificación…"
-                : "Puntos de los exámenes de tema: aciertos − fallos − blancos. Cuentan todos los intentos."}
+                : `${remote.at ? `Actualizada a las ${new Date(remote.at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}. ` : ""}` + "Exámenes de tema: acierto +3, fallo −1, en blanco 0. Cada tema puntúa una vez al día."}
         </p>
       </div>
     </section>
