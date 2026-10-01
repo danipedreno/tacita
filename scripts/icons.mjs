@@ -1,32 +1,33 @@
-// Genera los iconos PWA: tres pestañas de carpeta (azul, rojo, verde) sobre tinta.
+// Genera los iconos PWA: la mascota de Tacita (cúpula rosa con ojos, cuerpo oliva y gota naranja) sobre crema.
 import sharp from "sharp";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
-const tab = (x, y, w, color) =>
-  `<path d="M${x} ${y + 44}C${x + 4} ${y + 44} ${x + 6.4} ${y + 40} ${x + 7.6} ${y + 34}L${x + 11.8} ${y + 10}C${x + 13.5} ${y + 3} ${x + 16} ${y} ${x + 24} ${y}H${x + w - 24}C${x + w - 16} ${y} ${x + w - 13.5} ${y + 3} ${x + w - 11.8} ${y + 10}L${x + w - 7.6} ${y + 34}C${x + w - 6.4} ${y + 40} ${x + w - 4} ${y + 44} ${x + w} ${y + 44}Z" fill="${color}"/>`;
+// Mascota en un lienzo de 300×300.
+export const mascot = `
+  <path d="M60 210V180A90 72 0 0 1 240 180V210Z" fill="#ff8ac8"/>
+  <path d="M75 208H225V222A75 48 0 0 1 75 222Z" fill="#848f3e"/>
+  <path d="M150 112L134 88A22 22 0 1 1 166 88Z" fill="#c4692c"/>
+  <circle cx="120" cy="172" r="17" fill="#fffcf7"/><circle cx="126" cy="173" r="9.5" fill="#1e1e1c"/>
+  <circle cx="180" cy="172" r="17" fill="#fffcf7"/><circle cx="186" cy="173" r="9.5" fill="#1e1e1c"/>`;
 
-const svg = (pad) => {
-  const s = 512, inner = s - pad * 2, u = inner / 300;
-  const g = (y, color, x) => `${tab(x, y, 150, color)}<rect x="0" y="${y + 43}" width="300" height="${300 - y}" rx="8" fill="${color}"/>`;
+const svg = (pad, bg = "#f6f1e9") => {
+  const s = 512, u = (s - pad * 2) / 300;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
-  <rect width="${s}" height="${s}" fill="#191919"/>
-  <g transform="translate(${pad} ${pad + 10 * u}) scale(${u})">
-    ${g(30, "#1e4bd7", 20)}${g(105, "#d71e1e", 110)}${g(180, "#0c7866", 40)}
-    <rect x="0" y="265" width="300" height="10" fill="#0c7866"/>
-  </g>
-  <g transform="translate(${pad} ${pad + 10 * u}) scale(${u})"><path d="M70 262 l30 -22 30 22 M70 282 l30 -22 30 22" stroke="#ffe927" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(50 -30)"/></g>
+  <rect width="${s}" height="${s}" fill="${bg}"/>
+  <g transform="translate(${pad} ${pad - 18 * u}) scale(${u})">${mascot}</g>
 </svg>`;
 };
 
 mkdirSync("public/icons", { recursive: true });
 const out = [
-  ["icon-192.png", 192, 56],
-  ["icon-512.png", 512, 56],
-  ["apple-touch-icon.png", 180, 56],
-  ["icon-maskable-192.png", 192, 104],
-  ["icon-maskable-512.png", 512, 104],
+  ["icon-192.png", 192, 40],
+  ["icon-512.png", 512, 40],
+  ["apple-touch-icon.png", 180, 40],
+  ["icon-maskable-192.png", 192, 96],
+  ["icon-maskable-512.png", 512, 96],
 ];
 for (const [file, size, pad] of out) {
   await sharp(Buffer.from(svg(pad))).resize(size, size).png().toFile(`public/icons/${file}`);
 }
+writeFileSync("public/logo.svg", `<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 70 220 170">${mascot}</svg>`);
 console.log("Iconos generados en public/icons/");

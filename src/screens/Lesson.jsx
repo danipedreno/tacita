@@ -4,6 +4,7 @@ import { isInteractive, shuffle } from "../lib/logic.js";
 import { Button, IconButton, Paper, ProgressBar, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import { play } from "../lib/sound.js";
+import { Mascot } from "../mascots.jsx";
 
 /* ---------------------------------------------------------------------
    Reproductor de lecciones (como Duolingo): una tarjeta por paso, comprobar y continuar.
@@ -449,10 +450,14 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
 
       <div ref={scrollRef} className="flex-1 scroll-area px-4 pt-2 pb-6">
         <div key={pos} className="max-w-md lg:max-w-2xl mx-auto anim-q-next">
-          <p className="label mb-3 flex items-center gap-2">
-            <span className="w-3 h-3 blob" style={{ background: color }} aria-hidden="true" />
-            {item.retry > 0 ? "Otra vez, que se te resistió" : KIND_LABEL[step.t]}
-          </p>
+          <div className="mb-3 flex items-end gap-2">
+            <span className="w-12 shrink-0" aria-hidden="true">
+              <Mascot name="tacita" fit face={step.t === "teoria" ? "happy" : item.retry > 0 ? "meh" : "open"} look={[0.8, 0.5]} className="w-full h-auto" />
+            </span>
+            <p className="mb-2 rounded-[14px] rounded-bl-none bg-card paper-shadow px-3 py-1.5 font-bold text-[15px]" style={{ boxShadow: `inset 0 -3px 0 ${color}` }}>
+              {item.retry > 0 ? "Otra vez, que se te resistió" : KIND_LABEL[step.t]}
+            </p>
+          </div>
           {step.t === "teoria" && <Theory step={step} />}
           {(step.t === "test" || step.t === "hueco") && <Choice step={step} answer={answer} setAnswer={setAnswer} checked={checked} order={optionOrder} />}
           {step.t === "vf" && <TrueFalse step={step} answer={answer} setAnswer={setAnswer} checked={checked} />}
@@ -464,10 +469,14 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
       <div className={`px-4 pt-4 pb-safe transition-colors duration-200 ${checked ? (right ? "bg-mint" : "bg-peach") : "bg-ground border-t border-line"}`}>
         <div className="max-w-md lg:max-w-2xl mx-auto">
           {checked && (
-            <div className="mb-3 anim-pop" aria-live="polite">
+            <div className="mb-3 anim-pop flex gap-3 items-start" aria-live="polite">
+              <span className="w-16 shrink-0 -mt-1 anim-hop" aria-hidden="true">
+                <Mascot name="tacita" fit face={right ? (streak >= 3 ? "happy" : "wink") : "meh"} className="w-full h-auto" />
+              </span>
+              <div className="min-w-0">
               <p className={`display text-[26px] flex items-center gap-2 ${right ? "text-olive" : "text-plum"}`}>
                 {right ? <CheckCircle size={28} weight="fill" /> : <ArrowCounterClockwise size={26} weight="bold" />}
-                {right ? ["¡Bien!", "¡Correcto!", "¡Eso es!", "¡Perfecto!"][pos % 4] : "Casi…"}
+                {right ? (streak >= 3 ? `¡${streak} seguidas!` : ["¡Bien!", "¡Correcto!", "¡Eso es!", "¡Perfecto!"][pos % 4]) : "Casi…"}
               </p>
               {!right && (step.t === "test" || step.t === "hueco") && (
                 <p className="text-[15px] mt-1">
@@ -476,6 +485,7 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
               )}
               {!right && step.t === "vf" && <p className="text-[15px] mt-1">Es <span className="font-semibold">{step.a ? "verdadero" : "falso"}</span>.</p>}
               {feedbackText && <p className="text-[15px] leading-snug mt-1">{feedbackText}</p>}
+              </div>
             </div>
           )}
           {step.t !== "pares" || checked ? (

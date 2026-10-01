@@ -35,9 +35,9 @@ export function weakTemas(bank, store) {
 }
 
 export const MISSIONS = [
-  { id: "lessons", label: "Completa 2 lecciones", goal: 2, color: "#e1f1c8" },
-  { id: "cards", label: "Repasa 20 tarjetas", goal: 20, color: "#f6d5c2" },
-  { id: "questions", label: "Responde 20 preguntas de test", goal: 20, color: "#a4bdff" },
+  { id: "lessons", label: "Completa 2 lecciones", goal: 2, color: "#c3ca85" },
+  { id: "cards", label: "Repasa 20 tarjetas", goal: 20, color: "#f2b48c" },
+  { id: "questions", label: "Responde 20 preguntas de test", goal: 20, color: "#8da4ba" },
 ];
 
 export function missions(store, today = dateKey()) {

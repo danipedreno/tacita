@@ -1,6 +1,4 @@
-@import "@fontsource-variable/bricolage-grotesque/opsz.css";
-@import "@fontsource/caprasimo/400.css";
-@import "@fontsource-variable/source-serif-4/index.css";
+@import "@fontsource-variable/figtree/index.css";
 
 @tailwind base;
 @tailwind components;
@@ -17,25 +15,26 @@
   body,
   #root {
     height: 100%;
-    background: #fdf4df;
+    background: #f6f1e9;
     overscroll-behavior: none;
   }
   body {
     @apply font-sans text-ink antialiased;
     font-optical-sizing: auto;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     font-size: 16px;
+    font-weight: 500;
     line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
   }
   ::selection {
-    background: #e6befb;
-    color: #222222;
+    background: #a9bccf;
+    color: #1e1e1c;
   }
   html {
-    scrollbar-color: #d9cba8 transparent;
-    caret-color: #222222;
+    scrollbar-color: #cfc4b1 transparent;
+    caret-color: #1e1e1c;
   }
   .font-mono {
     font-variant-numeric: tabular-nums;
@@ -52,26 +51,27 @@
     cursor: pointer;
   }
   :focus-visible {
-    outline: 3px solid #222222;
+    outline: 3px solid #1e1e1c;
     outline-offset: 2px;
   }
 }
 
 @layer components {
   /* Titulares: grotesca de peso medio, apretada, en caja baja (como Pelago) */
+  /* Titulares: grotesca muy gruesa y apretada (como Marshmallow) */
   .display {
-    font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
-    font-weight: 560;
-    line-height: 1;
-    letter-spacing: -0.035em;
+    font-family: "Figtree Variable", system-ui, sans-serif;
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
     text-wrap: balance;
   }
-  /* La marca: serif gruesa y blanda */
+  /* La marca y las cifras grandes */
   .brand {
-    font-family: Caprasimo, Georgia, serif;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    line-height: 1;
+    font-family: "Figtree Variable", system-ui, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 0.95;
   }
   .label {
     @apply text-sm font-medium;
@@ -103,7 +103,7 @@
     box-shadow: none;
   }
   .paper-shadow {
-    box-shadow: 0 0 0 1px #ebdfc3;
+    box-shadow: 0 0 0 1px #e4dbcc;
   }
   /* Mancha orgánica detrás de las ilustraciones */
   .blob {
@@ -239,6 +239,23 @@
     pointer-events: none;
   }
   /* Medalla del centro del carrusel: flota inclinándose en 3D, despacio (como en AllTrails) */
+  /* Parpadeo de los personajes: rápido y de vez en cuando */
+  .mascot-eye {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: blink 4.6s infinite;
+  }
+  /* La tutora asoma al entrar en Inicio */
+  /* La siguiente lección «respira» para llamar la atención */
+  .anim-hop {
+    animation: hop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .anim-node {
+    animation: node-breathe 1.8s ease-in-out infinite;
+  }
+  .anim-peek {
+    animation: peek 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 150ms both;
+  }
   .medal-float {
     animation: medal-float 4.2s ease-in-out infinite;
   }
@@ -324,6 +341,23 @@
   0%, 100% { transform: perspective(600px) rotateY(-9deg) rotateX(4deg) rotate(-2deg); }
   50% { transform: perspective(600px) rotateY(9deg) rotateX(-3deg) rotate(2deg); }
 }
+@keyframes hop {
+  0% { transform: translateY(14px) scale(0.9); }
+  60% { transform: translateY(-6px); }
+  100% { transform: none; }
+}
+@keyframes node-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07) translateY(-3px); }
+}
+@keyframes peek {
+  from { transform: translateY(60%); }
+  to { transform: none; }
+}
+@keyframes blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
 @keyframes bob-x {
   0%, 100% { translate: 0 0; }
   50% { translate: 5px 0; }
@@ -337,7 +371,7 @@
   .anim-rise, .anim-pop, .anim-folder, .anim-toast, .anim-q-next, .anim-q-prev, .anim-medal, .celebrate-pop, .celebrate-in {
     animation: fade 180ms ease both !important;
   }
-  .anim-shake, .anim-flicker, .medal-float, .anim-bob-x, .anim-correct, .goal-pop {
+  .anim-shake, .anim-flicker, .anim-peek, .anim-node, .anim-hop, .medal-float, .mascot-eye, .anim-bob-x, .anim-correct, .goal-pop {
     animation: none !important;
   }
   .burst-piece {
@@ -367,6 +401,7 @@
   animation: splash-blob 420ms var(--ease-out) both;
 }
 .splash-logo .logo-fig { animation: splash-fig 640ms var(--ease-in-out) 160ms both; }
+.splash-pop { animation: celebrate-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 .splash-letter { display: inline-block; animation: splash-letter 320ms var(--ease-out) both; }
 .splash { transition: opacity 260ms var(--ease-out), transform 260ms var(--ease-out); }
 .splash-out { opacity: 0; transform: scale(1.03); pointer-events: none; }

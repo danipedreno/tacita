@@ -99,14 +99,14 @@ function useSwipe({ enabled, onSwipe, reduce }) {
 
 /* Calor de la racha: cuanto más seguidas, más fuego (barra, chip y +XP). */
 const HEAT = [
-  { bar: "#222222", chip: "#f6d5c2", glow: 0, speed: 0 },
-  { bar: "linear-gradient(90deg,#fae355,#f7c04a,#fae355)", chip: "#f6d5c2", glow: 0, speed: 2.6 },
-  { bar: "linear-gradient(90deg,#fae355,#f59b3a,#ef6a2c,#f59b3a,#fae355)", chip: "linear-gradient(90deg,#fae355,#f59b3a)", glow: 6, speed: 1.8 },
-  { bar: "linear-gradient(90deg,#fae355,#f59b3a,#e8452a,#c62a2a,#e8452a,#f59b3a,#fae355)", chip: "linear-gradient(90deg,#f59b3a,#e8452a)", glow: 10, speed: 1.2 },
-  { bar: "linear-gradient(90deg,#fae355,#f59b3a,#e8452a,#b0183a,#e8452a,#f59b3a,#fae355)", chip: "linear-gradient(90deg,#e8452a,#b0183a)", glow: 16, speed: 0.8 },
+  { bar: "#1e1e1c", chip: "#f2b48c", glow: 0, speed: 0 },
+  { bar: "linear-gradient(90deg,#ff8ac8,#f7c04a,#ff8ac8)", chip: "#f2b48c", glow: 0, speed: 2.6 },
+  { bar: "linear-gradient(90deg,#ff8ac8,#f59b3a,#ef6a2c,#f59b3a,#ff8ac8)", chip: "linear-gradient(90deg,#ff8ac8,#f59b3a)", glow: 6, speed: 1.8 },
+  { bar: "linear-gradient(90deg,#ff8ac8,#f59b3a,#e8452a,#c62a2a,#e8452a,#f59b3a,#ff8ac8)", chip: "linear-gradient(90deg,#f59b3a,#e8452a)", glow: 10, speed: 1.2 },
+  { bar: "linear-gradient(90deg,#ff8ac8,#f59b3a,#e8452a,#b0183a,#e8452a,#f59b3a,#ff8ac8)", chip: "linear-gradient(90deg,#e8452a,#b0183a)", glow: 16, speed: 0.8 },
 ];
 const heatOf = (combo) => (combo < 2 ? 0 : combo < 5 ? 1 : combo < 10 ? 2 : combo < 15 ? 3 : 4);
-const SPARKS = ["#fae355", "#f59b3a", "#e8452a", "#fae355", "#ef6a2c", "#c62a2a", "#f59b3a", "#fae355", "#e8452a", "#f59b3a"];
+const SPARKS = ["#ff8ac8", "#f59b3a", "#e8452a", "#ff8ac8", "#ef6a2c", "#c62a2a", "#f59b3a", "#ff8ac8", "#e8452a", "#f59b3a"];
 
 /** Barra de progreso que se calienta con la racha: degradado que fluye y brillo naranja. */
 function FireBar({ pct, heat, flash }) {
@@ -141,7 +141,7 @@ function XpChip({ xp, gain }) {
       <span
         key={xp}
         className="anim-pop font-mono text-sm font-semibold rounded-full text-ink px-3 h-8 flex items-center"
-        style={{ background: heat >= 2 ? HEAT[Math.min(heat, 3)].chip : "#fae355", animationDuration: `${250 + heat * 60}ms` }}
+        style={{ background: heat >= 2 ? HEAT[Math.min(heat, 3)].chip : "#ff8ac8", animationDuration: `${250 + heat * 60}ms` }}
         aria-label={`${xp} XP en esta sesión`}
       >
         +{xp} XP
@@ -151,7 +151,7 @@ function XpChip({ xp, gain }) {
           key={gain.id}
           aria-hidden="true"
           className="xp-gain absolute right-full mr-2 top-1 font-mono font-bold pointer-events-none whitespace-nowrap"
-          style={{ fontSize: `${13 + heat * 3 + (gain.milestone ? 6 : 0)}px`, color: ["#222222", "#b77a00", "#ef6a2c", "#d9302a", "#b0183a"][heat] }}
+          style={{ fontSize: `${13 + heat * 3 + (gain.milestone ? 6 : 0)}px`, color: ["#1e1e1c", "#b77a00", "#ef6a2c", "#d9302a", "#b0183a"][heat] }}
         >
           +{gain.n}
         </span>

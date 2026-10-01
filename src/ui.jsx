@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ArrowCounterClockwise, Books, CaretDoubleUp, CaretDown, Cards, Check, Fire, GraduationCap, PencilSimpleLine, Scales, Star, Target, Timer } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Books, CaretDoubleUp, CaretDown, Cards, Check, Fire, GraduationCap, Scales, Star, Target, Timer } from "@phosphor-icons/react";
 import { Drawer } from "vaul";
 import { Toaster, toast } from "sonner";
-import { ILLUSTRATIONS } from "./lib/illustrations.js";
+import { Mascot, isGroup } from "./mascots.jsx";
 import { RANKS, ROMAN } from "./lib/logic.js";
 
 /* ---------------------------------------------------------------------
@@ -147,7 +147,7 @@ export function ChoiceTile({ selected, onClick, color, title, note, illustration
       onClick={onClick}
       className={`tap press relative text-left rounded-[22px] p-3 transition-shadow duration-150 ${
         wide ? `col-span-2 flex items-center gap-3 ${compact ? "min-h-[88px]" : "min-h-[116px]"}` : `flex flex-col ${compact ? "min-h-[128px]" : "min-h-[172px]"}`
-      } ${selected ? "shadow-[inset_0_0_0_3px_#222222]" : ""}`}
+      } ${selected ? "shadow-[inset_0_0_0_3px_#1e1e1c]" : ""}`}
       style={{ background: color }}
     >
       <span
@@ -257,7 +257,7 @@ export function Picker({ id, label, value, options, onChange }) {
 }
 
 /** Barra de progreso animada con transform (scaleX), no con width: no recalcula el layout. */
-export function ProgressBar({ pct, color = "#222222", track = "bg-ground-2", className = "h-2", label }) {
+export function ProgressBar({ pct, color = "#1e1e1c", track = "bg-ground-2", className = "h-2", label }) {
   const v = Math.max(0, Math.min(100, pct));
   return (
     <div className={`${track} rounded-full overflow-hidden ${className}`} role="progressbar" aria-valuenow={Math.round(v)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
@@ -324,40 +324,10 @@ export function MedalBadge({ family, level, size = 64 }) {
 }
 
 /* ---------------------------------------------------------------------
-   Ilustraciones: carga public/illustrations/<name>.svg → .png → marcador
+   Ilustraciones: personajes geométricos con ojos (src/mascots.jsx), generados en SVG
    --------------------------------------------------------------------- */
-const EXTENSIONS = ["svg", "png", "webp"];
-
-export function Illustration({ name, className = "", alt = "", fallback, fallbackNode }) {
-  const meta = ILLUSTRATIONS[name] || { ratio: "square" };
-  const [attempt, setAttempt] = useState(0);
-  const aspect = meta.ratio === "wide" ? "aspect-video" : "aspect-square";
-
-  if (attempt >= EXTENSIONS.length) {
-    // Mientras llega una ilustración nueva, se usa otra parecida en vez del marcador.
-    if (fallback) return <Illustration name={fallback} className={className} alt={alt} fallbackNode={fallbackNode} />;
-    if (fallbackNode) return fallbackNode;
-    return (
-      <div
-        className={`${aspect} rounded-folder border-2 border-dashed border-line flex flex-col items-center justify-center gap-1 text-center px-2 ${className}`}
-        role="img"
-        aria-label={alt || `Ilustración pendiente: ${name}`}
-      >
-        <PencilSimpleLine size={22} weight="bold" className="text-ink-soft" />
-        <span className="font-mono text-[10px] leading-tight text-ink-soft break-all">{name}</span>
-      </div>
-    );
-  }
-  return (
-    <img
-      src={`${import.meta.env.BASE_URL}illustrations/${name}.${EXTENSIONS[attempt]}`}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      onError={() => setAttempt((a) => a + 1)}
-      className={`${aspect} object-contain ${className}`}
-    />
-  );
+export function Illustration({ name, className = "", alt = "", face, look, follow }) {
+  return <Mascot name={name} fit="center" face={face} look={look} follow={follow} title={alt || undefined} className={`${isGroup(name) ? "aspect-[5/2]" : "aspect-square"} w-full h-auto ${className}`} />;
 }
 
 /* ---------------------------------------------------------------------
@@ -399,7 +369,7 @@ export function AppToaster() {
   return <Toaster position="top-center" offset={{ top }} mobileOffset={{ top, left: 16, right: 16 }} gap={8} />;
 }
 
-export function notify({ icon, color = "#e6befb", kicker, text, duration = 3800 }) {
+export function notify({ icon, color = "#a9bccf", kicker, text, duration = 3800 }) {
   toast.custom(
     () => (
       <Paper className="w-full px-3 py-3 flex items-center gap-3">

@@ -40,7 +40,7 @@ function TabBar({ tab, onChange }) {
   const n = TABS.length;
   return (
     <nav className="fixed left-3 right-3 tabbar-pos z-40 lg:hidden" aria-label="Navegación principal">
-      <div className="relative max-w-md mx-auto rounded-full bg-card p-1.5 shadow-[0_0_0_1px_#ebdfc3,0_18px_40px_-16px_rgba(33,38,51,0.45)]">
+      <div className="relative max-w-md mx-auto rounded-full bg-card p-1.5 shadow-[0_0_0_1px_#e4dbcc,0_18px_40px_-16px_rgba(33,38,51,0.45)]">
         <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
           {TABS.map(({ id, label, Icon }) => (
             <button

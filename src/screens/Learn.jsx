@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Check, Crown, Exam, Lock, Play, Star, Trophy } from "@phosphor-icons/react";
+import { BookOpen, Crown, Exam, Play } from "@phosphor-icons/react";
+import { Mascot } from "../mascots.jsx";
 import { BLOCKS, UNIT_COLORS, lessonKey } from "../lib/logic.js";
 import { learnTemas, temaLabel } from "../lib/bank.js";
 import { nextLesson, unitDoneCount } from "../lib/tutor.js";
@@ -17,13 +18,26 @@ export const unitColor = (bank, temaId) => {
   return UNIT_COLORS[(i < 0 ? 0 : i) % UNIT_COLORS.length];
 };
 
-function Node({ state, color, label, offset, onClick, icon, isNext, nodeRef }) {
-  const Icon = icon;
+/* Cada lección del camino es un personaje: dormido si aún no toca, despierto y mirándote si es la
+   siguiente, y feliz cuando ya la has hecho. La forma cambia de una lección a otra. */
+const NODE_SHAPES = ["dome", "hex", "circle", "diamond", "house", "square", "shield", "pin"];
+
+function Node({ state, color, label, offset, onClick, isNext, nodeRef, index, crown }) {
+  const shape = crown ? "crown" : NODE_SHAPES[index % NODE_SHAPES.length];
+  const h = shape === "dome" ? 62 : shape === "pin" ? 96 : 80;
+  const cfg = {
+    head: { shape, color: state === "pending" ? "#ddd3c2" : state === "next" ? (color === "#ff8ac8" ? "#c4692c" : "#ff8ac8") : color, w: 96, h },
+    body: null,
+    hat: null,
+    face: state === "done" ? "happy" : state === "next" ? "open" : "sleepy",
+    look: [0, -0.6],
+    eyeY: shape === "crown" ? 0.62 : undefined,
+  };
   return (
     <li className="relative flex justify-center" style={{ transform: `translateX(${offset}px)` }}>
       {isNext && (
-        <span className={`absolute top-1/2 z-[1] ${offset > 0 ? "right-1/2 mr-12" : "left-1/2 ml-12"}`} aria-hidden="true">
-          <span className="block -translate-y-1/2 anim-bob-x relative rounded-[12px] bg-ink text-ground text-sm font-semibold px-3 py-1.5 whitespace-nowrap">
+        <span className={`absolute top-1/2 z-[1] ${offset > 0 ? "right-1/2 mr-14" : "left-1/2 ml-14"}`} aria-hidden="true">
+          <span className="block -translate-y-1/2 anim-bob-x relative rounded-full bg-ink text-ground text-sm font-bold px-3.5 py-2 whitespace-nowrap">
             ¡Sigue aquí!
             <span className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rotate-45 bg-ink ${offset > 0 ? "-right-1" : "-left-1"}`} />
           </span>
@@ -34,13 +48,10 @@ function Node({ state, color, label, offset, onClick, icon, isNext, nodeRef }) {
         type="button"
         onClick={onClick}
         aria-label={label}
-        className={`tap press relative w-[72px] h-[66px] rounded-[50%] flex items-center justify-center ${isNext ? "ring-4 ring-ink/15 ring-offset-4 ring-offset-ground" : ""}`}
-        style={{
-          background: state === "done" ? color : state === "next" ? color : PAL.ground2,
-          boxShadow: `0 7px 0 ${state === "pending" ? "#e2d3ae" : "rgba(34,34,34,0.28)"}`,
-        }}
+        className={`tap press relative w-[88px] h-[80px] flex items-end justify-center ${isNext ? "anim-node" : ""}`}
+        style={{ filter: state === "pending" ? "none" : "drop-shadow(0 6px 0 rgba(30,30,28,0.22))" }}
       >
-        <Icon size={30} weight={state === "pending" || Icon === Check ? "bold" : "fill"} className={state === "pending" ? "text-line-strong" : "text-ink"} />
+        <Mascot cfg={cfg} fit className="w-full h-full" />
       </button>
     </li>
   );
@@ -82,7 +93,7 @@ function Unit({ bank, tema, store, color, nextRef, next, onOpenLesson, onTemaExa
               state={isDone ? "done" : isNext ? "next" : "pending"}
               color={color}
               offset={ZIGZAG[i % ZIGZAG.length]}
-              icon={isDone ? Check : isNext ? Play : i % 3 === 2 ? Star : BookOpen}
+              index={i}
               isNext={isNext}
               label={`Lección ${i + 1}: ${l.titulo}${isDone ? " (hecha)" : ""}`}
               onClick={() => onOpenLesson(tema.id, i)}
@@ -91,9 +102,10 @@ function Unit({ bank, tema, store, color, nextRef, next, onOpenLesson, onTemaExa
         })}
         <Node
           state={exam?.passed ? "done" : allDone ? "next" : "pending"}
-          color={PAL.sun}
+          color="#c4692c"
           offset={ZIGZAG[total % ZIGZAG.length]}
-          icon={exam?.passed ? Crown : allDone ? Trophy : Lock}
+          index={total}
+          crown
           label={`Examen del tema ${tema.numero}${exam?.passed ? ` (superado, mejor nota ${exam.best.toFixed(1)})` : ""}`}
           onClick={() => onTemaExam(tema.id)}
         />

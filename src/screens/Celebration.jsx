@@ -110,7 +110,7 @@ function testScreen(report) {
     title: grade.over10 >= 7 ? "¡Muy bien!" : grade.over10 >= 4 ? "¡Buen trabajo!" : "¡A seguir!",
     confetti: grade.over10 >= 7,
     visual: (
-      <div className="w-40 h-40 p-4 bg-card blob">
+      <div className="w-48 h-48 anim-hop">
         <Illustration name={art} className="w-full" alt="" />
       </div>
     ),
@@ -154,7 +154,7 @@ function cardsScreen(report) {
     title: ratio >= 0.7 ? "¡Muy bien!" : "¡Buen repaso!",
     confetti: ratio >= 0.9,
     visual: (
-      <div className="w-40 h-40 p-4 bg-card blob">
+      <div className="w-48 h-48 anim-hop">
         <Illustration name="test-listo" className="w-full" alt="" />
       </div>
     ),
@@ -195,7 +195,7 @@ function lessonScreen(report) {
     title: perfect ? "¡Perfecta!" : report.pct >= 70 ? "¡Muy bien!" : "¡Hecho!",
     confetti: perfect || report.newUnit,
     visual: (
-      <div className="w-40 h-40 p-4 bg-card blob">
+      <div className="w-48 h-48 anim-hop">
         <Illustration name={perfect ? "resultado-alto" : "test-listo"} className="w-full" alt="" />
       </div>
     ),
@@ -239,7 +239,7 @@ function screenFor(item, report, store) {
       confetti: item.count > 1,
       visual: (
         <div className="relative">
-          <div className="w-40 h-40 p-4 bg-card blob">
+          <div className="w-48 h-48 anim-hop">
             <Illustration name="racha-activa" className="w-full" alt="" />
           </div>
           <span className="absolute -bottom-2 -right-2 w-14 h-14 blob-2 bg-ink text-sun flex items-center justify-center">
@@ -280,7 +280,7 @@ function screenFor(item, report, store) {
       title: "Nueva medalla",
       confetti: true,
       visual: (
-        <div className="w-44 h-44 p-4 bg-card blob">
+        <div className="w-48 h-48 anim-hop">
           <Illustration name={a.illustration} fallback={a.fallback} className="w-full" alt="" />
         </div>
       ),
@@ -327,7 +327,7 @@ function screenFor(item, report, store) {
     title: rank.name,
     confetti: true,
     visual: (
-      <div className="w-44 h-44 p-4 bg-card blob">
+      <div className="w-48 h-48 anim-hop">
         <Illustration name={rank.illustration} className="w-full" alt="" />
       </div>
     ),

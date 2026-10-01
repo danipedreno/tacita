@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, BookOpen, CaretRight, ChalkboardTeacher, Check, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, CaretRight, Check, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
 import { DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
@@ -355,19 +355,19 @@ function TutorCard({ bank, store, onAction }) {
   const recs = recommend(bank, store);
   const [main, ...rest] = recs;
   return (
-    <section aria-labelledby="tutor-title" className="rounded-folder bg-navy text-ground p-5">
-      <div className="flex items-start gap-3">
-        <span className="w-12 h-12 blob bg-sun text-ink flex items-center justify-center shrink-0" aria-hidden="true">
-          <ChalkboardTeacher size={26} weight="fill" />
-        </span>
-        <div className="min-w-0">
-          <p className="label text-sun">Tu tutor</p>
-          <p className="text-[15px] leading-snug mt-0.5 text-ground/90">{greeting(store)}</p>
+    <section aria-labelledby="tutor-title" className="rounded-folder bg-forest text-ground p-5 relative overflow-hidden">
+      <div className="flex items-end gap-3">
+        <div className="min-w-0 flex-1 pb-2">
+          <p className="label text-pink">Tacita, tu tutora</p>
+          <p className="text-[16px] leading-snug mt-1 text-ground/90">{greeting(store)}</p>
         </div>
+        <span className="w-28 shrink-0 -mb-1 anim-peek" aria-hidden="true">
+          <Illustration name="tacita" follow className="w-full" />
+        </span>
       </div>
-      <div className="mt-4 rounded-[18px] bg-card text-ink p-4">
+      <div className="rounded-[20px] bg-card text-ink p-4 relative">
         <p className="label text-ink-soft">{main.kicker}</p>
-        <h2 id="tutor-title" className="display text-[28px] mt-1">
+        <h2 id="tutor-title" className="display text-[32px] mt-1">
           {main.title}
         </h2>
         <p className="text-[15px] text-ink-soft leading-snug mt-1.5">{main.text}</p>
