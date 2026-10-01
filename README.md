@@ -27,4 +27,4 @@ npm run banco
 npm run dev
 ```
 
-El progreso se guarda en el navegador de cada dispositivo (localStorage).
+El progreso se guarda en el navegador y se sincroniza entre dispositivos con Supabase (`src/lib/sync.js`; el SQL está en `contenido/supabase.sql`). En Logros está la **Liga gaditana**: clasificación por categorías (Churro de la Guapa, Cazón en adobo, Garbanzos con choco y Chicharrón) con los exámenes de tema.

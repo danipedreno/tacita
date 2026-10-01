@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 
 // Proyecto de Supabase. La clave «publishable/anon» es pública por diseño (va en el navegador).
 export const SUPABASE_URL = "https://epkmnclbxqbegfkzctlq.supabase.co";
-export const SUPABASE_KEY = "";
+export const SUPABASE_KEY = "sb_publishable_qosSKIGxzI9UCijtptaWzg_Q6Ofbtv1";
 
 const enabled = () => !!SUPABASE_KEY;
 
