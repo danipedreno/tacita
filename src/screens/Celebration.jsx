@@ -5,6 +5,8 @@ import { useCountUp, useReducedMotion } from "../lib/motion.js";
 import { Button, Galones, Illustration, MedalBadge } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import { play } from "../lib/sound.js";
+import { ligaInfo, tramoLabel } from "../lib/liga.js";
+import { FoodIcon } from "../foods.jsx";
 
 /* Pantallas de celebración a pantalla completa (bucle de Duolingo): al terminar un test se
    encadenan test completado → racha → meta diaria → medallas → ascenso, cada una con «Continuar».
@@ -252,6 +254,30 @@ function screenFor(item, report, store) {
           {item.count === 1 ? "Has encendido la racha. Vuelve mañana para que crezca." : "Vuelve mañana para mantenerla."}
           {next && <span className="block font-mono text-sm mt-2">Medalla «En racha» {ROMAN[medalProgress(racha, store).level + 1]} a los {next} días</span>}
         </p>
+      ),
+    };
+  }
+
+  if (item.type === "liga") {
+    const info = ligaInfo(item.after);
+    return {
+      bg: info.cat.color,
+      kicker: item.up ? "¡Subes en la liga!" : "Liga gaditana",
+      title: item.up ? tramoLabel(info) : `${item.gained >= 0 ? "+" : ""}${item.gained} ${Math.abs(item.gained) === 1 ? "punto" : "puntos"}`,
+      confetti: item.up,
+      visual: (
+        <div className="w-44 h-44 blob bg-card flex items-center justify-center">
+          <FoodIcon name={info.cat.icon} className={`w-32 h-32 ${item.up ? "anim-hop" : ""}`} />
+        </div>
+      ),
+      body: (
+        <>
+          <p className="text-base max-w-xs">
+            {item.up ? `${item.gained >= 0 ? "+" : ""}${item.gained} puntos en este examen. ` : `Sigues en ${tramoLabel(info)}. `}
+            Llevas {item.after} {item.after === 1 ? "punto" : "puntos"}.
+          </p>
+          <p className="font-mono text-sm mt-2">{info.next ? `${tramoLabel(info.next)} a los ${info.next.min}` : "¡Lo más alto de la liga!"}</p>
+        </>
       ),
     };
   }

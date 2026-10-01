@@ -364,7 +364,7 @@ function UserApp({ user, bank, logout }) {
                       }}
                     />
                   )}
-                  {tab === "badges" && <Achievements store={store} onReset={onReset} />}
+                  {tab === "badges" && <Achievements store={store} user={user} access={access} onReset={onReset} />}
                 </div>
               </main>
               <TabBar tab={tab} onChange={goTab} />

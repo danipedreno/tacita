@@ -1,6 +1,8 @@
 /* ---------------------------------------------------------------------
    CONFIGURACIÓN
    --------------------------------------------------------------------- */
+import { ligaInfo, ligaTotals } from "./liga.js";
+
 export const STORAGE_KEY = "tacita.v1";
 // XP: una lección son ~15-30 XP; 40 ejercicios al día dan unos 300-350 XP diarios.
 export const XP_PER_CORRECT = 10;
@@ -462,10 +464,20 @@ export function applyExamResult(store, exam, reason, date) {
     const prev = temaExams[exam.temaExam];
     temaExams[exam.temaExam] = { best: Math.max(prev?.best || 0, grade.over10), passed: !!prev?.passed || grade.over10 >= 5, last: date.toISOString() };
   }
+  // Liga: cada examen de tema queda apuntado con sus aciertos, fallos y blancos.
+  const liga = { ...(store.liga || {}) };
+  let ligaReport = null;
+  if (exam.temaExam && grade.n >= 10) {
+    const before = ligaTotals(liga).points;
+    liga[exam.id] = { t: exam.temaExam, c: grade.correct, w: grade.wrong, b: grade.blank, d: date.toISOString() };
+    const after = ligaTotals(liga).points;
+    ligaReport = { gained: grade.correct - grade.wrong - grade.blank, before, after, up: ligaInfo(after).index > ligaInfo(before).index };
+  }
   const log = logActivity(store, today, { questions: grade.correct + grade.wrong });
-  const nextStore = { ...store, xp, blockStats, temaStats, temaExams, log, achievements, streak, totals, counters, daily, goalDays, mistakes };
+  const nextStore = { ...store, xp, blockStats, temaStats, temaExams, liga, log, achievements, streak, totals, counters, daily, goalDays, mistakes };
 
   const celebrations = celebrationsFor(store, nextStore, { first: "test", today, goalMet, goal, earned });
+  if (ligaReport) celebrations.splice(1, 0, { type: "liga", ...ligaReport });
 
   const report = {
     exam,

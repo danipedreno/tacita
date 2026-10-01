@@ -18,6 +18,7 @@ export const DEFAULT_STORE = {
   units: {}, // temas con todas sus lecciones hechas → fecha
   temaStats: {}, // aciertos por tema en los tests: { c, t }
   temaExams: {}, // examen de cada tema: { best, passed, last }
+  liga: {}, // intentos de examen de tema para la liga: examId → { t, c, w, b, d }
   lastLesson: null,
   goalDays: [], // días en que se cumplió la meta
   counters: { marathons: 0, mastered: 0, highScores: 0 },

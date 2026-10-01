@@ -84,6 +84,7 @@ export function mergeStores(local, remote, localNewer) {
       passed: !!(x.passed || y.passed),
       last: (x.last || "") > (y.last || "") ? x.last : y.last,
     })),
+    liga: { ...(remote.liga || {}), ...(local.liga || {}) },
     onboarded: !!(local.onboarded || remote.onboarded),
   };
 }
@@ -188,4 +189,30 @@ export function useSync(access, store, setStore) {
   }, [store]);
 
   return status;
+}
+
+/* ---------- Clasificación de la liga ---------- */
+/**
+ * Descarga la liga de todos los usuarios (solo con credenciales válidas).
+ * Devuelve { status: "off" | "loading" | "ok" | "offline", rows: [{ usuario, liga }] }.
+ */
+export function useClasificacion(access) {
+  const [state, setState] = useState({ status: enabled() && access ? "loading" : "off", rows: [] });
+  useEffect(() => {
+    if (!enabled() || !access) return undefined;
+    let alive = true;
+    (async () => {
+      try {
+        const rows = await rpc("clasificacion", { p_usuario: access.user, p_secreto: await syncSecret(access.user, access.pass) });
+        if (alive) setState({ status: "ok", rows: Array.isArray(rows) ? rows : [] });
+      } catch (e) {
+        if (alive) setState((s) => ({ ...s, status: "offline" }));
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return state;
 }

@@ -4,8 +4,9 @@ import { ACHIEVEMENTS, MEDAL_FAMILIES, RANKS, medalProgress, rankInfo } from "..
 import { Button, Illustration, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import MedalCarousel from "./MedalCarousel.jsx";
+import Liga from "./Liga.jsx";
 
-export default function Achievements({ store, onReset }) {
+export default function Achievements({ store, user, access, onReset }) {
   const [confirm, setConfirm] = useState(false);
   const specials = ACHIEVEMENTS.filter((a) => store.achievements[a.id]).length;
   const tiers = MEDAL_FAMILIES.map((f) => ({ f, p: medalProgress(f, store) }));
@@ -31,6 +32,8 @@ export default function Achievements({ store, onReset }) {
           {unlocked} de {total}
         </p>
       </header>
+
+      <Liga store={store} user={user} access={access} />
 
       <MedalCarousel items={carousel} />
 

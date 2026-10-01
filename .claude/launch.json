@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "tacita", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "--port", "5173", "--strictPort"], "port": 5173 }
+    { "name": "tacita", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "--port", "5173", "--strictPort"], "port": 5173 },
+    { "name": "tacita-2", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "--port", "5183", "--strictPort"], "port": 5183 }
   ]
 }

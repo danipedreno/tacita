@@ -1,0 +1,42 @@
+/* Liga gaditana: competición entre los usuarios de Tacita con los exámenes de tema.
+   - Cada examen de tema (15 preguntas) suma puntos: aciertos − fallos − blancos (nunca baja de 0 en total).
+   - Cuentan todos los intentos: repetir un examen también suma (y resta).
+   - Los puntos llevan por tramos: 4 categorías (comidas de Cádiz) con 3 niveles cada una. Los tramos son
+     anchos a propósito: lo normal es compartir categoría con alguien, así que ir tercero no se nota. */
+import { PAL } from "./palette.js";
+
+export const CATEGORIES = [
+  { id: "churro", name: "Churro de la Guapa", icon: "churro", color: PAL.peach, levels: [0, 15, 35] },
+  { id: "cazon", name: "Cazón en adobo", icon: "pescado", color: PAL.sky, levels: [60, 90, 125] },
+  { id: "garbanzos", name: "Garbanzos con choco", icon: "sepia", color: PAL.mint, levels: [165, 210, 260] },
+  { id: "chicharron", name: "Chicharrón", icon: "cerdo", color: PAL.sun, levels: [315, 375, 440] },
+];
+
+/** Todos los tramos en orden: { cat, level (1-3), min }. */
+export const TRAMOS = CATEGORIES.flatMap((cat) => cat.levels.map((min, i) => ({ cat, level: i + 1, min })));
+
+/** Suma de los intentos guardados en store.liga ({ [examId]: { t, c, w, b, d } }). */
+export function ligaTotals(liga = {}) {
+  const tot = { exams: 0, correct: 0, wrong: 0, blank: 0 };
+  for (const a of Object.values(liga)) {
+    tot.exams++;
+    tot.correct += a.c || 0;
+    tot.wrong += a.w || 0;
+    tot.blank += a.b || 0;
+  }
+  return { ...tot, points: Math.max(0, tot.correct - tot.wrong - tot.blank) };
+}
+
+/** Tramo en el que está una puntuación y cuánto falta para el siguiente. */
+export function ligaInfo(points) {
+  let idx = 0;
+  TRAMOS.forEach((t, i) => {
+    if (points >= t.min) idx = i;
+  });
+  const tramo = TRAMOS[idx];
+  const next = TRAMOS[idx + 1] || null;
+  const pct = next ? ((points - tramo.min) / (next.min - tramo.min)) * 100 : 100;
+  return { ...tramo, index: idx, next, toNext: next ? next.min - points : 0, pct: Math.min(100, Math.max(0, pct)) };
+}
+
+export const tramoLabel = (t) => `${t.cat.name} ${["", "I", "II", "III"][t.level]}`;
