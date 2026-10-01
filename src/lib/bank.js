@@ -31,8 +31,21 @@ export async function decryptFile(buffer, user, pass) {
   return JSON.parse(text);
 }
 
+/** Cada usuario tiene su archivo: banco-<sha256("tacita:usuario")[:16]>.enc (mismo cálculo que contenido/build.mjs). */
+async function bankFile(user) {
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`tacita:${user.trim().toLowerCase()}`));
+  const hex = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `banco-${hex.slice(0, 16)}.enc`;
+}
+
 async function downloadBank(user, pass, version) {
-  const res = await fetch(url(`banco.enc?v=${encodeURIComponent(version || Date.now())}`), { cache: "no-store" });
+  let res;
+  try {
+    res = await fetch(url(`${await bankFile(user)}?v=${encodeURIComponent(version || Date.now())}`), { cache: "no-store" });
+  } catch (e) {
+    throw new Error("red");
+  }
+  if (res.status === 404) throw new Error("usuario");
   if (!res.ok) throw new Error("red");
   return decryptFile(await res.arrayBuffer(), user, pass);
 }
@@ -58,6 +71,7 @@ export function validateBank(json) {
 }
 
 export function useBank({ onUpdated } = {}) {
+  const [user, setUser] = useState(() => readJSON(ACCESS_KEY)?.user || null);
   const [bank, setBank] = useState(() => {
     const b = loadBank();
     return b && !validateBank(b) ? b : null;
@@ -80,6 +94,7 @@ export function useBank({ onUpdated } = {}) {
       const error = validateBank(json);
       if (error) return { ok: false, error };
       save(json);
+      setUser(user.trim().toLowerCase());
       try {
         localStorage.setItem(ACCESS_KEY, JSON.stringify({ user: user.trim().toLowerCase(), pass: pass.trim() }));
       } catch (e) {
@@ -100,6 +115,7 @@ export function useBank({ onUpdated } = {}) {
       /* nada que borrar */
     }
     setBank(null);
+    setUser(null);
   }, []);
 
   // Al abrir la app: si hay una versión nueva publicada, se descarga sola con las credenciales guardadas.
@@ -126,7 +142,7 @@ export function useBank({ onUpdated } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { bank, login, logout };
+  return { bank: user ? bank : null, user, login, logout };
 }
 
 export const temasOf = (bank, block) => (bank?.temas || []).filter((t) => block === "all" || t.bloque === block);

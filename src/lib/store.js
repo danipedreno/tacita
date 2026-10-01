@@ -29,9 +29,12 @@ export const DEFAULT_STORE = {
   onboarded: false, // bienvenida de primera vez vista
 };
 
-function loadStore() {
+// Cada usuario tiene su propio progreso: tacita.v1:<usuario>.
+const storeKey = (user) => `${STORAGE_KEY}:${user}`;
+
+function loadStore(user) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storeKey(user));
     if (!raw) return DEFAULT_STORE;
     const s = JSON.parse(raw);
     return {
@@ -49,15 +52,15 @@ function loadStore() {
 }
 
 /** Todo el progreso vive en un único objeto en localStorage. */
-export function usePersistentStore() {
-  const [store, setStore] = useState(loadStore);
+export function usePersistentStore(user) {
+  const [store, setStore] = useState(() => loadStore(user));
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      localStorage.setItem(storeKey(user), JSON.stringify(store));
     } catch (e) {
       /* almacenamiento no disponible (modo privado): la app sigue en memoria */
     }
-  }, [store]);
+  }, [store, user]);
   return [store, setStore];
 }
 

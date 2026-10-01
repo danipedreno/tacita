@@ -73,7 +73,7 @@ function TabBar({ tab, onChange }) {
 }
 
 /** Barra lateral (escritorio): marca, secciones y tu rango. */
-function SideNav({ tab, onChange, xp }) {
+function SideNav({ tab, onChange, xp, user }) {
   const { rank, pct } = rankInfo(xp);
   return (
     <nav className="hidden lg:flex fixed inset-y-0 left-0 w-64 z-40 flex-col gap-1 border-r border-line bg-ground px-4 py-6" aria-label="Navegación principal">
@@ -96,7 +96,7 @@ function SideNav({ tab, onChange, xp }) {
         );
       })}
       <div className="mt-auto rounded-[16px] bg-card paper-shadow p-3">
-        <p className="text-xs text-ink-soft">Rango</p>
+        <p className="text-xs text-ink-soft capitalize">{user} · rango</p>
         <p className="font-semibold leading-tight">{rank.name}</p>
         <div className="h-1.5 rounded-full bg-ground-2 mt-2 overflow-hidden">
           <div className="h-full bg-plum rounded-full" style={{ width: `${pct}%` }} />
@@ -107,11 +107,9 @@ function SideNav({ tab, onChange, xp }) {
   );
 }
 
+/** Raíz: acceso y, tras entrar, la app de ese usuario (con su propio progreso). */
 export default function App() {
-  const [store, setStore] = usePersistentStore();
-  const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
-  const install = useInstallPrompt();
-  const { bank, login, logout } = useBank({
+  const { bank, user, login, logout } = useBank({
     onUpdated: (b) =>
       notify({
         icon: <CheckCircle size={24} weight="fill" />,
@@ -120,12 +118,25 @@ export default function App() {
         text: `${b.temas.length} temas · ${b.preguntas.length} preguntas`,
       }),
   });
+  const [splash, setSplash] = useState(shouldShowSplash);
+  const endSplash = useCallback(() => setSplash(false), []);
+  return (
+    <div className="fixed inset-0 overflow-hidden bg-ground">
+      <AppToaster />
+      {splash && <Splash onDone={endSplash} />}
+      {!bank ? <Login onLogin={login} /> : <UserApp key={user} user={user} bank={bank} logout={logout} />}
+    </div>
+  );
+}
+
+function UserApp({ user, bank, logout }) {
+  const [store, setStore] = usePersistentStore(user);
+  const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
+  const install = useInstallPrompt();
   const [celebration, setCelebration] = useState(null); // { queue, report }
   const [lesson, setLesson] = useState(null); // { temaId, index }
   const [apuntes, setApuntes] = useState(null); // tema abierto en Apuntes
   const [cardsAuto, setCardsAuto] = useState(false);
-  const [splash, setSplash] = useState(shouldShowSplash);
-  const endSplash = useCallback(() => setSplash(false), []);
   const storeRef = useRef(store);
   const finishedIds = useRef(new Set());
   const mainRef = useRef(null);
@@ -266,13 +277,7 @@ export default function App() {
   const lessonTema = lesson && temaById(bank, lesson.temaId);
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-ground">
-      <AppToaster />
-      {splash && <Splash onDone={endSplash} />}
-      {!bank ? (
-        <Login onLogin={login} />
-      ) : (
-        <>
+    <>
           {!store.onboarded && store.totals.answered === 0 && <Onboarding onDone={() => setStore((s) => ({ ...s, onboarded: true }))} />}
           {celebration && <Celebrations queue={celebration.queue} report={celebration.report} store={store} onDone={() => setCelebration(null)} />}
           {lessonTema &&
@@ -291,7 +296,7 @@ export default function App() {
             <ExamRunner exam={exam} bank={bank} remainingMs={remainingMs} onSelect={onSelect} onBlank={onBlank} onGoto={onGoto} onFinish={() => finishExam("submitted")} onAbandon={onAbandon} />
           ) : (
             <>
-              <SideNav tab={tab} onChange={goTab} xp={store.xp} />
+              <SideNav tab={tab} onChange={goTab} xp={store.xp} user={user} />
               <main ref={mainRef} className="absolute inset-0 lg:left-64 scroll-area">
                 <div key={tab} className={`mx-auto px-4 lg:px-10 pt-safe lg:pt-10 pb-tabbar lg:pb-16 anim-rise ${tab === "home" ? "max-w-md lg:max-w-5xl" : "max-w-md lg:max-w-3xl"}`}>
                   {tab === "home" && (
@@ -355,8 +360,6 @@ export default function App() {
               <TabBar tab={tab} onChange={goTab} />
             </>
           )}
-        </>
-      )}
-    </div>
+    </>
   );
 }
