@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, CaretLeft, CaretRight, Check, Crown, Exam, Headphones, Play } from "@phosphor-icons/react";
+import { BookOpen, CaretDown, CaretLeft, CaretRight, Check, Crown, Exam, Headphones, Play } from "@phosphor-icons/react";
 import { Huevo, PolloEnHuevo, doneFace } from "../pollo.jsx";
 import { BLOCKS, UNIT_COLORS, lessonKey } from "../lib/logic.js";
 import { learnTemas, temaLabel } from "../lib/bank.js";
@@ -11,6 +11,101 @@ import { episodesOf, fmtTime, player } from "../lib/podcast.js";
 /* Camino de aprendizaje (como Duolingo): cada tema es una unidad con sus lecciones en zigzag
    y, al final, el examen del tema. Todo está abierto (es tu temario), pero el tutor marca
    la siguiente lección recomendada. Se ve un tema cada vez; la barra de arriba salta entre temas. */
+
+/**
+ * Selector de tema: una sola barra fija con el tema a la vista (número, nombre y progreso) y flechas al anterior
+ * y al siguiente. Al tocarla se abre una hoja con todos los temas por bloque, con su nombre completo.
+ */
+const numSize = (t) => (String(t.numero).length > 3 ? "text-[10px] tracking-tight" : "text-[13px]");
+
+function TemaSwitcher({ bank, store, groups, current, next, prev, following, onSelect }) {
+  const [open, setOpen] = useState(false);
+  if (!current) return null;
+  const done = unitDoneCount(current, store);
+  const total = current.lecciones.length;
+  const arrow = "tap press w-11 h-11 rounded-full bg-card paper-shadow flex items-center justify-center shrink-0 disabled:opacity-30";
+  return (
+    <nav aria-label="Temas" className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 px-4 lg:-mx-10 lg:px-10 py-2 bg-ground/95 backdrop-blur border-b border-line">
+      <div className="flex items-center gap-2">
+        <button type="button" className={arrow} disabled={!prev} onClick={() => prev && onSelect(prev.id)} aria-label={prev ? `Tema anterior: ${temaLabel(bank, prev.id)}` : "No hay tema anterior"}>
+          <CaretLeft size={18} weight="bold" />
+        </button>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          onClick={() => setOpen(true)}
+          className="tap press flex-1 min-w-0 h-14 rounded-full bg-ink text-ground pl-2 pr-4 flex items-center gap-3 text-left"
+        >
+          <span className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-ink font-bold ${numSize(current)}`} style={{ background: unitColor(bank, current.id) }} aria-hidden="true">
+            {current.numero}
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.06em] text-ground/70">
+              {BLOCKS[current.bloque].short} · {done} de {total}
+            </span>
+            <span className="block font-semibold text-[15px] leading-tight truncate">{current.titulo}</span>
+          </span>
+          <CaretDown size={16} weight="bold" className="shrink-0" aria-hidden="true" />
+        </button>
+        <button type="button" className={arrow} disabled={!following} onClick={() => following && onSelect(following.id)} aria-label={following ? `Tema siguiente: ${temaLabel(bank, following.id)}` : "No hay tema siguiente"}>
+          <CaretRight size={18} weight="bold" />
+        </button>
+      </div>
+      <Sheet
+        open={open}
+        title="Elige tema"
+        onClose={() => setOpen(false)}
+        body={
+          <div className="-mx-2 max-h-[62vh] overflow-y-auto overscroll-contain pb-2">
+            {groups.map(({ b, temas: list }) => (
+              <div key={b} role="group" aria-label={BLOCKS[b].label}>
+                <p className="sticky top-0 z-[1] bg-card px-2 pt-3 pb-2 flex items-center gap-2 text-ink font-semibold text-sm" aria-hidden="true">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: BLOCKS[b].hex }} />
+                  {BLOCKS[b].label}
+                </p>
+                <ul className="flex flex-col gap-1">
+                  {list.map((t) => {
+                    const d = unitDoneCount(t, store);
+                    const n = t.lecciones.length;
+                    const on = t.id === current.id;
+                    const isNext = next?.tema.id === t.id;
+                    return (
+                      <li key={t.id}>
+                        <button
+                          type="button"
+                          aria-current={on ? "true" : undefined}
+                          onClick={() => {
+                            onSelect(t.id);
+                            setOpen(false);
+                          }}
+                          className={`tap press w-full text-left rounded-[12px] px-2 py-2.5 flex items-center gap-3 text-ink ${on ? "bg-ground-2" : "hover:bg-ground"}`}
+                        >
+                          <span className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold ${numSize(t)}`} style={{ background: unitColor(bank, t.id) }} aria-hidden="true">
+                            {d === n ? <Check size={18} weight="bold" /> : t.numero}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block font-semibold leading-snug text-[15px]">{t.titulo}</span>
+                            <span className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-ink-soft font-mono">
+                                Tema {t.numero} · {d === n ? "terminado" : `${d} de ${n}`}
+                              </span>
+                              {isNext && <span className="tag !h-5 !text-[10px]">Te toca</span>}
+                            </span>
+                          </span>
+                          {on && <span className="sr-only">(a la vista)</span>}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        }
+      />
+    </nav>
+  );
+}
 
 const SEL_KEY = "tacita-aprende-tema";
 const chipLabel = (t) => (t.bloque === "comun" && /^\d/.test(String(t.numero)) ? `C${t.numero}` : String(t.numero));
@@ -159,7 +254,6 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
     return temas.some((t) => t.id === saved) ? saved : next?.tema.id || temas[0]?.id;
   });
   const topRef = useRef(null);
-  const chipsRef = useRef(null);
   const selIndex = Math.max(0, temas.findIndex((t) => t.id === sel));
   const current = temas[selIndex];
   const setSel = (id) => {
@@ -171,11 +265,6 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
     }
     requestAnimationFrame(() => topRef.current?.scrollIntoView?.({ block: "start", behavior: "smooth" }));
   };
-
-  // El botón del tema elegido, siempre visible en la barra.
-  useEffect(() => {
-    chipsRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ inline: "center", block: "nearest" });
-  }, [sel]);
 
   // Al entrar, el camino se coloca en la siguiente lección (si es de este tema).
   useEffect(() => {
@@ -205,38 +294,7 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
         </div>
       </header>
 
-      <nav aria-label="Temas" className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 px-4 lg:-mx-10 lg:px-10 py-2 bg-ground/95 backdrop-blur border-b border-line">
-        <div ref={chipsRef} className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          {groups.map(({ b, temas: list }) => (
-            <div key={b} className="flex items-center gap-1.5 shrink-0">
-              <span className="label font-semibold text-ink px-1 shrink-0 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: BLOCKS[b].hex }} aria-hidden="true" />
-                {BLOCKS[b].short}
-              </span>
-              {list.map((t) => {
-                const done = unitDoneCount(t, store) === t.lecciones.length;
-                const on = t.id === current?.id;
-                const hasNext = next?.tema.id === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setSel(t.id)}
-                    aria-current={on ? "true" : undefined}
-                    aria-label={`${temaLabel(bank, t.id)}${done ? " (terminado)" : ""}`}
-                    className={`tap press relative h-10 min-w-[44px] px-3 rounded-full text-sm font-semibold font-mono flex items-center justify-center gap-1 shrink-0 ${on ? "bg-ink text-ground" : "bg-card paper-shadow"}`}
-                    style={on ? undefined : { boxShadow: `inset 0 -3px 0 ${unitColor(bank, t.id)}` }}
-                  >
-                    {chipLabel(t)}
-                    {done && <Check size={14} weight="bold" aria-hidden="true" />}
-                    {hasNext && !on && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-plum" aria-hidden="true" />}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </nav>
+      <TemaSwitcher bank={bank} store={store} groups={groups} current={current} next={next} prev={temas[selIndex - 1]} following={temas[selIndex + 1]} onSelect={setSel} />
 
       {current && (
         <div ref={topRef} className="flex flex-col gap-6 scroll-mt-20">
