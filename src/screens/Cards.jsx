@@ -17,8 +17,16 @@ import { Cajon } from "../cajon.jsx";
  * - al soltar sin decidir vuelve a su sitio en 200 ms ease-out; al decidir sale volando.
  * Solo se activa con la respuesta a la vista; un toque sin arrastre sigue girando la tarjeta.
  */
+/* Mazo: las tarjetas que quedan asoman por debajo, escalonadas (k = 1, 2), con el color de su bloque. */
+const DECK_PEEK = 14;
+const deckGhost = (k, lift = 0) => {
+  const d = Math.max(0, k - lift);
+  return `translateY(${d * DECK_PEEK}px) scale(${1 - d * 0.05})`;
+};
+
 function useSwipe({ enabled, onSwipe, reduce }) {
   const ref = useRef(null);
+  const under = useRef(null); // la tarjeta de debajo del mazo: sube mientras arrastras
   const yes = useRef(null);
   const no = useRef(null);
   const drag = useRef(null);
@@ -30,6 +38,10 @@ function useSwipe({ enabled, onSwipe, reduce }) {
     el.style.transition = animate ? "transform 200ms var(--ease-out)" : "none";
     el.style.transform = dx ? `translateX(${dx}px) rotate(${reduce ? 0 : dx / 18}deg)` : "";
     const p = Math.min(1, Math.abs(dx) / 110);
+    if (under.current) {
+      under.current.style.transition = animate ? "transform 200ms var(--ease-out)" : "none";
+      under.current.style.transform = dx ? deckGhost(1, p) : "";
+    }
     if (yes.current) yes.current.style.opacity = dx > 0 ? p : 0;
     if (no.current) no.current.style.opacity = dx < 0 ? p : 0;
   };
@@ -95,7 +107,7 @@ function useSwipe({ enabled, onSwipe, reduce }) {
       }
     },
   };
-  return { ref, yes, no, handlers };
+  return { ref, under, yes, no, handlers };
 }
 
 /* Calor de la racha: cuanto más seguidas, más fuego (barra, chip y +XP). */
@@ -272,7 +284,23 @@ function Session({ bank, queue: initial, onExit, onFinish }) {
       </div>
 
       <div className="flex-1 scroll-area px-4 pt-5 pb-6">
-        <div key={`${card.id}-${i}`} className="max-w-md lg:max-w-2xl mx-auto anim-q-next">
+        <div className="max-w-md lg:max-w-2xl mx-auto relative" style={{ paddingBottom: DECK_PEEK * 2 }}>
+          {/* Las siguientes del mazo, asomando por debajo (solo la forma y el color de su bloque) */}
+          {[2, 1].map((k) => {
+            const nxt = queue[i + k];
+            if (!nxt) return null;
+            const hex = (BLOCKS[nxt.block] || BLOCKS.especifico).hex;
+            return (
+              <div
+                key={`g${k}-${nxt.id}-${i + k}`}
+                ref={k === 1 ? swipe.under : undefined}
+                aria-hidden="true"
+                className="absolute inset-x-0 top-11 rounded-folder origin-bottom"
+                style={{ bottom: DECK_PEEK * 2, background: hex, transform: deckGhost(k), filter: `brightness(${1 - k * 0.06})` }}
+              />
+            );
+          })}
+        <div key={`${card.id}-${i}`} className="relative anim-deck-rise">
           <div ref={swipe.ref} {...swipe.handlers} className="relative will-change-transform" style={{ touchAction: "pan-y" }}>
           <span ref={swipe.yes} className="swipe-stamp left-6 text-olive -rotate-12" aria-hidden="true">
             LO SÉ
@@ -317,6 +345,10 @@ function Session({ bank, queue: initial, onExit, onFinish }) {
           </Folder>
           </div>
         </div>
+        </div>
+        <p className="text-center font-mono text-xs text-ink-soft mt-3" aria-live="off">
+          {queue.length - i - 1 > 0 ? `Quedan ${queue.length - i - 1} en el mazo` : "Última tarjeta"}
+        </p>
       </div>
 
       <div className="px-4 pt-3 pb-safe bg-ground">

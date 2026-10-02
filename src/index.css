@@ -197,6 +197,11 @@
     transform-origin: 50% 90%;
   }
   /* Pregunta siguiente / anterior (continuidad espacial) */
+  /* Tarjetas: la siguiente sube desde el mazo con un pequeño rebote */
+  .anim-deck-rise {
+    animation: deck-rise 320ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    transform-origin: 50% 100%;
+  }
   .anim-q-next {
     animation: q-next 180ms var(--ease-out) both;
   }
@@ -344,6 +349,10 @@
   0%, 100% { transform: scale(1) rotate(-3deg); }
   50% { transform: scale(1.1) rotate(3deg); }
 }
+@keyframes deck-rise {
+  from { transform: translateY(14px) scale(0.95); }
+  to { transform: none; }
+}
 @keyframes q-next {
   from { transform: translateX(16px); opacity: 0; }
   to { transform: none; opacity: 1; }
@@ -421,7 +430,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-rise, .anim-pop, .anim-folder, .anim-toast, .anim-q-next, .anim-q-prev, .anim-medal, .celebrate-pop, .celebrate-in {
+  .anim-rise, .anim-pop, .anim-folder, .anim-toast, .anim-q-next, .anim-deck-rise, .anim-q-prev, .anim-medal, .celebrate-pop, .celebrate-in {
     animation: fade 180ms ease both !important;
   }
   .anim-shake, .anim-flicker, .anim-peek, .anim-node, .anim-hop, .medal-float, .mascot-eye, .mascot-idle, .anim-bob-x, .anim-correct, .goal-pop {
