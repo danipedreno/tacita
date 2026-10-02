@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Illustration } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
+import { Cajon } from "../cajon.jsx";
 
 /* Bienvenida de primera vez: tres pantallas ilustradas que cuentan cómo sacar partido a la app.
    Solo se ve una vez (se marca `onboarded` al terminar o saltarla). */
@@ -62,7 +63,14 @@ export default function Onboarding({ onDone }) {
         </div>
         <div key={i} className="flex-1 flex flex-col justify-center anim-q-next">
           <div className="w-56 h-56 mx-auto p-4 bg-card blob">
-            <Illustration name={s.art} fallback={s.fallback} className="w-full" alt="" />
+            {s.art === "caja-las-se" ? (
+              <div className="w-full h-full flex flex-col justify-center gap-3">
+                <Cajon tone="known" className="w-full max-w-[140px] h-auto mx-auto" />
+                <Cajon tone="unknown" className="w-full max-w-[140px] h-auto mx-auto" />
+              </div>
+            ) : (
+              <Illustration name={s.art} fallback={s.fallback} className="w-full" alt="" />
+            )}
           </div>
           <h2 className="display text-[40px] mt-8">{s.title}</h2>
           <p className="text-[17px] leading-relaxed mt-3">{s.text}</p>

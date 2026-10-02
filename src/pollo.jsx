@@ -130,7 +130,7 @@ export function PolloShape({ face = "open", blink, look = [0, 0], shadow = true,
       <ellipse cx="52" cy="128" rx="11" ry="7" fill={POLLO.cheek} stroke={POLLO.line} strokeWidth={SW - 1.2} />
       <ellipse cx="148" cy="128" rx="11" ry="7" fill={POLLO.cheek} stroke={POLLO.line} strokeWidth={SW - 1.2} />
       {/* cara */}
-      {f}
+      {[].concat(f).map((el, i) => <g key={i}>{el}</g>)}
       {/* patitas */}
       {feet && [70, 130].map((x) => (
         <g key={x}>

@@ -8,6 +8,7 @@ import { Button, ChoiceTile, Folder, IconButton, ArtIcon, Illustration, Paper, P
 import { useReducedMotion } from "../lib/motion.js";
 import { play } from "../lib/sound.js";
 import { PAL } from "../lib/palette.js";
+import { Cajon } from "../cajon.jsx";
 
 /**
  * Deslizar la tarjeta (a la manera de las apps de citas, con criterios de Emil Kowalski):
@@ -348,13 +349,11 @@ function Session({ bank, queue: initial, onExit, onFinish }) {
 }
 
 /** Caja de tarjetas («Las sé» / «No las sé») con su ilustración, contador y botón de repaso. */
-function Pile({ title, color, cards, illustration, onReview }) {
+function Pile({ title, tone, cards, onReview }) {
   return (
-    <div className="rounded-[22px] p-3 flex flex-col gap-3 min-w-0" style={{ background: color }}>
-      <div className="flex items-center gap-2.5 px-1 pt-1">
-        <span className="w-11 h-11 bg-card/75 blob flex items-center justify-center shrink-0">
-          <ArtIcon name={illustration} size="52%" />
-        </span>
+    <div className="rounded-[22px] p-3 flex flex-col gap-3 min-w-0 bg-card border-2 border-line">
+      <Cajon tone={tone} className="w-full max-w-[150px] h-auto mx-auto mt-1" />
+      <div className="flex items-end gap-2 px-1">
         <span className="font-semibold text-[17px] leading-tight flex-1 min-w-0">{title}</span>
         <span className="brand text-[34px] leading-none">{cards.length}</span>
       </div>
@@ -536,8 +535,8 @@ export default function CardsScreen({ store, bank, onFinish, autoStart, onAutoSt
         <h2 id="cajas-title" className="display text-[30px]">Tus cajas</h2>
         <p className="text-sm text-ink-soft mt-1 mb-3">Cada tarjeta va a una caja según tu última respuesta. Repásalas cuando quieras.</p>
         <div className="grid grid-cols-2 gap-3">
-          <Pile title="Las sé" color={PAL.mint} cards={piles.known} illustration="caja-las-se" fallback="test-listo" onReview={() => startPile(piles.known)} />
-          <Pile title="No las sé" color={PAL.lilac} cards={piles.unknown} illustration="caja-no-las-se" fallback="procesando" onReview={() => startPile(piles.unknown)} />
+          <Pile title="Las sé" tone="known" cards={piles.known} onReview={() => startPile(piles.known)} />
+          <Pile title="No las sé" tone="unknown" cards={piles.unknown} onReview={() => startPile(piles.unknown)} />
         </div>
       </section>
 
