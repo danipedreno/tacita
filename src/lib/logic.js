@@ -187,7 +187,7 @@ export function prepareQuestion(q) {
   return { ...q, options: order.map((i) => q.options[i]), answer: order.indexOf(q.answer) };
 }
 
-export function createExam({ pool, count, feedback, secsPerQ, source, title, penalty = DEFAULT_PENALTY, ordered = false, temaExam = null, caso = null, reto = null }) {
+export function createExam({ pool, count, feedback, secsPerQ, source, title, penalty = DEFAULT_PENALTY, ordered = false, temaExam = null, caso = null, reto = null, duel = null }) {
   const questions = (ordered ? pool : shuffle(pool)).slice(0, Math.min(count, pool.length)).map(prepareQuestion);
   const now = Date.now();
   return {
@@ -200,6 +200,7 @@ export function createExam({ pool, count, feedback, secsPerQ, source, title, pen
     temaExam, // id del tema si es el «examen del tema» del camino
     caso, // id del caso práctico, para mostrar su supuesto
     reto, // fecha del reto del día, si lo es
+    duel, // { id, from, to, tema } si es un duelo
     startedAt: now,
     endsAt: now + questions.length * secsPerQ * 1000,
     questions,
@@ -475,6 +476,8 @@ export function applyExamResult(store, exam, reason, date) {
     // Si el tema ya puntuó hoy, este intento no cuenta (counted: false).
     ligaReport = { gained: after.points - before.points, counted: after.exams > before.exams, before: before.points, after: after.points, up: ligaInfo(after.points).index > ligaInfo(before.points).index };
   }
+  // Duelo: se apunta para que el rival lo vea (no suma puntos de liga).
+  if (exam.duel) liga[exam.id] = { t: "duelo", c: grade.correct, w: grade.wrong, b: grade.blank, d: date.toISOString(), du: exam.duel };
   const log = logActivity(store, today, { questions: grade.correct + grade.wrong });
   const nextStore = { ...store, xp, blockStats, temaStats, temaExams, liga, log, achievements, streak, totals, counters, daily, goalDays, mistakes };
 

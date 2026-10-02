@@ -2,7 +2,7 @@
    - Cada examen de tema (15 preguntas) suma puntos: acierto +3, fallo −1, en blanco 0 (como en el examen
      real, fallar penaliza y dejarla en blanco no). El total nunca baja de 0.
    - Cada tema puntúa una vez al día (el primer intento): repetir el mismo examen hasta sabérselo no da puntos.
-   - El reto del día (t: "reto") también puntúa, una vez al día.
+   - El reto del día (t: "reto") también puntúa, una vez al día. Los duelos (t: "duelo") no puntúan.
    - Los puntos llevan por tramos: 4 categorías (comidas de Cádiz) con 3 niveles cada una. Los tramos son
      anchos a propósito: lo normal es compartir categoría con alguien, así que ir tercero no se nota. */
 import { PAL } from "./palette.js";
@@ -29,6 +29,7 @@ export function ligaTotals(liga = {}) {
   const seen = new Set();
   const list = Object.values(liga).sort((x, y) => (x.d || "").localeCompare(y.d || ""));
   for (const a of list) {
+    if (a.t === "duelo") continue; // los duelos no suman puntos
     const key = `${a.t}|${dayOf(a.d)}`;
     if (seen.has(key)) continue;
     seen.add(key);

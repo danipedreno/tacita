@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
-import { DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
+import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, Sword, X } from "@phosphor-icons/react";
+import { BLOCKS, DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { GoalRing } from "./Celebration.jsx";
@@ -10,6 +10,8 @@ import { masteryOf, reviewState } from "../lib/srs.js";
 import { MasteryBar } from "./Mastery.jsx";
 import { retoResult } from "../lib/reto.js";
 import { POINTS } from "../lib/liga.js";
+import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
+import { learnTemas } from "../lib/bank.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -522,6 +524,117 @@ function RetoCard({ store, liga, user, onAction }) {
   );
 }
 
+/** Duelos: retar a otra persona a 10 preguntas. Las dos juegan las mismas; gana quien saque más puntos. */
+function DuelCard({ bank, store, liga, user, onAction }) {
+  const rivals = (liga?.rows || []).map((r) => r.usuario).filter((u) => u !== user);
+  const [rival, setRival] = useState(null);
+  const [tema, setTema] = useState("all");
+  const duels = duelsOf(user, store.liga, liga?.rows || []);
+  const pending = duels.filter((d) => d.status === "pending" && d.from !== user);
+  const waiting = duels.filter((d) => d.status === "waiting");
+  const done = duels.filter((d) => d.status === "done").slice(0, 3);
+  const record = duelRecord(duels);
+  const temas = learnTemas(bank);
+  const temaName = (id) => (id === "all" ? "todo el temario" : `«${temas.find((t) => t.id === id)?.titulo ?? "un tema"}»`);
+  const target = rival && rivals.includes(rival) ? rival : rivals[0];
+  const play = (duel) => onAction({ type: "duel", duel });
+
+  return (
+    <section aria-labelledby="duel-title" className="rounded-folder bg-peach p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="duel-title" className="display text-[24px] flex items-center gap-2">
+          <Sword size={22} weight="fill" /> Duelos
+        </h2>
+        <span className="text-xs font-semibold">{DUEL_SIZE} preguntas · las mismas para las dos personas</span>
+      </div>
+
+      {pending.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-2">
+          {pending.map((d) => (
+            <li key={d.id} className="rounded-[14px] bg-card px-3 py-2.5 flex items-center gap-3">
+              <span className="flex-1 min-w-0 text-[15px]">
+                <span className="font-semibold">{pretty(d.from)}</span> te reta en {temaName(d.tema)}
+              </span>
+              <button type="button" onClick={() => play(d)} className="tap press h-10 px-4 rounded-full bg-ink text-ground text-sm font-semibold shrink-0">
+                Aceptar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {rivals.length ? (
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="A quién retas">
+            {rivals.map((u) => (
+              <button
+                key={u}
+                type="button"
+                aria-pressed={u === target}
+                onClick={() => setRival(u)}
+                className={`tap press h-10 px-4 rounded-full text-sm font-semibold ${u === target ? "bg-ink text-ground" : "bg-card/70"}`}
+              >
+                {pretty(u)}
+              </button>
+            ))}
+          </div>
+          <label className="text-sm flex items-center gap-2">
+            <span className="shrink-0">Preguntas de</span>
+            <select value={tema} onChange={(e) => setTema(e.target.value)} className="flex-1 min-w-0 h-10 rounded-full bg-card px-3 text-sm">
+              <option value="all">Todo el temario</option>
+              {["comun", "especifico"].map((b) => (
+                <optgroup key={b} label={BLOCKS[b].label}>
+                  {temas
+                    .filter((t) => t.bloque === b)
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.numero} · {t.titulo}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <button type="button" onClick={() => play({ id: newDuelId(user), from: user, to: target, tema })} className="tap press w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold">
+            Retar a {pretty(target)}
+          </button>
+          <p className="text-xs">Juegas tú primero; le llega el aviso y tiene una semana. No suma puntos de liga: es por el honor.</p>
+        </div>
+      ) : (
+        <p className="mt-2 text-sm">{liga?.status === "ok" ? "Aún no hay nadie más a quien retar." : "Para retar a alguien hace falta conexión con la nube."}</p>
+      )}
+
+      {(waiting.length > 0 || done.length > 0) && (
+        <ul className="mt-3 flex flex-col gap-1 text-sm">
+          {waiting.map((d) => (
+            <li key={d.id} className="flex items-center justify-between gap-2 rounded-[12px] bg-card/70 px-3 py-1.5">
+              <span>Esperando a <span className="font-semibold">{pretty(d.rival)}</span></span>
+              <span className="font-mono">tú: {duelPoints(d.mine)}</span>
+            </li>
+          ))}
+          {done.map((d) => (
+            <li key={d.id} className="flex items-center justify-between gap-2 rounded-[12px] bg-card/70 px-3 py-1.5">
+              <span>
+                {d.result === "win" ? "Ganas a" : d.result === "loss" ? "Pierdes con" : "Empate con"} <span className="font-semibold">{pretty(d.rival)}</span>
+              </span>
+              <span className="font-mono">
+                {duelPoints(d.mine)} – {duelPoints(d.theirs)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {Object.keys(record).length > 0 && (
+        <p className="text-xs mt-2">
+          {Object.entries(record)
+            .map(([u, r]) => `Contra ${pretty(u)}: ${r.win} ${r.win === 1 ? "victoria" : "victorias"}, ${r.loss} ${r.loss === 1 ? "derrota" : "derrotas"}${r.draw ? `, ${r.draw} ${r.draw === 1 ? "empate" : "empates"}` : ""}`)
+            .join(" · ")}
+        </p>
+      )}
+    </section>
+  );
+}
+
 export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync, liga, user }) {
   const intro = useRef(!introPlayed).current;
   useEffect(() => {
@@ -608,6 +721,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <TutorCard bank={bank} store={store} onAction={onAction} />
           <MasteryCard bank={bank} store={store} onGoDominio={onGoDominio} onAction={onAction} />
           <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
+          <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowCounterClockwise, BookOpen, Brain, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, Sword, Brain, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
 import { applyCardsResult, applyExamResult, applyLessonResult, createExam, mistakePool, rankInfo } from "./lib/logic.js";
 import { bankQuestions, getAccess, temaById, temaLabel, useBank } from "./lib/bank.js";
 import { useClasificacion, useSync } from "./lib/sync.js";
@@ -9,6 +9,7 @@ import { FoodIcon } from "./foods.jsx";
 import { studiedTemas } from "./lib/tutor.js";
 import { dailyReviewPool, srsAfterExam, srsAfterLesson, temaReviewPool } from "./lib/srs.js";
 import { retoQuestions, retoResult } from "./lib/reto.js";
+import { DUEL_SIZE, duelPoints, duelQuestions, duelsOf } from "./lib/duelo.js";
 import Mastery from "./screens/Mastery.jsx";
 import { dateKey } from "./lib/logic.js";
 import CardsScreen from "./screens/Cards.jsx";
@@ -143,7 +144,34 @@ export default function App() {
 }
 
 /** Avisos de la liga: «Zaida sube a Cazón en adobo II». Se recuerda el último tramo visto de cada uno. */
-function useLigaNews(user, liga) {
+const pretty = (u = "") => u.charAt(0).toUpperCase() + u.slice(1);
+
+function useLigaNews(user, liga, myLiga) {
+  // Duelos: «Zaida te reta a un duelo» y «Duelo con Zaida: ¡ganas!». Se recuerda lo ya avisado.
+  useEffect(() => {
+    if (liga.status !== "ok") return;
+    const key = `tacita-duelos-visto:${user}`;
+    let seen = null;
+    try {
+      seen = JSON.parse(localStorage.getItem(key) || "null");
+    } catch (e) {
+      /* sin almacenamiento */
+    }
+    const now = {};
+    duelsOf(user, myLiga, liga.rows).forEach((d) => {
+      now[d.id] = d.status;
+      if (!seen || seen[d.id] === d.status) return;
+      if (d.status === "pending" && d.from !== user)
+        notify({ icon: <Sword size={24} weight="fill" />, color: PAL.peach, kicker: "Duelo", text: `${pretty(d.rival)} te reta a un duelo`, duration: 7000 });
+      if (d.status === "done" && seen[d.id] === "waiting")
+        notify({ icon: <Sword size={24} weight="fill" />, color: d.result === "win" ? PAL.mint : PAL.sky, kicker: "Duelo", text: `Duelo con ${pretty(d.rival)}: ${d.result === "win" ? "¡ganas!" : d.result === "loss" ? `gana ${pretty(d.rival)}` : "empate"} (${duelPoints(d.mine)} a ${duelPoints(d.theirs)})`, duration: 7000 });
+    });
+    try {
+      localStorage.setItem(key, JSON.stringify(now));
+    } catch (e) {
+      /* sin almacenamiento */
+    }
+  }, [liga.at]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (liga.status !== "ok") return;
     const key = `tacita-liga-visto:${user}`;
@@ -177,7 +205,9 @@ function UserApp({ user, bank, logout }) {
   const [access] = useState(getAccess);
   const sync = useSync(access?.user === user ? access : null, store, setStore);
   const liga = useClasificacion(access?.user === user ? access : null);
-  useLigaNews(user, liga);
+  useLigaNews(user, liga, store.liga);
+  const ligaRef = useRef(liga);
+  ligaRef.current = liga;
   const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
   const install = useInstallPrompt();
   const [celebration, setCelebration] = useState(null); // { queue, report }
@@ -222,8 +252,15 @@ function UserApp({ user, bank, logout }) {
       setTab("test");
       // Pantallas de «¡Enhorabuena!» encadenadas; debajo queda el resultado.
       setCelebration({ queue: report.celebrations, report });
+      // Duelo: si el rival ya lo jugó, se sabe quién gana; si no, queda esperándole.
+      const du = s.activeExam.duel;
+      if (du) {
+        const d = duelsOf(user, next.liga, ligaRef.current.rows).find((x) => x.id === du.id);
+        const text = d?.status === "done" ? `Duelo con ${pretty(d.rival)}: ${d.result === "win" ? "¡ganas!" : d.result === "loss" ? "esta vez pierdes" : "empate"} (${duelPoints(d.mine)} a ${duelPoints(d.theirs)})` : `Duelo enviado a ${pretty(du.from === user ? du.to : du.from)}: le toca jugar`;
+        notify({ icon: <Sword size={24} weight="fill" />, color: PAL.peach, kicker: "Duelo", text, duration: 7000 });
+      }
     },
-    [setStore]
+    [setStore, user]
   );
 
   // Entrega automática al agotarse el tiempo (también tras reabrir la app con el examen caducado).
@@ -246,7 +283,8 @@ function UserApp({ user, bank, logout }) {
     });
   const onBlank = () => updateExam((e) => ({ ...e, revealed: e.revealed.map((r, k) => (k === e.current ? true : r)) }));
   const onGoto = (i) => updateExam((e) => ({ ...e, current: Math.max(0, Math.min(e.questions.length - 1, i)) }));
-  const onAbandon = () => setStore((s) => ({ ...s, activeExam: null }));
+  // Un duelo abandonado cuenta como entregado (si no, se podría repetir sabiendo las preguntas).
+  const onAbandon = () => (storeRef.current.activeExam?.duel ? finishExam("submitted") : setStore((s) => ({ ...s, activeExam: null })));
 
   const onSettings = useCallback((patch) => setStore((s) => ({ ...s, settings: { ...s.settings, ...patch } })), [setStore]);
   const onReview = () => {
@@ -280,6 +318,13 @@ function UserApp({ user, bank, logout }) {
     if (retoResult(s.liga)) return;
     const day = dateKey();
     startExam({ pool: retoQuestions(bank, day), count: 10, ordered: true, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "reto", reto: day, title: "Reto del día" });
+  };
+  // Duelo: las mismas 10 preguntas para quien reta y para quien acepta; se juega una sola vez.
+  const onDuel = ({ id, from, to, tema }) => {
+    const s = storeRef.current;
+    if (Object.values(s.liga || {}).some((a) => a.t === "duelo" && a.du?.id === id)) return;
+    const rival = from === user ? to : from;
+    startExam({ pool: duelQuestions(bank, id, tema), count: DUEL_SIZE, ordered: true, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "duelo", duel: { id, from, to, tema }, title: `Duelo con ${pretty(rival)}` });
   };
   const onTemaReview = (temaId) => {
     const s = storeRef.current;
@@ -324,6 +369,7 @@ function UserApp({ user, bank, logout }) {
     else if (a.type === "temaExam") onTemaExam(a.temaId);
     else if (a.type === "review") onDailyReview();
     else if (a.type === "reto") onReto();
+    else if (a.type === "duel") onDuel(a.duel);
     else if (a.type === "temaReview") onTemaReview(a.temaId);
     else if (a.type === "weak") {
       const s = storeRef.current;
