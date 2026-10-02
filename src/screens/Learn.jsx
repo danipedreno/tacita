@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Crown, Exam, Play } from "@phosphor-icons/react";
+import { BookOpen, CaretLeft, CaretRight, Check, Crown, Exam, Play } from "@phosphor-icons/react";
 import { Mascot } from "../mascots.jsx";
 import { BLOCKS, UNIT_COLORS, lessonKey } from "../lib/logic.js";
 import { learnTemas, temaLabel } from "../lib/bank.js";
@@ -9,7 +9,10 @@ import { PAL } from "../lib/palette.js";
 
 /* Camino de aprendizaje (como Duolingo): cada tema es una unidad con sus lecciones en zigzag
    y, al final, el examen del tema. Todo está abierto (es tu temario), pero el tutor marca
-   la siguiente lección recomendada. */
+   la siguiente lección recomendada. Se ve un tema cada vez; la barra de arriba salta entre temas. */
+
+const SEL_KEY = "tacita-aprende-tema";
+const chipLabel = (t) => (t.bloque === "comun" && /^\d/.test(String(t.numero)) ? `C${t.numero}` : String(t.numero));
 
 const ZIGZAG = [0, 44, 66, 44, 0, -44, -66, -44];
 
@@ -122,7 +125,36 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
   const totalLessons = temas.reduce((a, t) => a + t.lecciones.length, 0);
   const doneLessons = temas.reduce((a, t) => a + unitDoneCount(t, store), 0);
 
-  // Al entrar, el camino se coloca en la siguiente lección.
+  // Tema a la vista: el último que abriste o, la primera vez, el de la siguiente lección.
+  const [sel, setSelState] = useState(() => {
+    let saved = null;
+    try {
+      saved = localStorage.getItem(SEL_KEY);
+    } catch (e) {
+      /* sin almacenamiento */
+    }
+    return temas.some((t) => t.id === saved) ? saved : next?.tema.id || temas[0]?.id;
+  });
+  const topRef = useRef(null);
+  const chipsRef = useRef(null);
+  const selIndex = Math.max(0, temas.findIndex((t) => t.id === sel));
+  const current = temas[selIndex];
+  const setSel = (id) => {
+    setSelState(id);
+    try {
+      localStorage.setItem(SEL_KEY, id);
+    } catch (e) {
+      /* sin almacenamiento */
+    }
+    requestAnimationFrame(() => topRef.current?.scrollIntoView?.({ block: "start", behavior: "smooth" }));
+  };
+
+  // El botón del tema elegido, siempre visible en la barra.
+  useEffect(() => {
+    chipsRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ inline: "center", block: "nearest" });
+  }, [sel]);
+
+  // Al entrar, el camino se coloca en la siguiente lección (si es de este tema).
   useEffect(() => {
     const t = setTimeout(() => nextRef.current?.scrollIntoView?.({ block: "center", behavior: "smooth" }), 250);
     return () => clearTimeout(t);
@@ -149,28 +181,73 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
         </div>
       </header>
 
-      {groups.map(({ b, temas: list }) => (
-        <section key={b} aria-labelledby={`grupo-${b}`} className="flex flex-col gap-10">
-          <h2 id={`grupo-${b}`} className="display text-[34px] flex items-center gap-3">
-            <span className="w-5 h-5 blob" style={{ background: BLOCKS[b].hex }} aria-hidden="true" />
-            {BLOCKS[b].label}
-          </h2>
-          {list.map((t) => (
-            <Unit
-              key={t.id}
-              bank={bank}
-              tema={t}
-              store={store}
-              color={unitColor(bank, t.id)}
-              next={next}
-              nextRef={nextRef}
-              onOpenLesson={(temaId, index) => setSheet({ temaId, index })}
-              onTemaExam={onTemaExam}
-              onApuntes={onApuntes}
-            />
+      <nav aria-label="Temas" className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 px-4 lg:-mx-10 lg:px-10 py-2 bg-ground/95 backdrop-blur border-b border-line">
+        <div ref={chipsRef} className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          {groups.map(({ b, temas: list }) => (
+            <div key={b} className="flex items-center gap-1.5 shrink-0">
+              <span className="label text-ink-soft px-1 shrink-0" style={{ color: BLOCKS[b].hex }}>
+                {BLOCKS[b].short}
+              </span>
+              {list.map((t) => {
+                const done = unitDoneCount(t, store) === t.lecciones.length;
+                const on = t.id === current?.id;
+                const hasNext = next?.tema.id === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSel(t.id)}
+                    aria-current={on ? "true" : undefined}
+                    aria-label={`${temaLabel(bank, t.id)}${done ? " (terminado)" : ""}`}
+                    className={`tap press relative h-10 min-w-[44px] px-3 rounded-full text-sm font-semibold font-mono flex items-center justify-center gap-1 shrink-0 ${on ? "bg-ink text-ground" : "bg-card paper-shadow"}`}
+                    style={on ? undefined : { boxShadow: `inset 0 -3px 0 ${unitColor(bank, t.id)}` }}
+                  >
+                    {chipLabel(t)}
+                    {done && <Check size={14} weight="bold" aria-hidden="true" />}
+                    {hasNext && !on && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-plum" aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
           ))}
-        </section>
-      ))}
+        </div>
+      </nav>
+
+      {current && (
+        <div ref={topRef} className="flex flex-col gap-6 scroll-mt-20">
+          <Unit
+            key={current.id}
+            bank={bank}
+            tema={current}
+            store={store}
+            color={unitColor(bank, current.id)}
+            next={next}
+            nextRef={nextRef}
+            onOpenLesson={(temaId, index) => setSheet({ temaId, index })}
+            onTemaExam={onTemaExam}
+            onApuntes={onApuntes}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            {selIndex > 0 ? (
+              <button type="button" onClick={() => setSel(temas[selIndex - 1].id)} className="tap press h-14 rounded-full bg-card paper-shadow text-sm font-semibold flex items-center justify-center gap-1.5 px-3">
+                <CaretLeft size={18} weight="bold" aria-hidden="true" /> <span className="truncate">Tema {chipLabel(temas[selIndex - 1])}</span>
+              </button>
+            ) : (
+              <span />
+            )}
+            {selIndex < temas.length - 1 && (
+              <button type="button" onClick={() => setSel(temas[selIndex + 1].id)} className="tap press h-14 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-1.5 px-3">
+                <span className="truncate">Siguiente: tema {chipLabel(temas[selIndex + 1])}</span> <CaretRight size={18} weight="bold" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          {next && next.tema.id !== current.id && (
+            <button type="button" onClick={() => setSel(next.tema.id)} className="text-sm text-ink-soft underline underline-offset-4 self-center">
+              Ir a tu siguiente lección (tema {chipLabel(next.tema)})
+            </button>
+          )}
+        </div>
+      )}
 
       <section aria-labelledby="practica-title" className="rounded-folder bg-lilac p-5">
         <h2 id="practica-title" className="display text-[30px]">
