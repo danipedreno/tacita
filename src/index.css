@@ -159,6 +159,15 @@
   .pb-tabbar-player {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 190px);
   }
+  /* Mazo de tarjetas de Inicio: al subir de posición, un pequeño rebote */
+  .deck-card {
+    transition: transform 340ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 240ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .deck-card {
+      transition: opacity 200ms ease;
+    }
+  }
   .toast-pos {
     top: calc(env(safe-area-inset-top, 0px) + 12px);
   }

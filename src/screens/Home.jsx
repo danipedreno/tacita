@@ -606,70 +606,182 @@ function MistakesCard({ store, onReview }) {
   );
 }
 
-/* Carrusel de tarjetas de práctica: en el móvil se pasan deslizando (cada una encaja en su sitio y asoma la
-   siguiente) y los puntos de abajo dicen en cuál estás; en el ordenador, rejilla de dos columnas. */
-function CardRail({ label, children }) {
-  const items = [].concat(children).filter(Boolean);
-  const rail = useRef(null);
-  const [at, setAt] = useState(0);
+/* Mazo de tarjetas de práctica (móvil): la de arriba entera y, detrás, el borde de las dos siguientes asomando
+   escalonado. Se arrastra la de arriba a un lado y sale volando al fondo del mazo; la siguiente sube con un pequeño
+   rebote. Los puntos de abajo dicen cuál está arriba y llevan a cualquiera. En escritorio, rejilla de dos columnas. */
+const DECK_PEEK = 14; // px que asoma cada tarjeta de detrás
+const DECK_SHRINK = 0.05; // cuánto encoge cada nivel de profundidad
+
+function useDesktop() {
+  const q = "(min-width: 1024px)";
+  const [on, setOn] = useState(() => typeof window !== "undefined" && window.matchMedia(q).matches);
   useEffect(() => {
-    const el = rail.current;
-    if (!el) return undefined;
-    // La tarjeta activa es la que tiene el centro más cerca del centro del carrusel.
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const mid = el.scrollLeft + el.clientWidth / 2;
-        let best = 0;
-        let dist = Infinity;
-        [...el.children].forEach((c, i) => {
-          const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
-          if (d < dist) (dist = d), (best = i);
-        });
-        setAt(best);
+    const m = window.matchMedia(q);
+    const f = () => setOn(m.matches);
+    m.addEventListener("change", f);
+    return () => m.removeEventListener("change", f);
+  }, []);
+  return on;
+}
+
+const depthStyle = (depth, lift = 0) => {
+  const d = Math.max(0, depth - lift); // `lift` (0-1): la de debajo sube mientras arrastras la de arriba
+  return {
+    transform: `translateY(${d * DECK_PEEK}px) scale(${1 - d * DECK_SHRINK})`,
+    opacity: depth > 2 ? 0 : 1,
+    zIndex: 10 - depth,
+  };
+};
+
+function CardDeck({ label, children }) {
+  const items = [].concat(children).filter(Boolean);
+  const n = items.length;
+  const desktop = useDesktop();
+  const [order, setOrder] = useState(() => items.map((_, i) => i));
+  const els = useRef([]);
+  const drag = useRef(null);
+  const moved = useRef(false);
+  const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const top = order[0];
+
+  // Las de detrás no se pueden tocar ni enfocar.
+  useEffect(() => {
+    els.current.forEach((el, i) => el && (i === top || desktop ? el.removeAttribute("inert") : el.setAttribute("inert", "")));
+  }, [top, desktop]);
+
+  if (desktop)
+    return (
+      <section aria-label={label}>
+        <h2 className="display text-[26px] mb-3">{label}</h2>
+        <div className="grid grid-cols-2 gap-4">{items}</div>
+      </section>
+    );
+
+  const paint = (dx, animate) => {
+    const el = els.current[top];
+    const under = els.current[order[1]];
+    const p = Math.min(1, Math.abs(dx) / 140);
+    // Mientras se arrastra, sin transición; al soltar sin pasar el umbral, vuelve con la del mazo (CSS).
+    [el, under].forEach((x) => x && (x.style.transition = animate ? "" : "none"));
+    if (el) el.style.transform = dx ? `translateX(${dx}px) rotate(${reduce ? 0 : dx / 22}deg)` : depthStyle(0).transform;
+    if (under) under.style.transform = depthStyle(1, p).transform;
+  };
+  // Manda la de arriba al fondo (dir: 1 derecha, -1 izquierda) o trae al frente la tarjeta `to`.
+  const advance = (dir = -1, to = null) => {
+    const el = els.current[top];
+    const finish = () => {
+      // La que sale vuelve al fondo invisible y sin animación; luego todas recuperan la transición del mazo.
+      if (el) {
+        el.style.transition = "none";
+        el.style.opacity = "0";
+      }
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          els.current.forEach((x) => x && ((x.style.transition = ""), (x.style.opacity = "")));
+        })
+      );
+      setOrder((o) => {
+        if (to !== null) {
+          const k = o.indexOf(to);
+          return [...o.slice(k), ...o.slice(0, k)];
+        }
+        return [...o.slice(1), o[0]];
       });
     };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      el.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-  const go = (i) => {
-    const c = rail.current?.children[i];
-    if (c) rail.current.scrollTo({ left: c.offsetLeft - (rail.current.clientWidth - c.offsetWidth) / 2, behavior: "smooth" });
+    if (!el || reduce) return finish();
+    el.style.transition = "transform 220ms var(--ease-out)";
+    el.style.transform = `translateX(${dir * (window.innerWidth + 40)}px) rotate(${dir * 14}deg)`;
+    setTimeout(finish, 200);
   };
+
+  const handlers = {
+    onPointerDown: (e) => {
+      if (drag.current) return;
+      drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
+      moved.current = false;
+    },
+    onPointerMove: (e) => {
+      const d = drag.current;
+      if (!d || e.pointerId !== d.id) return;
+      const dx = e.clientX - d.x;
+      if (!moved.current) {
+        if (Math.abs(dx) < 8) return;
+        if (Math.abs(e.clientY - d.y) > Math.abs(dx)) {
+          drag.current = null; // gesto vertical: es scroll
+          return;
+        }
+        moved.current = true;
+        try {
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+        } catch (err) {
+          /* el puntero ya se soltó */
+        }
+      }
+      paint(dx, false);
+    },
+    onPointerUp: (e) => {
+      const d = drag.current;
+      drag.current = null;
+      if (!d || !moved.current) return;
+      const dx = e.clientX - d.x;
+      const v = Math.abs(dx) / (performance.now() - d.t);
+      if (Math.abs(dx) > 90 || (v > 0.4 && Math.abs(dx) > 30)) {
+        try {
+          navigator.vibrate?.(8);
+        } catch (err) {
+          /* sin vibración */
+        }
+        advance(dx > 0 ? 1 : -1);
+      } else paint(0, true);
+    },
+    onPointerCancel: () => {
+      drag.current = null;
+      paint(0, true);
+    },
+    // Si hubo arrastre, el toque final no pulsa el botón de la tarjeta.
+    onClickCapture: (e) => {
+      if (moved.current) {
+        e.stopPropagation();
+        e.preventDefault();
+        moved.current = false;
+      }
+    },
+  };
+
   return (
-    <section aria-label={label} aria-roledescription="carrusel">
+    <section aria-label={label} aria-roledescription="mazo de tarjetas">
       <div className="flex items-baseline justify-between gap-2 mb-3">
         <h2 className="display text-[26px]">{label}</h2>
-        <span className="font-mono text-sm text-ink-soft lg:hidden" aria-hidden="true">
-          {at + 1}/{items.length}
-        </span>
+        <span className="text-xs text-ink-soft whitespace-nowrap">Desliza para ver más</span>
       </div>
-      <div
-        ref={rail}
-        className="-mx-4 px-4 flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-px-4 overscroll-x-contain lg:mx-0 lg:px-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible"
-      >
-        {items.map((c, i) => (
-          <div key={i} className="snap-center shrink-0 w-[86%] lg:w-auto" aria-roledescription="tarjeta" aria-label={`${i + 1} de ${items.length}`}>
-            {c}
-          </div>
-        ))}
+      <div className="grid" style={{ paddingBottom: DECK_PEEK * 2 }}>
+        {items.map((c, i) => {
+          const depth = order.indexOf(i);
+          return (
+            <div
+              key={i}
+              ref={(el) => (els.current[i] = el)}
+              className="deck-card [grid-area:1/1] origin-bottom"
+              style={{ ...depthStyle(depth), touchAction: depth === 0 ? "pan-y" : undefined }}
+              aria-hidden={depth !== 0 || undefined}
+              {...(depth === 0 ? handlers : {})}
+            >
+              <div className={`h-full rounded-folder ${depth ? "shadow-none" : "shadow-[0_10px_24px_-14px_rgba(0,0,0,0.45)]"}`}>{c}</div>
+            </div>
+          );
+        })}
       </div>
-      <div className="flex justify-center gap-1.5 mt-3 lg:hidden">
+      <div className="flex justify-center gap-1.5 mt-2">
         {items.map((_, i) => (
           <button
             key={i}
             type="button"
-            onClick={() => go(i)}
-            aria-label={`Ir a la tarjeta ${i + 1}`}
-            aria-current={i === at ? "true" : undefined}
+            onClick={() => i !== top && advance(-1, i)}
+            aria-label={`Ver la tarjeta ${i + 1} de ${n}`}
+            aria-current={i === top ? "true" : undefined}
             className="tap flex items-center justify-center !min-w-[28px] !min-h-[28px]"
           >
-            <span className={`block h-2 rounded-full transition-all duration-200 ${i === at ? "w-6 bg-ink" : "w-2 bg-ink/25"}`} />
+            <span className={`block h-2 rounded-full transition-all duration-200 ${i === top ? "w-6 bg-ink" : "w-2 bg-ink/25"}`} />
           </button>
         ))}
       </div>
@@ -1059,14 +1171,14 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6 min-w-0">
-          {/* Practicar y retarse: carrusel de tarjetas */}
-          <CardRail label="Practica y rétate">
+          {/* Practicar y retarse: mazo de tarjetas */}
+          <CardDeck label="Practica y rétate">
             <ReviewCard bank={bank} store={store} onAction={onAction} onGoDominio={onGoDominio} />
             <QuickTestCard onQuickTest={onQuickTest} />
             <MistakesCard store={store} onReview={onReview} />
             <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
             <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
-          </CardRail>
+          </CardDeck>
           <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
         </div>
       </div>
