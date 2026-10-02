@@ -11,6 +11,7 @@ import { retoResult } from "../lib/reto.js";
 import { POINTS } from "../lib/liga.js";
 import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
 import { learnTemas } from "../lib/bank.js";
+import { unitColor } from "./Learn.jsx";
 import { Avatar } from "../avatars.jsx";
 import { episodesOf, usePodcast } from "../lib/podcast.js";
 
@@ -687,23 +688,48 @@ function DuelCard({ bank, store, liga, user, onAction }) {
                 </button>
               ))}
             </div>
-            <label className="text-sm flex flex-col gap-2">
-              <span className="label text-ink-soft">Preguntas de</span>
-              <select value={tema} onChange={(e) => setTema(e.target.value)} className="w-full min-w-0 h-12 rounded-full bg-ground border-2 border-line px-4 text-sm">
-                <option value="all">Todo el temario</option>
-                {["comun", "especifico"].map((b) => (
-                  <optgroup key={b} label={BLOCKS[b].label}>
-                    {temas
-                      .filter((t) => t.bloque === b)
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.numero} · {t.titulo}
-                        </option>
-                      ))}
-                  </optgroup>
+            <div>
+              <p className="label text-ink-soft mb-2">Preguntas de</p>
+              {/* Lista propia en lugar del desplegable del sistema: mismo aspecto que «Elige tema» de Aprende */}
+              <ul className="max-h-[38vh] overflow-y-auto overscroll-contain -mx-1 px-1 flex flex-col gap-1" role="listbox" aria-label="Preguntas de">
+                {[{ b: null, list: [{ id: "all", numero: "∗", titulo: "Todo el temario" }] }, ...["comun", "especifico"].map((b) => ({ b, list: temas.filter((t) => t.bloque === b) }))].map(({ b, list }) => (
+                  <li key={b || "all"} role="presentation">
+                    {b && (
+                      <p className="sticky top-0 z-[1] bg-card pt-2 pb-1 flex items-center gap-2 font-semibold text-sm" aria-hidden="true">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: BLOCKS[b].hex }} />
+                        {BLOCKS[b].label}
+                      </p>
+                    )}
+                    <ul className="flex flex-col gap-1" role="presentation">
+                      {list.map((t) => {
+                        const on = t.id === tema;
+                        return (
+                          <li key={t.id} role="presentation">
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={on}
+                              onClick={() => setTema(t.id)}
+                              className={`tap press w-full text-left rounded-[12px] px-2 py-2 flex items-center gap-3 ${on ? "bg-ink text-ground" : "hover:bg-ground"}`}
+                            >
+                              <span
+                                className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-ink font-bold ${String(t.numero).length > 3 ? "text-[10px]" : "text-[13px]"}`}
+                                style={{ background: t.id === "all" ? PAL.sun : unitColor(bank, t.id) }}
+                                aria-hidden="true"
+                              >
+                                {t.id === "all" ? <Sword size={16} weight="fill" /> : t.numero}
+                              </span>
+                              <span className="flex-1 min-w-0 text-[15px] font-semibold leading-snug">{t.titulo}</span>
+                              {on && <Check size={18} weight="bold" className="shrink-0" aria-hidden="true" />}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
                 ))}
-              </select>
-            </label>
+              </ul>
+            </div>
             <p className="text-sm text-ink-soft">Juegas tú primero; le llega el aviso y tiene una semana. No suma puntos de liga: es por el honor.</p>
           </div>
         }
