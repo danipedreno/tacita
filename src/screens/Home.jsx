@@ -606,20 +606,74 @@ function MistakesCard({ store, onReview }) {
   );
 }
 
-/* Pila de tarjetas: al bajar, cada una se queda arriba y la siguiente sube por encima (solo en el móvil). */
+/* Pila de tarjetas (solo en el móvil): al bajar, cada tarjeta se queda arriba y la siguiente sube por encima.
+   La que queda tapada se encoge y se oscurece un poco, como si se fuera al fondo del mazo. Al final se deja el hueco
+   justo para que la última también llegue arriba (si no, se quedaba a medio subir porque la página se acaba). */
+const STACK_TOP = 12; // px desde arriba de la primera tarjeta
+const STACK_STEP = 12; // px que asoma cada tarjeta de debajo
+const STACK_BOTTOM = 132; // lo que ocupa la barra de abajo
+
 function CardStack({ children }) {
   const items = [].concat(children).filter(Boolean);
+  const refs = useRef([]);
+  const [spacer, setSpacer] = useState(0);
+  useEffect(() => {
+    const els = refs.current.filter(Boolean);
+    const scroller = els[0]?.closest(".scroll-area");
+    if (!scroller) return undefined;
+    const mobile = window.matchMedia("(max-width: 1023px)");
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    const paint = () => {
+      frame = 0;
+      for (let i = 0; i < els.length; i++) {
+        const inner = els[i].firstElementChild;
+        if (!inner) continue;
+        const next = els[i + 1];
+        let k = 0;
+        if (mobile.matches && next && !still.matches) {
+          const r = els[i].getBoundingClientRect();
+          // Cuánto de esta tarjeta tapa ya la siguiente (0 = nada, 1 = entera)
+          k = Math.min(1, Math.max(0, (r.bottom - next.getBoundingClientRect().top) / r.height));
+        }
+        inner.style.transform = k ? `scale(${1 - k * 0.06})` : "";
+        inner.style.filter = k ? `brightness(${1 - k * 0.18})` : "";
+      }
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(paint);
+    };
+    const measure = () => {
+      const last = els[els.length - 1];
+      if (!mobile.matches || !last) return setSpacer(0);
+      const top = STACK_TOP + (els.length - 1) * STACK_STEP;
+      setSpacer(Math.max(0, scroller.clientHeight - top - last.offsetHeight - STACK_BOTTOM));
+      onScroll();
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    els.forEach((el) => ro.observe(el));
+    ro.observe(scroller);
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }, [items.length]);
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       {items.map((c, i) => (
         <div
           key={i}
+          ref={(el) => (refs.current[i] = el)}
           className="stack-card sticky lg:static rounded-folder"
-          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${12 + i * 12}px)`, zIndex: i + 1 }}
+          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${STACK_TOP + i * STACK_STEP}px)`, zIndex: i + 1 }}
         >
           {c}
         </div>
       ))}
+      {spacer > 0 && <div aria-hidden="true" style={{ height: spacer }} className="lg:hidden" />}
     </div>
   );
 }

@@ -162,6 +162,8 @@
   /* Pila de tarjetas de Inicio: la que sube por encima proyecta sombra sobre la de debajo */
   .stack-card > section {
     box-shadow: 0 -10px 26px -18px rgba(0, 0, 0, 0.55);
+    transform-origin: 50% 0;
+    will-change: transform;
   }
   @media (min-width: 1024px) {
     .stack-card > section {
