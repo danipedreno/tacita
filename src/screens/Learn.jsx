@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, CaretLeft, CaretRight, Check, Crown, Exam, Headphones, Play } from "@phosphor-icons/react";
-import { Mascot } from "../mascots.jsx";
+import { Huevo, PolloEnHuevo, doneFace } from "../pollo.jsx";
 import { BLOCKS, UNIT_COLORS, lessonKey } from "../lib/logic.js";
 import { learnTemas, temaLabel } from "../lib/bank.js";
 import { nextLesson, unitDoneCount } from "../lib/tutor.js";
@@ -22,21 +22,18 @@ export const unitColor = (bank, temaId) => {
   return UNIT_COLORS[(i < 0 ? 0 : i) % UNIT_COLORS.length];
 };
 
-/* Cada lección del camino es un personaje: dormido si aún no toca, despierto y mirándote si es la
-   siguiente, y feliz cuando ya la has hecho. La forma cambia de una lección a otra. */
-const NODE_SHAPES = ["dome", "hex", "circle", "diamond", "house", "square", "shield", "pin"];
+/* Cada lección del camino es un huevo: dormido si aún no toca, despierto y tambaleándose si es la siguiente.
+   Al aprenderla se rompe el cascarón y sale el pollito (cada uno con su cara). El examen del tema lleva corona. */
+const SEEN_KEY = "opo-pollitos-nacidos";
+const readSeen = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_KEY) || "null");
+  } catch (e) {
+    return null;
+  }
+};
 
-function Node({ state, color, label, offset, onClick, isNext, nodeRef, index, crown }) {
-  const shape = crown ? "crown" : NODE_SHAPES[index % NODE_SHAPES.length];
-  const h = shape === "dome" ? 62 : shape === "pin" ? 96 : 80;
-  const cfg = {
-    head: { shape, color: state === "pending" ? "#ddd3c2" : state === "next" ? (color === "#ff8ac8" ? "#c4692c" : "#ff8ac8") : color, w: 96, h },
-    body: null,
-    hat: null,
-    face: state === "done" ? "happy" : state === "next" ? "open" : "sleepy",
-    look: [0, -0.6],
-    eyeY: shape === "crown" ? 0.62 : undefined,
-  };
+function Node({ state, color, label, offset, onClick, isNext, nodeRef, index, crown, hatch }) {
   return (
     <li className="relative flex justify-center" style={{ transform: `translateX(${offset}px)` }}>
       {isNext && (
@@ -52,16 +49,19 @@ function Node({ state, color, label, offset, onClick, isNext, nodeRef, index, cr
         type="button"
         onClick={onClick}
         aria-label={label}
-        className={`tap press relative w-[88px] h-[80px] flex items-end justify-center ${isNext ? "anim-node" : ""}`}
-        style={{ filter: state === "pending" ? "none" : "drop-shadow(0 6px 0 rgba(30,30,28,0.22))" }}
+        className="tap press relative w-[92px] h-[100px] flex items-end justify-center"
       >
-        <Mascot cfg={cfg} fit className="w-full h-full" />
+        {state === "done" ? (
+          <PolloEnHuevo face={crown ? "sparkle" : doneFace(index)} tint={color} crown={crown} hatch={hatch} className="w-full h-full" />
+        ) : (
+          <Huevo state={state === "next" ? "awake" : "sleep"} tint={color} crown={crown} className="w-full h-full" />
+        )}
       </button>
     </li>
   );
 }
 
-function Unit({ bank, tema, store, color, nextRef, next, onOpenLesson, onTemaExam, onApuntes }) {
+function Unit({ bank, tema, store, color, nextRef, next, onOpenLesson, onTemaExam, onApuntes, fresh }) {
   const done = unitDoneCount(tema, store);
   const total = tema.lecciones.length;
   const exam = store.temaExams?.[tema.id];
@@ -100,6 +100,7 @@ function Unit({ bank, tema, store, color, nextRef, next, onOpenLesson, onTemaExa
               index={i}
               isNext={isNext}
               label={`Lección ${i + 1}: ${l.titulo}${isDone ? " (hecha)" : ""}`}
+              hatch={isDone && fresh.has(lessonKey(tema.id, i))}
               onClick={() => onOpenLesson(tema.id, i)}
             />
           );
@@ -110,6 +111,7 @@ function Unit({ bank, tema, store, color, nextRef, next, onOpenLesson, onTemaExa
           offset={ZIGZAG[total % ZIGZAG.length]}
           index={total}
           crown
+          hatch={!!exam?.passed && fresh.has(`exam:${tema.id}`)}
           label={`Examen del tema ${tema.numero}${exam?.passed ? ` (superado, mejor nota ${exam.best.toFixed(1)})` : ""}`}
           onClick={() => onTemaExam(tema.id)}
         />
@@ -125,6 +127,26 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
   const nextRef = useRef(null);
   const totalLessons = temas.reduce((a, t) => a + t.lecciones.length, 0);
   const doneLessons = temas.reduce((a, t) => a + unitDoneCount(t, store), 0);
+
+  // Pollitos recién nacidos: lecciones hechas desde la última vez que se vio el camino (se anima su salida una vez).
+  const doneKeys = useMemo(
+    () => [...temas.flatMap((t) => t.lecciones.map((_, i) => lessonKey(t.id, i)).filter((k) => store.lessons?.[k]?.done)), ...temas.filter((t) => store.temaExams?.[t.id]?.passed).map((t) => `exam:${t.id}`)],
+    [temas, store.lessons, store.temaExams]
+  );
+  const [fresh] = useState(() => {
+    const seen = readSeen();
+    return seen ? new Set(doneKeys.filter((k) => !seen.includes(k))) : new Set();
+  });
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify(doneKeys));
+      } catch (e) {
+        /* sin almacenamiento */
+      }
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [doneKeys]);
 
   // Tema a la vista: el último que abriste o, la primera vez, el de la siguiente lección.
   const [sel, setSelState] = useState(() => {
@@ -228,6 +250,7 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
             onOpenLesson={(temaId, index) => setSheet({ temaId, index })}
             onTemaExam={onTemaExam}
             onApuntes={onApuntes}
+            fresh={fresh}
           />
           <div className="grid grid-cols-2 gap-2">
             {selIndex > 0 ? (

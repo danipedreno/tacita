@@ -101,7 +101,7 @@ FACES.dead = FACES.sleepy;
 export const POLLO_FACES = Object.keys(FACES);
 
 /** El pollito como grupo SVG dentro de un lienzo de 200×200 (para meterlo en otros SVG). */
-export function PolloShape({ face = "open", blink, look = [0, 0], shadow = true, uid = "p" }) {
+export function PolloShape({ face = "open", blink, look = [0, 0], shadow = true, uid = "p", feet = true }) {
   const clip = `pollo-body-${uid}`;
   const body = "M100 41C146 41 184 92 184 136C184 167 160 181 100 181C40 181 16 167 16 136C16 92 54 41 100 41Z";
   const f = (FACES[face] || FACES.open)(blink, look);
@@ -132,7 +132,7 @@ export function PolloShape({ face = "open", blink, look = [0, 0], shadow = true,
       {/* cara */}
       {f}
       {/* patitas */}
-      {[70, 130].map((x) => (
+      {feet && [70, 130].map((x) => (
         <g key={x}>
           <ellipse cx={x} cy="173" rx="18" ry="21" fill={POLLO.feet} />
           <path d={`M${x - 17.5} ${176}Q${x} ${184} ${x + 17.5} ${176}Q${x + 15} ${193} ${x} ${194}Q${x - 15} ${193} ${x - 17.5} ${176}Z`} fill={POLLO.feetDark} />
@@ -149,6 +149,97 @@ export function Pollo({ face = "open", look, className = "", title, blink = "0s"
   return (
     <svg viewBox="0 8 200 190" className={className} role={title ? "img" : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
       <PolloShape face={face} look={look} blink={blink} shadow={shadow} uid={uid} />
+    </svg>
+  );
+}
+
+/* ---------- Huevos del camino de Aprende ----------
+   Lección sin hacer: huevo dormido · siguiente: huevo despierto que se tambalea · hecha: el pollito ya ha salido
+   y está sentado en media cáscara (con caras distintas). `hatch` anima el momento de romper el cascarón. */
+const EGG = "M100 22C138 22 172 78 172 130C172 174 141 198 100 198C59 198 28 174 28 130C28 78 62 22 100 22Z";
+const ZIG = "L172 150L158 138L142 154L126 136L110 154L94 136L78 154L62 138L44 154L28 142";
+const SHELL_BOTTOM = `M0 220H200V150${ZIG}L0 142Z`;
+const SHELL_TOP = `M0 0H200V150${ZIG}L0 142Z`;
+const SPECKS = [
+  [70, 70, 7],
+  [128, 92, 5],
+  [58, 158, 5],
+  [140, 166, 8],
+  [104, 52, 4],
+];
+const DONE_FACES = ["happy", "joy", "smile", "wink", "tongue", "sparkle", "kiss", "open"];
+export const doneFace = (i) => DONE_FACES[i % DONE_FACES.length];
+
+const Crown = ({ y = 0 }) => (
+  <path d={`M76 ${y + 26}L72 ${y}L88 ${y + 12}L100 ${y - 6}L112 ${y + 12}L128 ${y}L124 ${y + 26}Z`} fill="#ffcf5c" stroke={POLLO.line} strokeWidth={SW - 0.8} strokeLinejoin="round" />
+);
+
+function Shell({ clip, uid, tint, muted }) {
+  return (
+    <g clipPath={`url(#${clip}-${uid})`}>
+      <path d={EGG} fill={muted ? "#efe6d6" : "#fffaf0"} />
+      {SPECKS.map(([x, y, r], k) => (
+        <circle key={k} cx={x} cy={y} r={r} fill={tint} opacity={muted ? 0.35 : 0.6} />
+      ))}
+      <ellipse cx="72" cy="64" rx="10" ry="17" fill="#fff" opacity={muted ? 0.5 : 0.9} transform="rotate(24 72 64)" />
+      <path d={EGG} {...line} />
+    </g>
+  );
+}
+
+/** Huevo (lección sin hacer o siguiente). state: "sleep" | "awake". */
+export function Huevo({ state = "sleep", tint = POLLO.shade, crown = false, className = "", blink = "0s" }) {
+  const uid = useId().replace(/:/g, "");
+  const awake = state === "awake";
+  return (
+    <svg viewBox="0 -14 200 222" className={className} aria-hidden="true">
+      <defs>
+        <clipPath id={`all-${uid}`}>
+          <rect x="0" y="-20" width="200" height="240" />
+        </clipPath>
+      </defs>
+      <ellipse cx="100" cy="200" rx="58" ry="7" fill={POLLO.shadow} />
+      <g className={awake ? "egg-wobble" : undefined}>
+        <Shell clip="all" uid={uid} tint={tint} muted={!awake} />
+        <g transform="translate(0 14)">
+          <ellipse cx="58" cy="128" rx="10" ry="6.5" fill={POLLO.cheek} opacity={awake ? 1 : 0.6} />
+          <ellipse cx="142" cy="128" rx="10" ry="6.5" fill={POLLO.cheek} opacity={awake ? 1 : 0.6} />
+          {awake ? (FACES.smile(blink, [0, -0.6])) : FACES.sleepy()}
+        </g>
+        {crown && <Crown y={6} />}
+      </g>
+    </svg>
+  );
+}
+
+/** El pollito ya fuera del huevo, sentado en media cáscara. `hatch`: anima la salida. */
+export function PolloEnHuevo({ face = "happy", tint = POLLO.shade, crown = false, hatch = false, className = "" }) {
+  const uid = useId().replace(/:/g, "");
+  return (
+    <svg viewBox="0 -14 200 222" className={`overflow-visible ${className}`} aria-hidden="true">
+      <defs>
+        <clipPath id={`bot-${uid}`}>
+          <path d={SHELL_BOTTOM} />
+        </clipPath>
+        <clipPath id={`top-${uid}`}>
+          <path d={SHELL_TOP} />
+        </clipPath>
+      </defs>
+      <ellipse cx="100" cy="200" rx="62" ry="7" fill={POLLO.shadow} />
+      <g className={hatch ? "hatch-chick" : undefined}>
+        <g transform="translate(14 0) scale(0.86)">
+          <PolloShape face={face} shadow={false} uid={uid} feet={false} />
+          {crown && <Crown y={-4} />}
+        </g>
+      </g>
+      <g className={hatch ? "hatch-shell" : undefined}>
+        <Shell clip="bot" uid={uid} tint={tint} />
+      </g>
+      {hatch && (
+        <g className="hatch-top">
+          <Shell clip="top" uid={uid} tint={tint} />
+        </g>
+      )}
     </svg>
   );
 }
