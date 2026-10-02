@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
 import { DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
@@ -8,6 +8,8 @@ import { useCountUp } from "../lib/motion.js";
 import { greeting, missions, nextLesson, recommend } from "../lib/tutor.js";
 import { masteryOf, reviewState } from "../lib/srs.js";
 import { MasteryBar } from "./Mastery.jsx";
+import { retoResult } from "../lib/reto.js";
+import { POINTS } from "../lib/liga.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -477,7 +479,50 @@ function MasteryCard({ bank, store, onGoDominio, onAction }) {
   );
 }
 
-export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync }) {
+const retoPts = (r) => r.c * POINTS.correct + r.w * POINTS.wrong + r.b * POINTS.blank;
+const pretty = (u) => u.charAt(0).toUpperCase() + u.slice(1);
+
+/** Reto del día: las mismas 10 preguntas para todos. Se ve quién lo ha hecho ya y cómo le fue. */
+function RetoCard({ store, liga, user, onAction }) {
+  const mine = retoResult(store.liga);
+  const others = (liga?.rows || []).filter((r) => r.usuario !== user).map((r) => ({ u: r.usuario, r: retoResult(r.liga) }));
+  return (
+    <section aria-labelledby="reto-title" className="rounded-folder bg-sun p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="reto-title" className="display text-[24px] flex items-center gap-2">
+          <Flag size={22} weight="fill" /> Reto del día
+        </h2>
+        <span className="text-xs font-semibold">10 preguntas · iguales para todos</span>
+      </div>
+      {mine ? (
+        <p className="mt-2 text-[15px]">
+          Hecho: <span className="font-semibold">{mine.c} {mine.c === 1 ? "acierto" : "aciertos"}</span>, {mine.w} {mine.w === 1 ? "fallo" : "fallos"} y {mine.b} en blanco ·{" "}
+          <span className="font-mono">{retoPts(mine)} puntos</span> para la liga. Mañana, otro.
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-[15px]">Puntúa en la liga (+3 por acierto, −1 por fallo). Solo hay una oportunidad al día.</p>
+          <button type="button" onClick={() => onAction({ type: "reto" })} className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold">
+            Jugar el reto de hoy
+          </button>
+        </>
+      )}
+      {others.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1 text-sm">
+          {others.map(({ u, r }) => (
+            <li key={u} className="flex items-center justify-between rounded-[12px] bg-card/70 px-3 py-1.5">
+              <span className="font-semibold">{pretty(u)}</span>
+              <span>{r ? (mine ? `${r.c} ${r.c === 1 ? "acierto" : "aciertos"} · ${retoPts(r)} pts` : "Ya lo ha hecho") : "Aún no"}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {others.length > 0 && !mine && <p className="text-xs mt-2">Verás las notas de los demás cuando hagas el tuyo.</p>}
+    </section>
+  );
+}
+
+export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync, liga, user }) {
   const intro = useRef(!introPlayed).current;
   useEffect(() => {
     introPlayed = true;
@@ -562,6 +607,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
         <div className="flex flex-col gap-6">
           <TutorCard bank={bank} store={store} onAction={onAction} />
           <MasteryCard bank={bank} store={store} onGoDominio={onGoDominio} onAction={onAction} />
+          <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6">

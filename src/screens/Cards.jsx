@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Cards as CardsIcon, Fire, X } from "@phosphor-icons/react";
-import { BLOCKS, BLOCK_IDS, COMBO_BONUS, COMBO_STEP, MASTERED_BOX, XP_PER_CARD, cardPiles, cardsForSession, dateKey, shuffle } from "../lib/logic.js";
+import { BLOCKS, BLOCK_IDS, COMBO_BONUS, COMBO_STEP, MASTERED_BOX, XP_PER_CARD, cardPiles, cardsForSession, dateKey, lessonKey, shuffle } from "../lib/logic.js";
 import { bankCards, temaLabel, temasOf } from "../lib/bank.js";
 import { studiedTemas } from "../lib/tutor.js";
 import { Button, ChoiceTile, Folder, IconButton, Illustration, Paper, Picker } from "../ui.jsx";
@@ -380,7 +380,13 @@ export default function CardsScreen({ store, bank, onFinish, autoStart, onAutoSt
   const today = dateKey();
   const state = store.cards;
 
-  const allCards = useMemo(() => bankCards(bank, block, tema), [bank, block, tema]);
+  // Las tarjetas sacadas de una lección salen cuando ya has hecho esa lección (o si ya las has repasado).
+  const doneLessons = useMemo(() => {
+    const set = new Set();
+    for (const t of bank?.temas || []) (t.lecciones || []).forEach((l, i) => store.lessons?.[lessonKey(t.id, i)]?.done && set.add(`${t.id}|${l.titulo}`));
+    return set;
+  }, [bank, store.lessons]);
+  const allCards = useMemo(() => bankCards(bank, block, tema).filter((c) => !c.lesson || doneLessons.has(`${c.tema}|${c.lesson}`) || store.cards[c.id]), [bank, block, tema, doneLessons, store.cards]);
   const filterStudied = onlyStudied && tema === "all" && studied.size > 0;
   const cards = useMemo(() => (filterStudied ? allCards.filter((c) => studied.has(c.tema) || state[c.id]) : allCards), [allCards, filterStudied, studied, state]);
   const counts = useMemo(() => {

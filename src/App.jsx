@@ -8,6 +8,7 @@ import { ligaInfo, ligaTotals, tramoLabel } from "./lib/liga.js";
 import { FoodIcon } from "./foods.jsx";
 import { studiedTemas } from "./lib/tutor.js";
 import { dailyReviewPool, srsAfterExam, srsAfterLesson, temaReviewPool } from "./lib/srs.js";
+import { retoQuestions, retoResult } from "./lib/reto.js";
 import Mastery from "./screens/Mastery.jsx";
 import { dateKey } from "./lib/logic.js";
 import CardsScreen from "./screens/Cards.jsx";
@@ -273,6 +274,13 @@ function UserApp({ user, bank, logout }) {
     if (!pool.length) return;
     startExam({ pool, count: pool.length, ordered: true, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "review", title: "Repaso del día" });
   };
+  // Reto del día: las mismas 10 preguntas para todos; una vez al día.
+  const onReto = () => {
+    const s = storeRef.current;
+    if (retoResult(s.liga)) return;
+    const day = dateKey();
+    startExam({ pool: retoQuestions(bank, day), count: 10, ordered: true, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "reto", reto: day, title: "Reto del día" });
+  };
   const onTemaReview = (temaId) => {
     const s = storeRef.current;
     const pool = temaReviewPool(bank, s, temaId);
@@ -315,6 +323,7 @@ function UserApp({ user, bank, logout }) {
     } else if (a.type === "mistakes") onReview();
     else if (a.type === "temaExam") onTemaExam(a.temaId);
     else if (a.type === "review") onDailyReview();
+    else if (a.type === "reto") onReto();
     else if (a.type === "temaReview") onTemaReview(a.temaId);
     else if (a.type === "weak") {
       const s = storeRef.current;
@@ -372,6 +381,8 @@ function UserApp({ user, bank, logout }) {
                       onDismissInstall={() => setStore((s) => ({ ...s, installDismissed: true }))}
                       onGoTemario={() => goTab("temario")}
                       onGoDominio={() => goTab("dominio")}
+                      liga={liga}
+                      user={user}
                       onReview={onReview}
                       onPlan={(patch) => setStore((s) => ({ ...s, plan: { ...s.plan, ...patch } }))}
                       onQuickTest={onQuickTest}

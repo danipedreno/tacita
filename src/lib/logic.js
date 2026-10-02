@@ -86,7 +86,7 @@ export const MEDAL_FAMILIES = [
   { id: "respondidas", illustration: "medalla-respondidas", name: "Fondo de armario", icon: "books", color: "#8da4ba", unit: "preguntas respondidas", tiers: [100, 300, 700, 1200, 2000], value: (s) => s.totals.answered },
   { id: "maraton", illustration: "medalla-maraton", name: "Maratón", icon: "timer", color: "#f2b48c", unit: "tests de 30 o más preguntas", tiers: [1, 5, 10, 20], value: (s) => s.counters.marathons },
   { id: "repaso", illustration: "medalla-repaso", name: "Sin cuentas pendientes", icon: "repeat", color: "#a9bccf", unit: "fallos dominados", tiers: [5, 20, 50, 100], value: (s) => s.counters.mastered },
-  { id: "tarjetero", illustration: "medalla-tarjetero", name: "Tarjetero", icon: "cards", color: "#f2b48c", unit: "tarjetas dominadas", tiers: [20, 100, 250, 500], value: (s) => Object.values(s.cards || {}).filter((c) => c.box >= 4).length },
+  { id: "tarjetero", illustration: "medalla-tarjetero", name: "Tarjetero", icon: "cards", color: "#f2b48c", unit: "tarjetas dominadas", tiers: [20, 100, 300, 600, 900], value: (s) => Object.values(s.cards || {}).filter((c) => c.box >= 4).length },
   { id: "matricula", illustration: "medalla-matricula", name: "Matrícula", icon: "star", color: "#8da4ba", unit: "tests de 20+ con nota ≥ 8", tiers: [1, 5, 15], value: (s) => s.counters.highScores },
   {
     id: "especialista",
@@ -187,7 +187,7 @@ export function prepareQuestion(q) {
   return { ...q, options: order.map((i) => q.options[i]), answer: order.indexOf(q.answer) };
 }
 
-export function createExam({ pool, count, feedback, secsPerQ, source, title, penalty = DEFAULT_PENALTY, ordered = false, temaExam = null, caso = null }) {
+export function createExam({ pool, count, feedback, secsPerQ, source, title, penalty = DEFAULT_PENALTY, ordered = false, temaExam = null, caso = null, reto = null }) {
   const questions = (ordered ? pool : shuffle(pool)).slice(0, Math.min(count, pool.length)).map(prepareQuestion);
   const now = Date.now();
   return {
@@ -199,6 +199,7 @@ export function createExam({ pool, count, feedback, secsPerQ, source, title, pen
     penalty,
     temaExam, // id del tema si es el «examen del tema» del camino
     caso, // id del caso práctico, para mostrar su supuesto
+    reto, // fecha del reto del día, si lo es
     startedAt: now,
     endsAt: now + questions.length * secsPerQ * 1000,
     questions,
@@ -467,9 +468,9 @@ export function applyExamResult(store, exam, reason, date) {
   // Liga: cada examen de tema queda apuntado con sus aciertos, fallos y blancos.
   const liga = { ...(store.liga || {}) };
   let ligaReport = null;
-  if (exam.temaExam && grade.n >= 10) {
+  if ((exam.temaExam || exam.reto) && grade.n >= 10) {
     const before = ligaTotals(liga);
-    liga[exam.id] = { t: exam.temaExam, c: grade.correct, w: grade.wrong, b: grade.blank, d: date.toISOString() };
+    liga[exam.id] = { t: exam.temaExam || "reto", c: grade.correct, w: grade.wrong, b: grade.blank, d: date.toISOString() };
     const after = ligaTotals(liga);
     // Si el tema ya puntuó hoy, este intento no cuenta (counted: false).
     ligaReport = { gained: after.points - before.points, counted: after.exams > before.exams, before: before.points, after: after.points, up: ligaInfo(after.points).index > ligaInfo(before.points).index };
