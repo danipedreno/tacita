@@ -1,8 +1,49 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CaretLeft, CaretRight, ListBullets, MagnifyingGlass, MagnifyingGlassMinus, MagnifyingGlassPlus, X } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, ListBullets, MagnifyingGlass, MagnifyingGlassMinus, MagnifyingGlassPlus, Pause, Play, SpeakerHigh, Stop, X } from "@phosphor-icons/react";
+import { canSpeak, useReader } from "../lib/speech.js";
 import { loadText, useDocImage } from "../lib/docs.js";
 import { Rich } from "./Lesson.jsx";
+
+/**
+ * Barra del modo escuchar. `reader` viene de useReader; `idOf(i)` da el id del elemento que se lee,
+ * para resaltarlo y llevarlo a la vista.
+ */
+export function ReaderBar({ reader, total, idOf }) {
+  useEffect(() => {
+    if (reader.index < 0) return;
+    const el = document.getElementById(idOf(reader.index));
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [reader.index]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!canSpeak()) return null;
+  const active = reader.index >= 0;
+  const btn = "tap press w-11 h-11 rounded-full flex items-center justify-center shrink-0";
+  if (!active)
+    return (
+      <button type="button" onClick={() => reader.play(0)} className="tap press h-11 px-4 rounded-full bg-card paper-shadow flex items-center gap-2 text-sm font-semibold self-start">
+        <SpeakerHigh size={20} weight="fill" /> Escuchar
+      </button>
+    );
+  return (
+    <div className="sticky top-2 z-30 rounded-full bg-ink text-ground p-1.5 flex items-center gap-2 shadow-lg" role="region" aria-label="Lectura en voz alta">
+      <button type="button" className={`${btn} bg-sun text-ink`} onClick={reader.playing ? reader.pause : reader.resume} aria-label={reader.playing ? "Pausar" : "Seguir leyendo"}>
+        {reader.playing ? <Pause size={20} weight="fill" /> : <Play size={20} weight="fill" />}
+      </button>
+      <button type="button" className={btn} onClick={() => reader.play(reader.index + 1)} aria-label="Siguiente párrafo">
+        <CaretRight size={20} weight="bold" />
+      </button>
+      <span className="flex-1 min-w-0 text-xs font-mono text-center">
+        {reader.index + 1} / {total}
+      </span>
+      <button type="button" className="tap press h-11 px-3 rounded-full text-sm font-semibold" onClick={() => reader.setRate(reader.rate >= 1.5 ? 0.85 : reader.rate >= 1.25 ? 1.5 : reader.rate >= 1 ? 1.25 : 1)} aria-label="Cambiar velocidad">
+        {reader.rate}×
+      </button>
+      <button type="button" className={btn} onClick={reader.stop} aria-label="Dejar de escuchar">
+        <Stop size={20} weight="fill" />
+      </button>
+    </div>
+  );
+}
 
 /** true cuando el elemento está cerca de verse (para no descargar todas las imágenes de golpe). */
 function useNear(ref) {
@@ -164,7 +205,7 @@ function Block({ b, id, bank, onImage }) {
   if (b.h) {
     const cls = b.h === 2 ? "display text-[24px] mt-6" : b.h === 3 ? "font-semibold text-[19px] mt-4" : "font-semibold text-[17px] mt-3";
     return (
-      <h3 id={id} className={`${cls} leading-tight scroll-mt-4`}>
+      <h3 className={`${cls} leading-tight scroll-mt-4`}>
         {b.t}
       </h3>
     );
@@ -216,6 +257,10 @@ export function TextoCompleto({ bank, textos }) {
     return out;
   }, [blocks, query]);
   const imgs = useMemo(() => (blocks || []).filter((b) => b.img).map((b) => b.img), [blocks]);
+  // Modo escuchar: se leen títulos, párrafos, puntos y filas de tablas (no las imágenes).
+  const readable = useMemo(() => (blocks || []).map((b, i) => ({ i, text: plain(b) })).filter((x) => x.text), [blocks]);
+  const reader = useReader(readable);
+  const readingBlock = reader.index >= 0 ? readable[reader.index]?.i : -1;
   const headings = useMemo(() => (blocks || []).map((b, i) => ({ b, i })).filter(({ b }) => b.h && b.h <= 3), [blocks]);
 
   if (!textos?.length) return <p className="text-ink-soft">No hay texto completo para este tema.</p>;
@@ -291,12 +336,14 @@ export function TextoCompleto({ bank, textos }) {
         </div>
       )}
 
+      {blocks && !results && <ReaderBar reader={reader} total={readable.length} idOf={(k) => `blk-${readable[k]?.i}`} />}
+
       {blocks && !results && (
         <article className="rounded-folder bg-card paper-shadow p-4 lg:p-6 flex flex-col gap-2 font-serif text-[17px] leading-relaxed">
           {blocks.map((b, i) => (
-            <Fragment key={i}>
-              <Block b={b} id={`blk-${i}`} bank={bank} onImage={(img) => setViewer(imgs.indexOf(img))} />
-            </Fragment>
+            <div key={i} id={`blk-${i}`} className={`scroll-mt-20 rounded-[10px] transition-colors ${readingBlock === i ? "bg-sun/40 -mx-2 px-2" : ""}`}>
+              <Block b={b} bank={bank} onImage={(img) => setViewer(imgs.indexOf(img))} />
+            </div>
           ))}
         </article>
       )}
