@@ -37,10 +37,12 @@ const TABS = [
   { id: "learn", label: "Aprende", Icon: GraduationCap, color: PAL.mint },
   { id: "test", label: "Test", Icon: ClipboardText, color: PAL.sky },
   { id: "cards", label: "Tarjetas", Icon: Cards, color: PAL.peach },
-  { id: "badges", label: "Logros", Icon: Trophy, color: PAL.lilac },
+  { id: "dominio", label: "Dominio", Icon: Brain, color: PAL.sky },
 ];
+// Logros y liga salen desde Inicio (atajo «Liga» y tu foto) y tienen flecha para volver.
+const BADGES_TAB = { id: "badges", label: "Logros", Icon: Trophy, color: PAL.lilac };
 // En escritorio, los apuntes tienen su propia entrada en la barra lateral.
-const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon: BookOpen, color: PAL.mint }, { id: "podcast", label: "Pódcast", Icon: Headphones, color: PAL.sun }, { id: "dominio", label: "Dominio", Icon: Brain, color: PAL.sky }, TABS[4]];
+const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon: BookOpen, color: PAL.mint }, { id: "podcast", label: "Pódcast", Icon: Headphones, color: PAL.sun }, TABS[4], BADGES_TAB];
 
 /**
  * Barra de pestañas (móvil). La pestaña activa es una capa de color recortada con clip-path que se desliza
@@ -411,6 +413,7 @@ function UserApp({ user, bank, logout }) {
           {lessonTema &&
             createPortal(
               <LessonPlayer
+                bank={bank}
                 key={`${lesson.temaId}:${lesson.index}`}
                 tema={lessonTema}
                 index={lesson.index}
@@ -490,7 +493,7 @@ function UserApp({ user, bank, logout }) {
                   )}
                   {tab === "podcast" && <PodcastScreen bank={bank} store={store} initialTema={nextLesson(bank, store)?.tema.id} colorOf={(id) => unitColor(bank, id)} onBack={() => setTab("home")} />}
                   {tab === "dominio" && <Mastery bank={bank} store={store} onReview={onDailyReview} onTemaReview={onTemaReview} onStartLesson={startLesson} />}
-                  {tab === "badges" && <Achievements store={store} user={user} liga={liga} onReset={onReset} />}
+                  {tab === "badges" && <Achievements store={store} user={user} liga={liga} onReset={onReset} onBack={() => setTab("home")} />}
                 </div>
               </main>
               <MiniPlayer />

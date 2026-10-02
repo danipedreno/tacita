@@ -5,6 +5,7 @@ import { Button, IconButton, Paper, ProgressBar, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import { play } from "../lib/sound.js";
 import { Mascot } from "../mascots.jsx";
+import { ART_RE, ArticlesProvider, useArticles } from "../lib/articulos.jsx";
 
 /* ---------------------------------------------------------------------
    Reproductor de lecciones (como Duolingo): una tarjeta por paso, comprobar y continuar.
@@ -13,8 +14,34 @@ import { Mascot } from "../mascots.jsx";
    --------------------------------------------------------------------- */
 
 /** Texto con **negritas** y saltos de línea. */
-export function Rich({ text, className = "" }) {
+export function Rich({ text, className = "", plain = false }) {
+  const arts = useArticles();
   const lines = String(text).split("\n");
+  // «Art. 30» → enlace a la letra exacta, si ese artículo está en el temario completo del tema.
+  const linkArts = (str, key) => {
+    if (plain || !arts) return str;
+    const out = [];
+    let last = 0;
+    for (const m of str.matchAll(ART_RE)) {
+      if (!arts.has(m[2])) continue;
+      if (m.index > last) out.push(str.slice(last, m.index));
+      out.push(
+        <button
+          key={`${key}-${m.index}`}
+          type="button"
+          onClick={() => arts.open(m[2])}
+          className="inline underline decoration-2 decoration-sky underline-offset-[3px] hover:decoration-ink"
+          aria-label={`${m[0]}: ver la letra exacta`}
+        >
+          {m[0]}
+        </button>
+      );
+      last = m.index + m[0].length;
+    }
+    if (!out.length) return str;
+    if (last < str.length) out.push(str.slice(last));
+    return out;
+  };
   return (
     <div className={className}>
       {lines.map((line, k) => (
@@ -22,10 +49,10 @@ export function Rich({ text, className = "" }) {
           {line.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
             part.startsWith("**") && part.endsWith("**") ? (
               <strong key={j} className="font-semibold text-ink">
-                {part.slice(2, -2)}
+                {linkArts(part.slice(2, -2), j)}
               </strong>
             ) : (
-              <Fragment key={j}>{part}</Fragment>
+              <Fragment key={j}>{linkArts(part, j)}</Fragment>
             )
           )}
         </p>
@@ -327,7 +354,16 @@ const isCorrect = (step, answer) => {
 };
 const hasAnswer = (step, answer) => (step.t === "orden" ? (answer || []).length === step.items.length : answer !== null && answer !== undefined);
 
-export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onFinish }) {
+/** La lección con los artículos del tema a mano (toca «Art. N» para leer la letra exacta). */
+export default function LessonPlayer({ bank, ...props }) {
+  return (
+    <ArticlesProvider bank={bank} temaId={props.tema.id} Rich={Rich}>
+      <LessonRunner {...props} />
+    </ArticlesProvider>
+  );
+}
+
+function LessonRunner({ tema, index, color = PAL.sky, onExit, onFinish }) {
   const lesson = tema.lecciones[index];
   const [queue, setQueue] = useState(() => lesson.pasos.map((step, k) => ({ step, k, retry: 0 })));
   const [pos, setPos] = useState(0);

@@ -8,6 +8,7 @@ import { Esquemas, TextoCompleto } from "./FullNotes.jsx";
 import { hasPodcast } from "../lib/podcast.js";
 import { EpisodeList } from "./Podcast.jsx";
 import { Rich } from "./Lesson.jsx";
+import { ArticlesProvider } from "../lib/articulos.jsx";
 import { unitColor } from "./Learn.jsx";
 
 /** Apuntes de un tema: toda la teoría de sus lecciones seguida, más sus tarjetas. Para releer antes del examen. */
@@ -48,7 +49,7 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
       {view === "esquemas" && <Esquemas bank={bank} esquemas={docs?.esquemas} />}
       {view === "completo" && <TextoCompleto bank={bank} textos={docs?.textos} />}
       {view === "escuchar" && <EpisodeList bank={bank} temaId={tema.id} color={color} />}
-      {view === "resumen" && tema.lecciones.map((l, i) => (
+      {view === "resumen" && <ArticlesProvider bank={bank} temaId={tema.id} Rich={Rich}>{tema.lecciones.map((l, i) => (
         <Folder key={i} color={color} tab={`Lección ${i + 1}`}>
           <div className="p-2.5 flex flex-col gap-2.5">
             <div className="px-2.5 pt-2 flex items-center justify-between gap-3">
@@ -82,7 +83,7 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
               ))}
           </div>
         </Folder>
-      ))}
+      ))}</ArticlesProvider>}
       {view === "resumen" && cards.length > 0 && (
         <section aria-labelledby="claves-title">
           <h2 id="claves-title" className="display text-[30px] mb-3">

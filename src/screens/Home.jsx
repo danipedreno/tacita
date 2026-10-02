@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Headphones, Lightning, SpeakerHigh, SpeakerSlash, Sword, Trophy, X } from "@phosphor-icons/react";
-import { BLOCKS, DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
+import { ArrowCounterClockwise, BookOpen, CaretRight, Check, Flag, DeviceMobile, Fire, Headphones, Lightning, SpeakerHigh, SpeakerSlash, Sword, Trophy, X, XCircle } from "@phosphor-icons/react";
+import { BLOCKS, DAILY_GOALS, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, ArtIcon, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { GoalRing } from "./Celebration.jsx";
 import { useCountUp } from "../lib/motion.js";
 import { greeting, missions, nextLesson, recommend } from "../lib/tutor.js";
-import { masteryOf, reviewState } from "../lib/srs.js";
+import { reviewState } from "../lib/srs.js";
 import { retoResult } from "../lib/reto.js";
 import { POINTS } from "../lib/liga.js";
 import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
@@ -463,13 +463,12 @@ function Missions({ store, bank, onAction, onQuickTest }) {
 }
 
 /** Accesos directos: lo que no está en la barra de abajo (pódcast, apuntes, liga…) a un toque. */
-function Shortcuts({ bank, store, onQuickTest, onAction, onGoTemario, onGoDominio, onGoLiga, onGoPodcast }) {
+function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, onGoDominio, onGoLiga, onGoPodcast }) {
   const pod = usePodcast();
   const playing = pod.queue[pod.index];
   const eps = learnTemas(bank).flatMap((t) => episodesOf(bank, t.id));
   const heard = eps.filter((e) => pod.heard[e.key]).length;
   const { due, fresh } = reviewState(bank, store);
-  const m = masteryOf((bank?.preguntas || []).filter((q) => q.tema !== "casos"), store.srs);
   const items = [
     { id: "test", label: "Test rápido", sub: "10 preguntas", Icon: Lightning, color: PAL.peach, onClick: onQuickTest },
     {
@@ -490,8 +489,16 @@ function Shortcuts({ bank, store, onQuickTest, onAction, onGoTemario, onGoDomini
       onClick: onGoPodcast,
     },
     { id: "apuntes", label: "Apuntes", sub: "Teoría y esquemas", Icon: BookOpen, color: PAL.mint, onClick: onGoTemario },
-    { id: "dominio", label: "Dominio", sub: `${m.pct} % memorizado`, Icon: Brain, color: PAL.sky, onClick: onGoDominio },
-    { id: "liga", label: "Liga", sub: "Clasificación", Icon: Trophy, color: PAL.peach, onClick: onGoLiga },
+    {
+      id: "fallos",
+      label: "Fallos",
+      sub: mistakes ? `${mistakes} por repasar` : "Ninguno pendiente",
+      Icon: XCircle,
+      color: PAL.sky,
+      badge: mistakes || null,
+      onClick: () => (mistakes ? onReview() : onGoDominio()),
+    },
+    { id: "liga", label: "Liga y logros", sub: "Clasificación", Icon: Trophy, color: PAL.peach, onClick: onGoLiga },
   ];
   return (
     <nav aria-label="Accesos directos" className="grid grid-cols-3 gap-2">
@@ -788,7 +795,6 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
     introPlayed = true;
   }, []);
   const streakCount = streakView(store.streak).count;
-  const pendingMistakes = Object.keys(store.mistakes).length;
   const dateLabel = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   // Debajo del saludo, lo que empuja a estudiar hoy: la cuenta atrás y la meta del día.
   const left = daysUntil(store.plan.examDate, dateKey());
@@ -808,7 +814,11 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            {user && <Avatar user={user} face="happy" className="w-14 h-14 shrink-0" />}
+            {user && (
+              <button type="button" onClick={onGoLiga} aria-label="Tus logros y la liga" className="tap press shrink-0 rounded-full">
+                <Avatar user={user} face="happy" className="w-14 h-14 block" />
+              </button>
+            )}
             <div className="min-w-0">
               <h1 className="display text-[30px] lg:text-[44px] leading-[1.05]">¡Hola{user ? `, ${pretty(user)}` : ""}!</h1>
               <p className="text-[15px] font-semibold mt-0.5">{subtitle}</p>
@@ -884,22 +894,8 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
         <div className="flex flex-col gap-6 min-w-0">
           {/* Primero, lo que toca ahora; justo debajo, todo lo demás a un toque */}
           <TutorCard bank={bank} store={store} onAction={onAction} />
-          <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} onGoPodcast={onGoPodcast} />
+          <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onReview={onReview} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} onGoPodcast={onGoPodcast} />
 
-          {pendingMistakes > 0 && (
-            <button type="button" onClick={onReview} className="tap press text-left rounded-folder bg-sky text-ink p-4 flex items-center gap-4">
-              <span className="w-12 h-12 blob bg-card text-ink flex items-center justify-center shrink-0">
-                <ArrowCounterClockwise size={24} weight="bold" />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="display text-[24px] block">Repasar fallos</span>
-                <span className="text-sm leading-snug block mt-0.5">Salen cuando las aciertas {MASTERED_AFTER} veces seguidas</span>
-              </span>
-              <span className="brand text-[40px]" aria-label={`${pendingMistakes} pendientes`}>
-                {pendingMistakes}
-              </span>
-            </button>
-          )}
 
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>

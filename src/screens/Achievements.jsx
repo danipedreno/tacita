@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Check, Trophy } from "@phosphor-icons/react";
+import { CaretLeft, Check, Trophy } from "@phosphor-icons/react";
 import { ACHIEVEMENTS, MEDAL_FAMILIES, RANKS, medalProgress, rankInfo } from "../lib/logic.js";
 import { Button, ArtIcon, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import MedalCarousel from "./MedalCarousel.jsx";
 import Liga from "./Liga.jsx";
 
-export default function Achievements({ store, user, liga, onReset }) {
+export default function Achievements({ store, user, liga, onReset, onBack }) {
   const [confirm, setConfirm] = useState(false);
   const specials = ACHIEVEMENTS.filter((a) => store.achievements[a.id]).length;
   const tiers = MEDAL_FAMILIES.map((f) => ({ f, p: medalProgress(f, store) }));
@@ -23,6 +23,11 @@ export default function Achievements({ store, user, liga, onReset }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {onBack && (
+        <button type="button" onClick={onBack} className="tap press -mb-3 self-start h-11 pl-3 pr-4 rounded-full bg-card paper-shadow text-ink flex items-center gap-1 text-sm font-semibold lg:hidden">
+          <CaretLeft size={18} weight="bold" /> Inicio
+        </button>
+      )}
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="display text-[48px]">Logros</h1>
