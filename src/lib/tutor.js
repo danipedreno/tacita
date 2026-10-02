@@ -47,7 +47,7 @@ export function missions(store, today = dateKey()) {
 }
 
 /**
- * Recomendación principal y alternativas. Cada una: { id, kicker, title, text, action, cta }.
+ * Recomendación principal y alternativas. Cada una: { id, kicker, title, text, action, cta, tags? }.
  * `action`: { type: "review" } | { type: "lesson", temaId, index } | { type: "cards" } | { type: "mistakes" } | { type: "temaExam", temaId } | { type: "weak", temaId }
  */
 export function recommend(bank, store, today = dateKey()) {
@@ -105,7 +105,8 @@ export function recommend(bank, store, today = dateKey()) {
       id: "lesson",
       kicker: lessonsToday ? "¿Otra más?" : started ? "Seguimos donde lo dejaste" : next.index === 0 && !Object.keys(store.lessons || {}).length ? "Empezamos por el principio" : "Tema nuevo",
       title: next.tema.lecciones[next.index].titulo,
-      text: `${temaLabel(bank, next.tema.id)} · lección ${next.index + 1} de ${next.tema.lecciones.length}.`,
+      text: next.tema.titulo,
+      tags: [temaLabel(bank, next.tema.id).split(" · ")[0], `Lección ${next.index + 1} de ${next.tema.lecciones.length}`],
       cta: started || next.index > 0 ? "Continuar" : "Empezar",
       action: { type: "lesson", temaId: next.tema.id, index: next.index },
     });

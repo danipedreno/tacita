@@ -361,22 +361,34 @@ function HomeCabinet({ store, onPlan, intro }) {
 function TutorCard({ bank, store, onAction }) {
   const recs = recommend(bank, store);
   const [main, ...rest] = recs;
+  // «¡Buenas tardes! Soy tu tutor…» → titular «¡Buenas tardes!» y el resto como entradilla
+  const [, hi, intro] = greeting(store).match(/^(.*?[!?])\s*(.*)$/) || [, greeting(store), ""];
   return (
     <section aria-labelledby="tutor-title" className="rounded-folder bg-forest text-ground p-5 relative overflow-hidden">
+      {/* Habla el tutor: el saludo es el titular de la tarjeta y la recomendación, su remate */}
       <div className="flex items-end gap-3">
-        <div className="min-w-0 flex-1 pb-2">
-          <p className="label text-pink">Opoempollo, tu tutor</p>
-          <p className="text-[16px] leading-snug mt-1 text-ground/90">{greeting(store)}</p>
+        <div className="min-w-0 flex-1 pb-3">
+          <h2 id="tutor-title" className="display text-[26px]">
+            <span className="sr-only">Opoempollo, tu tutor: </span>
+            {hi}
+          </h2>
+          <p className="text-[15px] leading-snug mt-1.5 text-ground/75">{intro || main.kicker.replace(/[^.!?…]$/, "$&.")}</p>
         </div>
-        <span className="w-28 shrink-0 -mb-1 anim-peek" aria-hidden="true">
+        <span className="w-20 shrink-0 -mb-1 anim-peek" aria-hidden="true">
           <Illustration name="tacita" follow className="w-full" />
         </span>
       </div>
-      <div className="rounded-[20px] bg-card text-ink p-4 relative">
-        <p className="label text-ink-soft">{main.kicker}</p>
-        <h2 id="tutor-title" className="display text-[32px] mt-1">
-          {main.title}
-        </h2>
+      <div className="rounded-[12px] bg-card text-ink p-4 relative">
+        {main.tags && (
+          <p className="flex flex-wrap gap-1.5 mb-3">
+            {main.tags.map((t) => (
+              <span key={t} className="tag">
+                {t}
+              </span>
+            ))}
+          </p>
+        )}
+        <h3 className="display text-[28px]">{main.title}</h3>
         <p className="text-[15px] text-ink-soft leading-snug mt-1.5">{main.text}</p>
         <Button variant="yellow" onClick={() => onAction(main.action)} className="w-full mt-4">
           {main.cta} <CaretRight size={20} weight="bold" />
