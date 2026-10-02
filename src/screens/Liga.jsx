@@ -1,7 +1,7 @@
 import { ArrowClockwise, CheckCircle, MinusCircle, XCircle } from "@phosphor-icons/react";
 import { CATEGORIES, ligaInfo, ligaTotals, tramoLabel } from "../lib/liga.js";
 import { FoodIcon } from "../foods.jsx";
-import { Mascot } from "../mascots.jsx";
+import { Avatar } from "../avatars.jsx";
 import { ProgressBar } from "../ui.jsx";
 
 const ROMAN = ["", "I", "II", "III"];
@@ -94,7 +94,7 @@ export default function Liga({ store, user, remote }) {
                   <ul className="flex flex-col gap-1 mt-2">
                     {here.map((p) => (
                       <li key={p.usuario} className={`flex items-center gap-3 rounded-[12px] bg-card px-2 py-1.5 ${p.me ? "ring-2 ring-ink" : ""}`}>
-                        <Mascot name={`user-${p.usuario}`} fit="center" className="w-9 h-9 shrink-0" />
+                        <Avatar user={p.usuario} className="w-10 h-10 shrink-0" />
                         <span className="flex-1 min-w-0">
                           <span className="block font-semibold leading-tight">
                             {pretty(p.usuario)}

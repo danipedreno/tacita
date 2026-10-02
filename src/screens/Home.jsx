@@ -11,7 +11,7 @@ import { retoResult } from "../lib/reto.js";
 import { POINTS } from "../lib/liga.js";
 import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
 import { learnTemas } from "../lib/bank.js";
-import { Pollo } from "../pollo.jsx";
+import { Avatar } from "../avatars.jsx";
 import { episodesOf, player, usePodcast } from "../lib/podcast.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
@@ -554,8 +554,11 @@ function RetoCard({ store, liga, user, onAction }) {
       {others.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1 text-sm">
           {others.map(({ u, r }) => (
-            <li key={u} className="flex items-center justify-between rounded-[12px] bg-card/70 px-3 py-1.5">
-              <span className="font-semibold">{pretty(u)}</span>
+            <li key={u} className="flex items-center justify-between gap-2 rounded-[12px] bg-card/70 px-2 py-1.5">
+              <span className="font-semibold flex items-center gap-2">
+                <Avatar user={u} className="w-8 h-8 shrink-0" />
+                {pretty(u)}
+              </span>
               <span>{r ? (mine ? `${r.c} ${r.c === 1 ? "acierto" : "aciertos"} · ${retoPts(r)} pts` : "Ya lo ha hecho") : "Aún no"}</span>
             </li>
           ))}
@@ -599,7 +602,7 @@ function DuelInvite({ bank, store, liga, user, onAction }) {
       body={
         duel && (
           <>
-            <Pollo face="surprised" className="w-24 h-auto mx-auto mb-3 anim-hop" />
+            <Avatar user={duel.from} face="happy" className="w-24 h-24 mx-auto mb-3 block anim-hop" />
             Duelo de {DUEL_SIZE} preguntas en {tema}. Las mismas preguntas para las dos personas: gana quien acierte más.
           </>
         )
@@ -656,6 +659,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
         <ul className="mt-3 flex flex-col gap-2">
           {pending.map((d) => (
             <li key={d.id} className="rounded-[14px] bg-card px-3 py-2.5 flex items-center gap-3">
+              <Avatar user={d.from} className="w-9 h-9 shrink-0" />
               <span className="flex-1 min-w-0 text-[15px]">
                 <span className="font-semibold">{pretty(d.from)}</span> te reta en {temaName(d.tema)}
               </span>
@@ -688,8 +692,9 @@ function DuelCard({ bank, store, liga, user, onAction }) {
                   type="button"
                   aria-pressed={u === target}
                   onClick={() => setRival(u)}
-                  className={`tap press h-11 px-5 rounded-full text-sm font-semibold ${u === target ? "bg-ink text-ground" : "bg-ground-2"}`}
+                  className={`tap press h-12 pl-1.5 pr-5 rounded-full text-sm font-semibold flex items-center gap-2 ${u === target ? "bg-ink text-ground" : "bg-ground-2"}`}
                 >
+                  <Avatar user={u} className="w-9 h-9 shrink-0" />
                   {pretty(u)}
                 </button>
               ))}
@@ -788,8 +793,13 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="display text-[34px] lg:text-[44px] leading-[1.05]">¡Hola{user ? `, ${pretty(user)}` : ""}!</h1>
-          <p className="text-[17px] font-semibold mt-1">{subtitle}</p>
+          <div className="flex items-center gap-3">
+            {user && <Avatar user={user} face="happy" className="w-14 h-14 shrink-0" />}
+            <div className="min-w-0">
+              <h1 className="display text-[30px] lg:text-[44px] leading-[1.05]">¡Hola{user ? `, ${pretty(user)}` : ""}!</h1>
+              <p className="text-[15px] font-semibold mt-0.5">{subtitle}</p>
+            </div>
+          </div>
           <p className="label text-ink-soft mt-2 first-letter:uppercase">{dateLabel}</p>
           {sync && sync !== "off" && (
             <p className="text-xs text-ink-soft mt-1 flex items-center gap-1.5 lg:hidden">

@@ -6,6 +6,7 @@ import { bankQuestions, getAccess, temaById, temaLabel, useBank } from "./lib/ba
 import { useClasificacion, useSync } from "./lib/sync.js";
 import { ligaInfo, ligaTotals, tramoLabel } from "./lib/liga.js";
 import { FoodIcon } from "./foods.jsx";
+import { Avatar } from "./avatars.jsx";
 import { studiedTemas } from "./lib/tutor.js";
 import { dailyReviewPool, srsAfterExam, srsAfterLesson, temaReviewPool } from "./lib/srs.js";
 import { retoQuestions, retoResult } from "./lib/reto.js";
@@ -107,7 +108,10 @@ function SideNav({ tab, onChange, xp, user, sync }) {
         );
       })}
       <div className="mt-auto rounded-[16px] bg-card paper-shadow p-3">
-        <p className="text-xs text-ink-soft capitalize">{user} · rango</p>
+        <div className="flex items-center gap-2">
+          <Avatar user={user} className="w-9 h-9 shrink-0" />
+          <p className="text-xs text-ink-soft capitalize">{user} · rango</p>
+        </div>
         <p className="font-semibold leading-tight">{rank.name}</p>
         <div className="h-1.5 rounded-full bg-ground-2 mt-2 overflow-hidden">
           <div className="h-full bg-plum rounded-full" style={{ width: `${pct}%` }} />
