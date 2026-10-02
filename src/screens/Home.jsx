@@ -491,12 +491,13 @@ function RetoCard({ store, liga, user, onAction }) {
   const others = (liga?.rows || []).filter((r) => r.usuario !== user).map((r) => ({ u: r.usuario, r: retoResult(r.liga) }));
   return (
     <section aria-labelledby="reto-title" className="rounded-folder bg-sun p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 id="reto-title" className="display text-[24px] flex items-center gap-2">
-          <Flag size={22} weight="fill" /> Reto del día
-        </h2>
-        <span className="text-xs font-semibold">10 preguntas · iguales para todos</span>
-      </div>
+      <h2 id="reto-title" className="display text-[26px] flex items-center gap-2">
+        <Flag size={22} weight="fill" /> Reto del día
+      </h2>
+      <p className="mt-2 flex flex-wrap gap-1.5">
+        <span className="tag">10 preguntas</span>
+        <span className="tag">Iguales para todos</span>
+      </p>
       {mine ? (
         <p className="mt-2 text-[15px]">
           Hecho: <span className="font-semibold">{mine.c} {mine.c === 1 ? "acierto" : "aciertos"}</span>, {mine.w} {mine.w === 1 ? "fallo" : "fallos"} y {mine.b} en blanco ·{" "}
@@ -526,6 +527,66 @@ function RetoCard({ store, liga, user, onAction }) {
 }
 
 /** Duelos: retar a otra persona a 10 preguntas. Las dos juegan las mismas; gana quien saque más puntos. */
+/* Aviso emergente al entrar en Inicio cuando alguien te ha retado: se puede responder ya o dejarlo para luego
+   (sigue en la tarjeta de Duelos). Cada reto avisa una sola vez por dispositivo. */
+const SEEN_KEY = "opo-duelos-avisados";
+const readSeen = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_KEY) || "[]");
+  } catch {
+    return [];
+  }
+};
+
+function DuelInvite({ bank, store, liga, user, onAction }) {
+  const [seen, setSeen] = useState(readSeen);
+  const duel = duelsOf(user, store.liga, liga?.rows || []).find((d) => d.status === "pending" && d.from !== user && !seen.includes(d.id));
+  const temas = learnTemas(bank);
+  const close = () => {
+    if (!duel) return;
+    const next = [...seen, duel.id].slice(-50);
+    setSeen(next);
+    try {
+      localStorage.setItem(SEEN_KEY, JSON.stringify(next));
+    } catch {}
+  };
+  const tema = duel && (duel.tema === "all" ? "todo el temario" : `«${temas.find((t) => t.id === duel.tema)?.titulo ?? "un tema"}»`);
+  return (
+    <Sheet
+      open={!!duel}
+      onClose={close}
+      title={duel ? `¡${pretty(duel.from)} te reta!` : ""}
+      body={
+        duel && (
+          <>
+            <Pollo face="surprised" className="w-24 h-auto mx-auto mb-3 anim-hop" />
+            Duelo de {DUEL_SIZE} preguntas en {tema}. Las mismas preguntas para las dos personas: gana quien acierte más.
+          </>
+        )
+      }
+      actions={
+        duel && (
+          <>
+            <Button
+              variant="ink"
+              onClick={() => {
+                const d = duel;
+                close();
+                onAction({ type: "duel", duel: d });
+              }}
+            >
+              <Sword size={20} weight="fill" /> Responder al reto
+            </Button>
+            <Button variant="paper" onClick={close}>
+              Luego
+            </Button>
+          </>
+        )
+      }
+    />
+  );
+}
+
 function DuelCard({ bank, store, liga, user, onAction }) {
   const rivals = (liga?.rows || []).map((r) => r.usuario).filter((u) => u !== user);
   const [rival, setRival] = useState(null);
@@ -542,12 +603,13 @@ function DuelCard({ bank, store, liga, user, onAction }) {
 
   return (
     <section aria-labelledby="duel-title" className="rounded-folder bg-peach p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 id="duel-title" className="display text-[24px] flex items-center gap-2">
-          <Sword size={22} weight="fill" /> Duelos
-        </h2>
-        <span className="text-xs font-semibold">{DUEL_SIZE} preguntas · las mismas para las dos personas</span>
-      </div>
+      <h2 id="duel-title" className="display text-[26px] flex items-center gap-2">
+        <Sword size={22} weight="fill" /> Duelos
+      </h2>
+      <p className="mt-2 flex flex-wrap gap-1.5">
+        <span className="tag">{DUEL_SIZE} preguntas</span>
+        <span className="tag">Las mismas para las dos personas</span>
+      </p>
 
       {pending.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">
@@ -728,6 +790,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <MasteryCard bank={bank} store={store} onGoDominio={onGoDominio} onAction={onAction} />
           <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
           <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
+          <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6">
@@ -746,15 +809,15 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           </button>
 
           {pendingMistakes > 0 && (
-            <button type="button" onClick={onReview} className="tap press text-left rounded-folder bg-plum text-ground p-5 flex items-center gap-4">
-              <span className="w-12 h-12 blob bg-lilac text-plum flex items-center justify-center shrink-0">
+            <button type="button" onClick={onReview} className="tap press text-left rounded-folder bg-sky text-ink p-5 flex items-center gap-4">
+              <span className="w-12 h-12 blob bg-card text-ink flex items-center justify-center shrink-0">
                 <ArrowCounterClockwise size={24} weight="bold" />
               </span>
               <span className="flex-1 min-w-0">
-                <span className="display text-[28px] block text-lilac">Repasar fallos</span>
+                <span className="display text-[28px] block">Repasar fallos</span>
                 <span className="text-sm leading-snug block mt-1">Salen del repaso cuando las aciertas {MASTERED_AFTER} veces seguidas</span>
               </span>
-              <span className="brand text-[44px] text-lilac" aria-label={`${pendingMistakes} pendientes`}>
+              <span className="brand text-[44px]" aria-label={`${pendingMistakes} pendientes`}>
                 {pendingMistakes}
               </span>
             </button>

@@ -232,8 +232,8 @@ export const CHARACTERS = {
 
 /** Configuración de cada ilustración de la app (mismo nombre que el antiguo registro). */
 const MOODS = {
-  bienvenida: { group: ["amigo-1", "tacita", "amigo-2"], face: "happy" },
-  simulacro: { group: ["sim-1", "tacita", "sim-2"], face: "open" },
+  bienvenida: { face: "joy" },
+  simulacro: { face: "surprised" },
   "racha-activa": { face: "happy", hat: { shape: "drop", color: P.rust, w: 26, h: 30 } },
   "racha-pendiente": { face: "sleepy", hat: { shape: "drop", color: P.rust, w: 14, h: 18 } },
   "racha-apagada": { face: "meh", head: { color: P.slate } },
@@ -365,7 +365,7 @@ export function Mascot({ name = "tacita", cfg, face, look, follow = false, fit =
   if (fit && chars.length === 1) {
     // Lienzo ajustado al personaje (para nodos y avatares pequeños).
     const c = chars[0];
-    if (c.pollo) viewBox = `${60 - 92 * PS} ${150 - 180 * PS} ${184 * PS} ${182 * PS}`;
+    if (c.pollo) viewBox = `${60 - 92 * PS} ${150 - 180 * PS} ${184 * PS} ${192 * PS}`;
     const parts = c.pollo ? [] : [c.body, c.head, c.hat].filter(Boolean);
     const total = parts.reduce((a, p) => a + p.h, 0);
     const maxW = Math.max(...parts.map((p) => p.w));
