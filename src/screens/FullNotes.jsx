@@ -113,36 +113,43 @@ export function Esquemas({ bank, esquemas }) {
 const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const plain = (b) => (b.table ? b.table.map((r) => r.filter(Boolean).join(" · ")).join(" — ") : b.t || b.p || b.li || "").replace(/\*\*/g, "");
 
-/**
- * Tabla del temario convertida en fichas (en el móvil una tabla no cabe): cada fila es una ficha con su
- * primer dato en negrita. Si la primera fila son cabeceras, cada dato lleva su etiqueta.
- */
 const isHeader = (head, body) => head.length > 1 && body.length > 0 && head.every((c) => c && c.length < 40 && !/\d{3,}/.test(c));
 
+/**
+ * Tabla del temario convertida en fichas (en el móvil una tabla no cabe): cada fila es una ficha con su
+ * primer dato en negrita. Una fila de un solo elemento es un rótulo de grupo («Asuntos Sociales»).
+ * Con dos columnas, las cabeceras se dicen una vez arriba; con más, cada dato lleva su etiqueta.
+ */
 function DocTable({ rows }) {
   const [head, ...rest] = rows;
   const withHead = isHeader(head, rest);
   const body = withHead ? rest : rows;
-  // Con dos columnas basta con decir una vez qué es cada cosa; con más, cada dato lleva su etiqueta.
-  const twoCols = rows.every((r) => r.length <= 2);
+  const twoCols = rows.every((r) => r.filter(Boolean).length <= 2);
   const labels = withHead && !twoCols ? head : [];
+  const label = (t) => t && <span className="block text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{t}</span>;
   return (
     <div className="my-2 flex flex-col gap-2 font-sans">
-      {withHead && twoCols && <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft px-1">{head.join(" · ")}</p>}
+      {withHead && twoCols && <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft px-1">{head.filter(Boolean).join(" · ")}</p>}
       {body.map((r, i) => {
+        if (r.length === 1)
+          return (
+            <p key={i} className="mt-3 first:mt-0 px-1 font-semibold text-[16px] border-b-2 border-ink pb-1">
+              {r[0]}
+            </p>
+          );
         const [first, ...others] = r;
         const items = others.map((c, j) => ({ label: labels[j + 1], value: c })).filter((x) => x.value);
         return (
           <div key={i} className="rounded-[12px] bg-ground px-3 py-2.5 text-[15px] leading-snug">
             {first ? (
               <p className="font-semibold">
-                {labels[0] && <span className="block text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{labels[0]}</span>}
+                {label(labels[0])}
                 {first}
               </p>
             ) : null}
             {items.map((x, j) => (
-              <p key={j} className={first || j ? "mt-1" : ""}>
-                {x.label && <span className="block text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{x.label}</span>}
+              <p key={j} className={`whitespace-pre-line ${first || j ? "mt-1" : ""}`}>
+                {label(x.label)}
                 {x.value}
               </p>
             ))}
