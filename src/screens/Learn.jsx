@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, CaretLeft, CaretRight, Check, Crown, Exam, Play } from "@phosphor-icons/react";
+import { BookOpen, CaretLeft, CaretRight, Check, Crown, Exam, Headphones, Play } from "@phosphor-icons/react";
 import { Mascot } from "../mascots.jsx";
 import { BLOCKS, UNIT_COLORS, lessonKey } from "../lib/logic.js";
 import { learnTemas, temaLabel } from "../lib/bank.js";
 import { nextLesson, unitDoneCount } from "../lib/tutor.js";
 import { Button, Folder, Paper, ProgressBar, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
+import { episodesOf, fmtTime, player } from "../lib/podcast.js";
 
 /* Camino de aprendizaje (como Duolingo): cada tema es una unidad con sus lecciones en zigzag
    y, al final, el examen del tema. Todo está abierto (es tu temario), pero el tutor marca
@@ -164,6 +165,7 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
   const sheetLesson = sheetTema?.lecciones[sheet.index];
   const sheetDone = sheet && store.lessons?.[lessonKey(sheet.temaId, sheet.index)];
   const steps = sheetLesson?.pasos.length || 0;
+  const sheetEp = sheet && episodesOf(bank, sheet.temaId).find((e) => e.i === sheet.index);
   const exercises = sheetLesson?.pasos.filter((p) => p.t !== "teoria").length || 0;
 
   const groups = ["comun", "especifico"].map((b) => ({ b, temas: temas.filter((t) => t.bloque === b) }));
@@ -293,6 +295,18 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
             >
               <Play size={20} weight="fill" /> {sheetDone ? "Repetir lección" : "Empezar lección"}
             </Button>
+            {sheetEp && (
+              <Button
+                variant="paper"
+                onClick={() => {
+                  const eps = episodesOf(bank, sheet.temaId);
+                  player.play(bank, eps, eps.findIndex((e) => e.i === sheet.index));
+                  setSheet(null);
+                }}
+              >
+                <Headphones size={20} weight="bold" /> Escuchar el pódcast ({fmtTime(sheetEp.s)})
+              </Button>
+            )}
             <Button variant="paper" onClick={() => setSheet(null)}>
               Ahora no
             </Button>

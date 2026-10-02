@@ -6,6 +6,8 @@ import { unitDoneCount } from "../lib/tutor.js";
 import { Button, Folder, Paper, Segmented, Sheet } from "../ui.jsx";
 import { Esquemas, ReaderBar, TextoCompleto } from "./FullNotes.jsx";
 import { useReader } from "../lib/speech.js";
+import { hasPodcast } from "../lib/podcast.js";
+import { EpisodeList } from "./Podcast.jsx";
 import { Rich } from "./Lesson.jsx";
 import { unitColor } from "./Learn.jsx";
 
@@ -15,6 +17,7 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
   const cards = bankCards(bank, "all", tema.id);
   const docs = bank.docs?.temas?.[tema.id];
   const nEsq = docs?.esquemas?.reduce((a, e) => a + e.imgs.length, 0) || 0;
+  const pod = hasPodcast(bank, tema.id);
   const [view, setView] = useState("resumen");
   // Modo escuchar del resumen: la teoría de cada lección, en orden.
   const theory = tema.lecciones.flatMap((l, i) => l.pasos.filter((p) => p.t === "teoria").map((p, k) => ({ id: `rd-${i}-${k}`, text: [l.titulo + ". " + p.titulo + ".", p.texto, ...(p.puntos || []), p.truco ? "Truco: " + p.truco : ""].join(" ") })));
@@ -43,12 +46,14 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
             { value: "resumen", label: "Resumen", sub: `${tema.lecciones.length} lecciones` },
             { value: "esquemas", label: "Esquemas", sub: nEsq ? `${nEsq} imágenes` : "—" },
             { value: "completo", label: "Temario", sub: "completo" },
+            ...(pod ? [{ value: "escuchar", label: "Escuchar", sub: "pódcast" }] : []),
           ]}
         />
       )}
       {view === "esquemas" && <Esquemas bank={bank} esquemas={docs?.esquemas} />}
       {view === "completo" && <TextoCompleto bank={bank} textos={docs?.textos} />}
-      {view === "resumen" && <ReaderBar reader={reader} total={theory.length} idOf={(k) => theory[k]?.id} />}
+      {view === "escuchar" && <EpisodeList bank={bank} temaId={tema.id} color={color} />}
+      {view === "resumen" && !pod && <ReaderBar reader={reader} total={theory.length} idOf={(k) => theory[k]?.id} />}
       {view === "resumen" && tema.lecciones.map((l, i) => (
         <Folder key={i} color={color} tab={`Lección ${i + 1}`}>
           <div className="p-2.5 flex flex-col gap-2.5">

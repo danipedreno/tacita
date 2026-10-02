@@ -11,6 +11,8 @@ import { dailyReviewPool, srsAfterExam, srsAfterLesson, temaReviewPool } from ".
 import { retoQuestions, retoResult } from "./lib/reto.js";
 import { DUEL_SIZE, duelPoints, duelQuestions, duelsOf } from "./lib/duelo.js";
 import Mastery from "./screens/Mastery.jsx";
+import { MiniPlayer } from "./screens/Podcast.jsx";
+import { player, usePodcast } from "./lib/podcast.js";
 import { dateKey } from "./lib/logic.js";
 import CardsScreen from "./screens/Cards.jsx";
 import { DEFAULT_STORE, useInstallPrompt, useNow, usePersistentStore } from "./lib/store.js";
@@ -206,6 +208,8 @@ function UserApp({ user, bank, logout }) {
   const sync = useSync(access?.user === user ? access : null, store, setStore);
   const liga = useClasificacion(access?.user === user ? access : null);
   useLigaNews(user, liga, store.liga);
+  const pod = usePodcast();
+  useEffect(() => () => player.stop(), []); // al salir de la cuenta, se calla
   const ligaRef = useRef(liga);
   ligaRef.current = liga;
   const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
@@ -418,7 +422,7 @@ function UserApp({ user, bank, logout }) {
             <>
               <SideNav tab={tab} onChange={goTab} xp={store.xp} user={user} sync={sync} />
               <main ref={mainRef} className="absolute inset-0 lg:left-64 scroll-area">
-                <div key={tab} className={`mx-auto px-4 lg:px-10 pt-safe lg:pt-10 pb-tabbar lg:pb-16 anim-rise ${tab === "home" ? "max-w-md lg:max-w-5xl" : "max-w-md lg:max-w-3xl"}`}>
+                <div key={tab} className={`mx-auto px-4 lg:px-10 pt-safe lg:pt-10 ${pod.index >= 0 ? "pb-tabbar-player" : "pb-tabbar"} lg:pb-24 anim-rise ${tab === "home" ? "max-w-md lg:max-w-5xl" : "max-w-md lg:max-w-3xl"}`}>
                   {tab === "home" && (
                     <Home
                       store={store}
@@ -482,6 +486,7 @@ function UserApp({ user, bank, logout }) {
                   {tab === "badges" && <Achievements store={store} user={user} liga={liga} onReset={onReset} />}
                 </div>
               </main>
+              <MiniPlayer />
               <TabBar tab={tab} onChange={goTab} />
             </>
           )}

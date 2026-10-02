@@ -76,11 +76,24 @@ export function useDocImage(bank, f, active = true) {
   return { src, error };
 }
 
+const audios = new Map();
+/** URL (blob:) de un episodio del pódcast (m4a cifrado). Se guarda en caché: luego suena sin conexión. */
+export function loadAudio(bank, f) {
+  if (!audios.has(f)) {
+    const p = decrypt(bank, f).then((plain) => URL.createObjectURL(new Blob([plain], { type: "audio/mp4" })));
+    p.catch(() => audios.delete(f));
+    audios.set(f, p);
+  }
+  return audios.get(f);
+}
+
 /** Al cerrar sesión: fuera también los apuntes guardados. */
 export function clearDocs() {
   texts.clear();
   images.forEach((p) => p.then((u) => URL.revokeObjectURL(u)).catch(() => {}));
   images.clear();
+  audios.forEach((p) => p.then((u) => URL.revokeObjectURL(u)).catch(() => {}));
+  audios.clear();
   try {
     caches.delete(CACHE);
   } catch (e) {

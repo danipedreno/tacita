@@ -124,6 +124,17 @@
   .tabbar-pos {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   }
+  .miniplayer-pos {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+  }
+  @media (min-width: 1024px) {
+    .miniplayer-pos {
+      bottom: 24px;
+    }
+  }
+  .pb-tabbar-player {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 190px);
+  }
   .toast-pos {
     top: calc(env(safe-area-inset-top, 0px) + 12px);
   }
