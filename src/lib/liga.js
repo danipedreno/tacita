@@ -1,6 +1,6 @@
 /* Liga gaditana: competición entre los usuarios de Opoempollo con los exámenes de tema.
-   - Cada examen de tema (15 preguntas) suma puntos: acierto +3, fallo −1, en blanco 0 (como en el examen
-     real, fallar penaliza y dejarla en blanco no). El total nunca baja de 0.
+   - Cada examen de tema (15 preguntas) suma puntos: acierto +3, fallo −1, en blanco 0. Es la puntuación del
+     juego, más sencilla que la del examen real (−0,25 por fallo y −0,10 en blanco). El total nunca baja de 0.
    - Cada tema puntúa una vez al día (el primer intento): repetir el mismo examen hasta sabérselo no da puntos.
    - El reto del día (t: "reto") también puntúa, una vez al día. Los duelos (t: "duelo") no puntúan.
    - Los puntos llevan por tramos: 4 categorías (comidas de Cádiz) con 3 niveles cada una. Los tramos son

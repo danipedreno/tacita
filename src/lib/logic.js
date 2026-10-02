@@ -16,12 +16,17 @@ export const DEFAULT_DAILY_GOAL = 40;
 // Ritmo por defecto: 1 minuto por pregunta. Ajústalo cuando salgan las bases de la convocatoria.
 export const OFFICIAL_SECONDS_PER_QUESTION = 60;
 // Penalización por fallo (las bases dirán cuál; por defecto, la habitual de un tercio).
+/* Corrección del examen (bases, BOP de Cádiz n.º 165 de 27/08/2026): acierto +1, fallo −0,25 y en blanco −0,10;
+   60 preguntas en 60 minutos y nota pasada a 0-10. Con cuatro opciones, contestar al azar sale a +0,06 de media y
+   dejarla en blanco a −0,10: siempre compensa contestar. «none» queda para practicar sin restar. */
 export const PENALTIES = [
-  { value: 0, label: "Sin restar", short: "0" },
-  { value: 1 / 4, label: "−¼", short: "−¼" },
-  { value: 1 / 3, label: "−⅓", short: "−⅓" },
+  { value: "cadiz", label: "Como el examen", wrong: 0.25, blank: 0.1 },
+  { value: "none", label: "Sin restar", wrong: 0, blank: 0 },
 ];
-export const DEFAULT_PENALTY = 1 / 3;
+export const DEFAULT_PENALTY = "cadiz";
+/** Reglas de corrección de un ajuste (los valores antiguos −¼ y −⅓ pasan a las del examen). */
+export const scoring = (p) => (p === "none" || p === 0 ? PENALTIES[1] : PENALTIES[0]);
+export const EXAM_QUESTIONS = 60;
 export const NIGHT_START_HOUR = 23;
 export const NIGHT_END_HOUR = 6;
 export const EARLY_END_HOUR = 8;
@@ -236,8 +241,9 @@ export function gradeExam(exam) {
     }
   });
   const n = exam.questions.length;
-  const penalty = exam.penalty ?? DEFAULT_PENALTY;
-  const net = correct - wrong * penalty;
+  const sc = scoring(exam.penalty ?? DEFAULT_PENALTY);
+  const penalty = sc.value;
+  const net = correct - wrong * sc.wrong - blank * sc.blank;
   const over10 = n ? (Math.max(0, net) / n) * 10 : 0;
   return { n, correct, wrong, blank, net, over10, maxWrongRun, penalty };
 }

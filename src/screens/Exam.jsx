@@ -6,8 +6,10 @@ import {
   BLOCKS,
   BLOCK_IDS,
   DEFAULT_PENALTY,
+  EXAM_QUESTIONS,
   OFFICIAL_SECONDS_PER_QUESTION,
   PENALTIES,
+  scoring,
   fmt2,
   formatClock,
   formatMinutes,
@@ -47,13 +49,14 @@ function Step({ n, title, hint, children }) {
   );
 }
 
-const penaltyText = (p) => (p === 0 ? "0" : p === 1 / 4 ? "−¼" : "−⅓");
-const penaltyDecimal = (p) => (p === 0 ? "0" : p === 1 / 4 ? "−0,25" : "−0,33");
+const num = (x) => (x ? `−${String(x).replace(".", ",")}` : "0");
+const penaltyText = (p) => num(scoring(p).wrong);
+const blankText = (p) => num(scoring(p).blank);
 
 export function ExamSetup({ store, bank, onSettings, onStart }) {
   const s = store.settings;
   const base = bank.preguntas;
-  const penalty = s.penalty ?? DEFAULT_PENALTY;
+  const penalty = scoring(s.penalty ?? DEFAULT_PENALTY).value;
   const blocks = (s.blocks || []).filter((b) => BLOCK_IDS.includes(b));
   const all = blocks.length === 0;
   const tema = blocks.length === 1 && s.tema && s.tema !== "all" ? s.tema : "all";
@@ -79,7 +82,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
 
   const start = () => onStart({ pool, count, feedback: s.feedback, secsPerQ: s.secsPerQ, penalty, source: onlyMistakes ? "mistakes" : "temario", title });
   const simulacro = () =>
-    onStart({ pool: base.filter((q) => q.tema !== "casos"), count: 50, feedback: "final", secsPerQ: s.secsPerQ, penalty, source: "simulacro", title: "Simulacro · 50 preguntas de todo el temario" });
+    onStart({ pool: base.filter((q) => q.tema !== "casos"), count: EXAM_QUESTIONS, feedback: "final", secsPerQ: s.secsPerQ, penalty, source: "simulacro", title: `Simulacro · ${EXAM_QUESTIONS} preguntas de todo el temario` });
 
   return (
     <div className="flex flex-col gap-8">
@@ -95,7 +98,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
         <span className="flex-1 min-w-0">
           <span className="display text-[26px] block">Simulacro de examen</span>
           <span className="text-sm leading-snug block mt-1 text-ground/85">
-            50 preguntas de todo el temario, con tiempo y corrección al entregar ({penaltyText(penalty)} por fallo)
+            {EXAM_QUESTIONS} preguntas en {EXAM_QUESTIONS} minutos, como el examen, con la corrección de las bases ({penaltyText(penalty)} por fallo y {blankText(penalty)} en blanco)
           </span>
         </span>
         <CaretRight size={22} weight="bold" className="shrink-0" />
@@ -185,7 +188,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
         </div>
       </Step>
 
-      <Step n="5" title="¿Cuánto resta cada fallo?" hint="Cuando salgan las bases de la convocatoria, ponlo igual que en el examen.">
+      <Step n="5" title="¿Cómo se corrige?" hint="Las bases: el fallo resta 0,25 y la pregunta en blanco también resta, 0,10.">
         <Segmented hideLabel label="Penalización" value={penalty} onChange={(v) => onSettings({ penalty: v })} options={PENALTIES.map((p) => ({ value: p.value, label: p.label }))} />
       </Step>
 
@@ -207,7 +210,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
             <p className="text-xs">Acierto</p>
           </div>
           <div className="rounded-xl bg-card py-2">
-            <p className="font-mono text-xl font-semibold">0</p>
+            <p className="font-mono text-xl font-semibold">{blankText(penalty)}</p>
             <p className="text-xs">En blanco</p>
           </div>
           <div className="rounded-xl bg-peach py-2">
@@ -216,7 +219,9 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
           </div>
         </div>
         <p className="text-sm mt-3">
-          {penalty ? `Nota = aciertos − errores ${penalty === 1 / 4 ? "÷ 4" : "÷ 3"}. Si dudas entre más de dos, dejarla en blanco puede salir a cuenta.` : "Los fallos no restan: responde siempre."}
+          {penalty === "none"
+            ? "Sin restar: para practicar. Responde siempre."
+            : "Nota = aciertos − 0,25 × fallos − 0,10 × en blanco. Como la pregunta en blanco también resta, contesta siempre: aunque dudes entre las cuatro, contestar sale a cuenta."}
         </p>
         <Button variant="blue" onClick={start} disabled={!count} className="w-full mt-5">
           <Timer size={22} weight="bold" />
@@ -329,7 +334,7 @@ export function ExamRunner({ exam, bank, remainingMs, onSelect, onBlank, onGoto,
     return "bg-card border-line text-ink hover:border-ink/40";
   };
 
-  const verdict = chosen === q.answer ? { label: "Correcta · +1", cls: "text-olive" } : chosen === null ? { label: "En blanco · 0", cls: "text-ink-soft" } : { label: `Incorrecta · ${penaltyDecimal(penalty)}`, cls: "text-plum" };
+  const verdict = chosen === q.answer ? { label: "Correcta · +1", cls: "text-olive" } : chosen === null ? { label: `En blanco · ${blankText(penalty)}`, cls: "text-ink-soft" } : { label: `Incorrecta · ${penaltyText(penalty)}`, cls: "text-plum" };
 
   // Teclado (escritorio): 1-4 o A-D responden, flechas para moverse, Intro para seguir.
   const keys = useRef();
@@ -587,7 +592,7 @@ export function ExamResults({ result, xp, pendingMistakes, onNew, onHome, onRevi
               {fmt2(netShown)}
             </p>
             <p className="font-mono text-sm mt-1">
-              sobre {grade.n} · {grade.correct} aciertos − {grade.wrong} fallos{grade.penalty === 0 ? " (no restan)" : grade.penalty === 1 / 4 ? " ÷ 4" : " ÷ 3"}
+              sobre {grade.n} · {grade.correct} aciertos − {grade.wrong} fallos{grade.penalty === "none" ? " (no restan)" : ` × 0,25 − ${grade.blank} en blanco × 0,10`}
             </p>
           </div>
           <div className="w-28 h-28 p-2 shrink-0 bg-card blob">
