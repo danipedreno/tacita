@@ -188,13 +188,14 @@ function TrueFalse({ step, answer, setAnswer, checked }) {
  * Parejas: se toca un elemento de la izquierda y luego uno de la derecha. Si encajan, se apagan.
  * Se compara por texto (puede haber dos derechas iguales, p. ej. dos órganos con el mismo titular).
  */
-function Pairs({ step, onDone, onMiss }) {
+function Pairs({ step, onDone, onMiss, solved = false }) {
   const left = useMemo(() => shuffle(step.pares.map((p, i) => ({ i, text: p[0] }))), [step]);
   const right = useMemo(() => shuffle(step.pares.map((p, i) => ({ i, text: p[1] }))), [step]);
   const [selL, setSelL] = useState(null);
   const [selR, setSelR] = useState(null);
-  const [doneL, setDoneL] = useState(() => new Set());
-  const [doneR, setDoneR] = useState(() => new Set());
+  // solved: se vuelve a un paso ya hecho (flecha atrás): las parejas salen ya unidas.
+  const [doneL, setDoneL] = useState(() => new Set(solved ? step.pares.map((_, i) => i) : []));
+  const [doneR, setDoneR] = useState(() => new Set(solved ? step.pares.map((_, i) => i) : []));
   const [bad, setBad] = useState(null); // { l, r } un instante tras fallar
   const missed = useRef(false);
 
@@ -336,12 +337,17 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
   const [confirmExit, setConfirmExit] = useState(false);
   const [streak, setStreak] = useState(0);
   const firstTry = useRef(new Map()); // paso original → acertado a la primera
+  // Pasos ya respondidos (posición → respuesta): al volver atrás siguen marcados y no se pueden cambiar.
+  const answered = useRef(new Map());
   const scrollRef = useRef(null);
   const item = queue[pos];
   const step = item.step;
   const interactiveTotal = lesson.pasos.filter(isInteractive).length;
   const right = checked && (step.t === "pares" ? pairsDone?.clean : isCorrect(step, answer));
-  const optionOrder = useMemo(() => (step.t === "test" ? shuffle(step.o.map((_, i) => i)) : step.t === "hueco" ? shuffle(step.o.map((_, i) => i)) : []), [item]); // eslint-disable-line react-hooks/exhaustive-deps
+  // El orden de las opciones se baraja una vez por paso y se mantiene si vuelves atrás.
+  const orders = useRef(new Map());
+  if ((step.t === "test" || step.t === "hueco") && !orders.current.has(pos)) orders.current.set(pos, shuffle(step.o.map((_, i) => i)));
+  const optionOrder = orders.current.get(pos) || [];
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -352,7 +358,22 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
     onFinish({ temaId: tema.id, index, totalLessons: tema.lecciones.length, interactive: interactiveTotal, firstTry: first, title: lesson.titulo });
   };
 
+  // Muestra el paso `p` tal como quedó (si ya se respondió) o en blanco.
+  const goTo = (p) => {
+    const h = answered.current.get(p);
+    setPos(p);
+    setAnswer(h ? h.answer : null);
+    setChecked(!!h);
+    setPairsDone(h ? h.pairsDone : null);
+  };
+
   const advance = (wasRight) => {
+    if (answered.current.get(pos)?.advanced) {
+      // Paso que ya se había pasado antes de volver atrás: solo se avanza, sin repetir nada.
+      if (pos + 1 >= queue.length) return finish();
+      return goTo(pos + 1);
+    }
+    answered.current.set(pos, { ...(answered.current.get(pos) || {}), advanced: true });
     let next = queue;
     if (isInteractive(step) && !wasRight && item.retry < 2) {
       // Lo fallado vuelve al final de la lección.
@@ -363,19 +384,13 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
       finish();
       return;
     }
-    setPos(pos + 1);
-    setAnswer(null);
-    setChecked(false);
-    setPairsDone(null);
+    goTo(pos + 1);
   };
 
   // Volver al paso anterior (p. ej. a releer la teoría). Lo ya respondido cuenta como estaba.
   const back = () => {
     if (pos === 0) return;
-    setPos(pos - 1);
-    setAnswer(null);
-    setChecked(false);
-    setPairsDone(null);
+    goTo(pos - 1);
   };
 
   const check = () => {
@@ -384,6 +399,7 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
     if (!hasAnswer(step, answer)) return;
     const ok = isCorrect(step, answer);
     if (!firstTry.current.has(item.k)) firstTry.current.set(item.k, ok);
+    answered.current.set(pos, { answer, pairsDone: null });
     setChecked(true);
     setStreak((s) => (ok ? s + 1 : 0));
     play(ok ? "correct" : "wrong");
@@ -395,7 +411,9 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
   };
 
   const onPairsDone = (clean) => {
+    if (answered.current.has(pos)) return;
     if (!firstTry.current.has(item.k)) firstTry.current.set(item.k, clean);
+    answered.current.set(pos, { answer: null, pairsDone: { clean } });
     setPairsDone({ clean });
     setChecked(true);
     setStreak((s) => (clean ? s + 1 : 0));
@@ -478,7 +496,7 @@ export default function LessonPlayer({ tema, index, color = PAL.sky, onExit, onF
           {step.t === "teoria" && <Theory step={step} />}
           {(step.t === "test" || step.t === "hueco") && <Choice step={step} answer={answer} setAnswer={setAnswer} checked={checked} order={optionOrder} />}
           {step.t === "vf" && <TrueFalse step={step} answer={answer} setAnswer={setAnswer} checked={checked} />}
-          {step.t === "pares" && <Pairs step={step} onDone={onPairsDone} />}
+          {step.t === "pares" && <Pairs step={step} onDone={onPairsDone} solved={!!pairsDone} />}
           {step.t === "orden" && <Order step={step} answer={answer} setAnswer={setAnswer} checked={checked} />}
         </div>
       </div>
