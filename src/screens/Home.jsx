@@ -528,7 +528,7 @@ function Shortcuts({ bank, onGoTemario, onGoLiga, onGoPodcast }) {
 /* Tarjetas de práctica: mismo formato que el reto y los duelos (título con icono, etiquetas, texto y botón). */
 function PracticeCard({ id, color, Icon, title, tags, children, cta, onClick, disabled, secondary }) {
   return (
-    <section aria-labelledby={`${id}-title`} className="rounded-folder p-4" style={{ background: color }}>
+    <section aria-labelledby={`${id}-title`} className="h-full rounded-folder p-4 flex flex-col" style={{ background: color }}>
       <h2 id={`${id}-title`} className="display text-[26px] flex items-center gap-2">
         <Icon size={22} weight="fill" /> {title}
       </h2>
@@ -539,13 +539,13 @@ function PracticeCard({ id, color, Icon, title, tags, children, cta, onClick, di
           </span>
         ))}
       </p>
-      <p className="mt-2 text-[15px] leading-snug">{children}</p>
+      <p className="mt-2 mb-3 text-[15px] leading-snug">{children}</p>
       {cta && (
         <button
           type="button"
           onClick={onClick}
           disabled={disabled}
-          className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold disabled:bg-transparent disabled:text-ink disabled:border disabled:border-ink/40"
+          className="tap press mt-auto w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold disabled:bg-transparent disabled:text-ink disabled:border disabled:border-ink/40"
         >
           {cta}
         </button>
@@ -606,75 +606,74 @@ function MistakesCard({ store, onReview }) {
   );
 }
 
-/* Pila de tarjetas (solo en el móvil): al bajar, cada tarjeta se queda arriba y la siguiente sube por encima.
-   La que queda tapada se encoge y se oscurece un poco, como si se fuera al fondo del mazo. Al final se deja el hueco
-   justo para que la última también llegue arriba (si no, se quedaba a medio subir porque la página se acaba). */
-const STACK_TOP = 12; // px desde arriba de la primera tarjeta
-const STACK_STEP = 12; // px que asoma cada tarjeta de debajo
-const STACK_BOTTOM = 132; // lo que ocupa la barra de abajo
-
-function CardStack({ children }) {
+/* Carrusel de tarjetas de práctica: en el móvil se pasan deslizando (cada una encaja en su sitio y asoma la
+   siguiente) y los puntos de abajo dicen en cuál estás; en el ordenador, rejilla de dos columnas. */
+function CardRail({ label, children }) {
   const items = [].concat(children).filter(Boolean);
-  const refs = useRef([]);
-  const [spacer, setSpacer] = useState(0);
+  const rail = useRef(null);
+  const [at, setAt] = useState(0);
   useEffect(() => {
-    const els = refs.current.filter(Boolean);
-    const scroller = els[0]?.closest(".scroll-area");
-    if (!scroller) return undefined;
-    const mobile = window.matchMedia("(max-width: 1023px)");
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const el = rail.current;
+    if (!el) return undefined;
+    // La tarjeta activa es la que tiene el centro más cerca del centro del carrusel.
     let frame = 0;
-    const paint = () => {
-      frame = 0;
-      for (let i = 0; i < els.length; i++) {
-        const inner = els[i].firstElementChild;
-        if (!inner) continue;
-        const next = els[i + 1];
-        let k = 0;
-        if (mobile.matches && next && !still.matches) {
-          const r = els[i].getBoundingClientRect();
-          // Cuánto de esta tarjeta tapa ya la siguiente (0 = nada, 1 = entera)
-          k = Math.min(1, Math.max(0, (r.bottom - next.getBoundingClientRect().top) / r.height));
-        }
-        inner.style.transform = k ? `scale(${1 - k * 0.06})` : "";
-        inner.style.filter = k ? `brightness(${1 - k * 0.18})` : "";
-      }
-    };
     const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(paint);
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const mid = el.scrollLeft + el.clientWidth / 2;
+        let best = 0;
+        let dist = Infinity;
+        [...el.children].forEach((c, i) => {
+          const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+          if (d < dist) (dist = d), (best = i);
+        });
+        setAt(best);
+      });
     };
-    const measure = () => {
-      const last = els[els.length - 1];
-      if (!mobile.matches || !last) return setSpacer(0);
-      const top = STACK_TOP + (els.length - 1) * STACK_STEP;
-      setSpacer(Math.max(0, scroller.clientHeight - top - last.offsetHeight - STACK_BOTTOM));
-      onScroll();
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    els.forEach((el) => ro.observe(el));
-    ro.observe(scroller);
-    scroller.addEventListener("scroll", onScroll, { passive: true });
+    el.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
-      ro.disconnect();
-      scroller.removeEventListener("scroll", onScroll);
+      el.removeEventListener("scroll", onScroll);
     };
-  }, [items.length]);
+  }, []);
+  const go = (i) => {
+    const c = rail.current?.children[i];
+    if (c) rail.current.scrollTo({ left: c.offsetLeft - (rail.current.clientWidth - c.offsetWidth) / 2, behavior: "smooth" });
+  };
   return (
-    <div className="flex flex-col gap-4 lg:gap-6">
-      {items.map((c, i) => (
-        <div
-          key={i}
-          ref={(el) => (refs.current[i] = el)}
-          className="stack-card sticky lg:static rounded-folder"
-          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${STACK_TOP + i * STACK_STEP}px)`, zIndex: i + 1 }}
-        >
-          {c}
-        </div>
-      ))}
-      {spacer > 0 && <div aria-hidden="true" style={{ height: spacer }} className="lg:hidden" />}
-    </div>
+    <section aria-label={label} aria-roledescription="carrusel">
+      <div className="flex items-baseline justify-between gap-2 mb-3">
+        <h2 className="display text-[26px]">{label}</h2>
+        <span className="font-mono text-sm text-ink-soft lg:hidden" aria-hidden="true">
+          {at + 1}/{items.length}
+        </span>
+      </div>
+      <div
+        ref={rail}
+        className="-mx-4 px-4 flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-px-4 overscroll-x-contain lg:mx-0 lg:px-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible"
+      >
+        {items.map((c, i) => (
+          <div key={i} className="snap-center shrink-0 w-[86%] lg:w-auto" aria-roledescription="tarjeta" aria-label={`${i + 1} de ${items.length}`}>
+            {c}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center gap-1.5 mt-3 lg:hidden">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => go(i)}
+            aria-label={`Ir a la tarjeta ${i + 1}`}
+            aria-current={i === at ? "true" : undefined}
+            className="tap flex items-center justify-center !min-w-[28px] !min-h-[28px]"
+          >
+            <span className={`block h-2 rounded-full transition-all duration-200 ${i === at ? "w-6 bg-ink" : "w-2 bg-ink/25"}`} />
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -686,7 +685,7 @@ function RetoCard({ store, liga, user, onAction }) {
   const mine = retoResult(store.liga);
   const others = (liga?.rows || []).filter((r) => r.usuario !== user).map((r) => ({ u: r.usuario, r: retoResult(r.liga) }));
   return (
-    <section aria-labelledby="reto-title" className="rounded-folder bg-sun p-4">
+    <section aria-labelledby="reto-title" className="h-full rounded-folder bg-sun p-4 flex flex-col">
       <h2 id="reto-title" className="display text-[26px] flex items-center gap-2">
         <Flag size={22} weight="fill" /> Reto del día
       </h2>
@@ -701,8 +700,8 @@ function RetoCard({ store, liga, user, onAction }) {
         </p>
       ) : (
         <>
-          <p className="mt-2 text-[15px]">Puntúa en la liga: +20 por acierto, −5 por fallo y −2 en blanco. Solo hay una oportunidad al día.</p>
-          <button type="button" onClick={() => onAction({ type: "reto" })} className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold">
+          <p className="mt-2 mb-3 text-[15px]">Puntúa en la liga: +20 por acierto, −5 por fallo y −2 en blanco. Solo hay una oportunidad al día.</p>
+          <button type="button" onClick={() => onAction({ type: "reto" })} className="tap press mt-auto w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold">
             Jugar el reto de hoy
           </button>
         </>
@@ -802,7 +801,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
   const play = (duel) => onAction({ type: "duel", duel });
 
   return (
-    <section aria-labelledby="duel-title" className="rounded-folder bg-peach p-4">
+    <section aria-labelledby="duel-title" className="h-full rounded-folder bg-peach p-4 flex flex-col">
       <h2 id="duel-title" className="display text-[26px] flex items-center gap-2">
         <Sword size={22} weight="fill" /> Duelos
       </h2>
@@ -828,7 +827,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
       )}
 
       {rivals.length ? (
-        <button type="button" onClick={() => setPicking(true)} className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2">
+        <button type="button" onClick={() => setPicking(true)} className="tap press mt-auto w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2">
           <Sword size={18} weight="fill" /> Retar a alguien
         </button>
       ) : (
@@ -1060,14 +1059,14 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6 min-w-0">
-          {/* Practicar y retarse: tarjetas que se apilan al hacer scroll */}
-          <CardStack>
+          {/* Practicar y retarse: carrusel de tarjetas */}
+          <CardRail label="Practica y rétate">
             <ReviewCard bank={bank} store={store} onAction={onAction} onGoDominio={onGoDominio} />
             <QuickTestCard onQuickTest={onQuickTest} />
             <MistakesCard store={store} onReview={onReview} />
             <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
             <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
-          </CardStack>
+          </CardRail>
           <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
         </div>
       </div>
