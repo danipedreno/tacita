@@ -28,9 +28,11 @@ import { play } from "../lib/sound.js";
 const COUNTS = [
   { value: 10, label: "10" },
   { value: 20, label: "20" },
-  { value: 50, label: "50" },
-  { value: 100, label: "100", sub: "simulacro" },
+  { value: 30, label: "30" },
+  { value: 60, label: "60", sub: "como el examen" },
 ];
+// Ajustes guardados con las opciones antiguas (50, 100…) pasan a la más cercana.
+const countOf = (c) => (c === "all" || COUNTS.some((o) => o.value === c) ? c : c > 30 ? 60 : 20);
 
 function Step({ n, title, hint, children }) {
   return (
@@ -65,7 +67,8 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
 
   const matches = (q) => (all || blocks.includes(q.block)) && (tema === "all" || q.tema === tema);
   const pool = onlyMistakes ? mistakePool(store.mistakes, Infinity).filter(matches) : base.filter(matches);
-  const count = Math.min(s.count === "all" ? pool.length : s.count || 20, pool.length);
+  const sCount = countOf(s.count || 20);
+  const count = Math.min(sCount === "all" ? pool.length : sCount, pool.length);
 
   const toggleBlock = (id) => {
     const next = blocks.includes(id) ? blocks.filter((b) => b !== id) : [...blocks, id];
@@ -157,7 +160,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
       </Step>
 
       <Step n="2" title="¿Cuántas preguntas?">
-        <Segmented hideLabel label="Número de preguntas" value={s.count} onChange={(v) => onSettings({ count: v })} options={COUNTS} />
+        <Segmented hideLabel label="Número de preguntas" value={sCount} onChange={(v) => onSettings({ count: v })} options={COUNTS} />
       </Step>
 
       <Step n="3" title="¿Cuándo ves las respuestas?">
@@ -199,7 +202,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
         <p className="display text-[28px] leading-tight mt-3">
           {count} preguntas {onlyMistakes ? "falladas " : ""}de {scope} · {formatMinutes(count * s.secsPerQ)}
         </p>
-        {pool.length < (s.count || 0) && pool.length > 0 && (
+        {pool.length < (sCount === "all" ? 0 : sCount) && pool.length > 0 && (
           <p className="text-sm mt-1">Con esta selección solo hay {pool.length} preguntas.</p>
         )}
         {!pool.length && <p className="text-sm text-plum font-semibold mt-1">No hay preguntas con esta selección. Prueba con otra carpeta.</p>}
