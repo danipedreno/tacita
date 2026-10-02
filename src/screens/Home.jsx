@@ -469,6 +469,7 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
   const eps = learnTemas(bank).flatMap((t) => episodesOf(bank, t.id));
   const heard = eps.filter((e) => pod.heard[e.key]).length;
   const { due, fresh } = reviewState(bank, store);
+  const mistakes = Object.keys(store.mistakes || {}).length;
   const items = [
     { id: "test", label: "Test rápido", sub: "10 preguntas", Icon: Lightning, color: PAL.peach, onClick: onQuickTest },
     {
