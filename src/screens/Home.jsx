@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, Sword, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Headphones, Lightning, SpeakerHigh, SpeakerSlash, Sword, Trophy, X } from "@phosphor-icons/react";
 import { BLOCKS, DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, ArtIcon, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
@@ -7,12 +7,12 @@ import { GoalRing } from "./Celebration.jsx";
 import { useCountUp } from "../lib/motion.js";
 import { greeting, missions, nextLesson, recommend } from "../lib/tutor.js";
 import { masteryOf, reviewState } from "../lib/srs.js";
-import { MasteryBar } from "./Mastery.jsx";
 import { retoResult } from "../lib/reto.js";
 import { POINTS } from "../lib/liga.js";
 import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
 import { learnTemas } from "../lib/bank.js";
 import { Pollo } from "../pollo.jsx";
+import { episodesOf, player, usePodcast } from "../lib/podcast.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -364,19 +364,20 @@ function TutorCard({ bank, store, onAction }) {
   // «¡Buenas tardes! Soy tu tutor…» → titular «¡Buenas tardes!» y el resto como entradilla
   const [, hi, intro] = greeting(store).match(/^(.*?[!?])\s*(.*)$/) || [, greeting(store), ""];
   return (
-    <section aria-labelledby="tutor-title" className="rounded-folder bg-forest text-ground p-5 relative overflow-hidden">
-      {/* Habla el tutor: el saludo es el titular de la tarjeta y la recomendación, su remate */}
-      <div className="flex items-end gap-3">
-        <div className="min-w-0 flex-1 pb-3">
-          <h2 id="tutor-title" className="display text-[26px]">
+    <section aria-labelledby="tutor-title" className="rounded-folder bg-forest text-ground p-4 relative overflow-hidden">
+      {/* Habla el tutor: el saludo sale de su boca en un bocadillo de cómic */}
+      <div className="flex items-center gap-1 mb-3">
+        <span className="w-[84px] shrink-0 -ml-1 anim-peek" aria-hidden="true">
+          <Illustration name="tacita" follow className="w-full" />
+        </span>
+        <div className="relative min-w-0 flex-1 rounded-[20px] bg-sun text-ink px-4 py-3">
+          <span className="absolute -left-[11px] top-1/2 -translate-y-1/2 w-3 h-5 bg-sun" style={{ clipPath: "polygon(100% 0, 0 55%, 100% 100%)" }} aria-hidden="true" />
+          <h2 id="tutor-title" className="display text-[24px] leading-[1.05]">
             <span className="sr-only">Opoempollo, tu tutor: </span>
             {hi}
           </h2>
-          <p className="text-[15px] leading-snug mt-1.5 text-ground/75">{intro || main.kicker.replace(/[^.!?…]$/, "$&.")}</p>
+          <p className="text-[14px] leading-snug mt-1">{intro || main.kicker.replace(/[^.!?…]$/, "$&.")}</p>
         </div>
-        <span className="w-20 shrink-0 -mb-1 anim-peek" aria-hidden="true">
-          <Illustration name="tacita" follow className="w-full" />
-        </span>
       </div>
       <div className="rounded-[12px] bg-card text-ink p-4 relative">
         {main.tags && (
@@ -460,37 +461,64 @@ function Missions({ store, bank, onAction, onQuickTest }) {
   );
 }
 
-/** Tarjeta de dominio: cuánto llevas memorizado y lo que toca repasar hoy. */
-function MasteryCard({ bank, store, onGoDominio, onAction }) {
-  const m = masteryOf((bank?.preguntas || []).filter((q) => q.tema !== "casos"), store.srs);
+/* Pódcast de Inicio: el primer episodio sin escuchar del tema por el que vas (o del siguiente que tenga audio). */
+function nextEpisode(bank, store, heard) {
+  const temas = learnTemas(bank);
+  const from = Math.max(0, temas.findIndex((t) => t.id === nextLesson(bank, store)?.tema.id));
+  for (const t of [...temas.slice(from), ...temas.slice(0, from)]) {
+    const eps = episodesOf(bank, t.id);
+    const k = eps.findIndex((e) => !heard[e.key]);
+    if (k >= 0) return { eps, k };
+  }
+  const eps = episodesOf(bank, temas[from]?.id);
+  return eps.length ? { eps, k: 0 } : null;
+}
+
+/** Accesos directos: lo que no está en la barra de abajo (pódcast, apuntes, liga…) a un toque. */
+function Shortcuts({ bank, store, onQuickTest, onAction, onGoTemario, onGoDominio, onGoLiga }) {
+  const pod = usePodcast();
+  const playing = pod.queue[pod.index];
+  const ep = nextEpisode(bank, store, pod.heard);
   const { due, fresh } = reviewState(bank, store);
-  const can = due.length || fresh.length;
+  const m = masteryOf((bank?.preguntas || []).filter((q) => q.tema !== "casos"), store.srs);
+  const items = [
+    { id: "test", label: "Test rápido", sub: "10 preguntas", Icon: Lightning, color: PAL.peach, onClick: onQuickTest },
+    {
+      id: "repaso",
+      label: "Repaso",
+      sub: due.length ? `${due.length} pendientes` : fresh.length ? "Preguntas nuevas" : "Al día",
+      Icon: ArrowCounterClockwise,
+      color: PAL.lilac,
+      badge: due.length || null,
+      onClick: () => (due.length || fresh.length ? onAction({ type: "review" }) : onGoDominio()),
+    },
+    {
+      id: "podcast",
+      label: "Pódcast",
+      sub: playing ? (pod.playing ? "Sonando" : "En pausa") : ep ? `T${ep.eps[ep.k].numero} · ${ep.eps[ep.k].title}` : "Grabando",
+      Icon: Headphones,
+      color: PAL.sun,
+      onClick: () => (playing ? player.toggle() : ep ? player.play(bank, ep.eps, ep.k) : onGoTemario()),
+    },
+    { id: "apuntes", label: "Apuntes", sub: "Teoría y esquemas", Icon: BookOpen, color: PAL.mint, onClick: onGoTemario },
+    { id: "dominio", label: "Dominio", sub: `${m.pct} % memorizado`, Icon: Brain, color: PAL.sky, onClick: onGoDominio },
+    { id: "liga", label: "Liga", sub: "Clasificación", Icon: Trophy, color: PAL.peach, onClick: onGoLiga },
+  ];
   return (
-    <section aria-labelledby="dominio-title" className="rounded-folder bg-card paper-shadow p-4">
-      <button type="button" onClick={onGoDominio} className="tap w-full text-left">
-        <span className="flex items-baseline justify-between gap-2">
-          <span id="dominio-title" className="display text-[24px] flex items-center gap-2">
-            <Brain size={22} weight="fill" className="text-plum" /> Tu dominio
+    <nav aria-label="Accesos directos" className="grid grid-cols-3 gap-2">
+      {items.map(({ id, label, sub, Icon, color, badge, onClick }) => (
+        <button key={id} type="button" onClick={onClick} className="tap press relative min-w-0 rounded-folder bg-card paper-shadow p-3 flex flex-col items-start gap-2.5 text-left">
+          <span className="w-10 h-10 blob flex items-center justify-center" style={{ background: color }} aria-hidden="true">
+            <Icon size={20} weight="fill" />
           </span>
-          <span className="flex items-center gap-1 font-mono text-sm">
-            {m.pct}% <CaretRight size={16} weight="bold" className="text-ink-soft" />
+          {badge && <span className="absolute top-2.5 right-2.5 min-w-[22px] h-[22px] px-1.5 rounded-full bg-ink text-ground font-mono text-[11px] font-semibold flex items-center justify-center">{badge > 99 ? "99+" : badge}</span>}
+          <span className="w-full min-w-0">
+            <span className="block font-semibold text-[15px] leading-tight">{label}</span>
+            <span className="block text-xs text-ink-soft leading-tight mt-0.5 truncate">{sub}</span>
           </span>
-        </span>
-        <MasteryBar m={m} className="h-2.5 mt-3" />
-        <span className="block text-xs text-ink-soft mt-2">
-          {m.dominada} dominadas · {m.casi + m.aprendiendo} en repaso · {m.nueva} sin ver
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={() => onAction({ type: "review" })}
-        disabled={!can}
-        className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2 disabled:bg-transparent disabled:text-ink-soft disabled:border disabled:border-line"
-      >
-        <ArrowCounterClockwise size={18} weight="bold" />
-        {due.length ? `Repaso del día · ${due.length} pendientes` : fresh.length ? "Repaso del día" : "Hoy no hay nada pendiente"}
-      </button>
-    </section>
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -603,6 +631,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
   const rivals = (liga?.rows || []).map((r) => r.usuario).filter((u) => u !== user);
   const [rival, setRival] = useState(null);
   const [tema, setTema] = useState("all");
+  const [picking, setPicking] = useState(false);
   const duels = duelsOf(user, store.liga, liga?.rows || []);
   const pending = duels.filter((d) => d.status === "pending" && d.from !== user);
   const waiting = duels.filter((d) => d.status === "waiting");
@@ -639,45 +668,69 @@ function DuelCard({ bank, store, liga, user, onAction }) {
       )}
 
       {rivals.length ? (
-        <div className="mt-3 flex flex-col gap-2">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="A quién retas">
-            {rivals.map((u) => (
-              <button
-                key={u}
-                type="button"
-                aria-pressed={u === target}
-                onClick={() => setRival(u)}
-                className={`tap press h-10 px-4 rounded-full text-sm font-semibold ${u === target ? "bg-ink text-ground" : "bg-card/70"}`}
-              >
-                {pretty(u)}
-              </button>
-            ))}
-          </div>
-          <label className="text-sm flex items-center gap-2">
-            <span className="shrink-0">Preguntas de</span>
-            <select value={tema} onChange={(e) => setTema(e.target.value)} className="flex-1 min-w-0 h-10 rounded-full bg-card px-3 text-sm">
-              <option value="all">Todo el temario</option>
-              {["comun", "especifico"].map((b) => (
-                <optgroup key={b} label={BLOCKS[b].label}>
-                  {temas
-                    .filter((t) => t.bloque === b)
-                    .map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.numero} · {t.titulo}
-                      </option>
-                    ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
-          <button type="button" onClick={() => play({ id: newDuelId(user), from: user, to: target, tema })} className="tap press w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold">
-            Retar a {pretty(target)}
-          </button>
-          <p className="text-xs">Juegas tú primero; le llega el aviso y tiene una semana. No suma puntos de liga: es por el honor.</p>
-        </div>
+        <button type="button" onClick={() => setPicking(true)} className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2">
+          <Sword size={18} weight="fill" /> Retar a alguien
+        </button>
       ) : (
         <p className="mt-2 text-sm">{liga?.status === "ok" ? "Aún no hay nadie más a quien retar." : "Para retar a alguien hace falta conexión con la nube."}</p>
       )}
+
+      <Sheet
+        open={picking && rivals.length > 0}
+        title="Nuevo duelo"
+        onClose={() => setPicking(false)}
+        body={
+          <div className="flex flex-col gap-4 text-ink pt-1">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="A quién retas">
+              {rivals.map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  aria-pressed={u === target}
+                  onClick={() => setRival(u)}
+                  className={`tap press h-11 px-5 rounded-full text-sm font-semibold ${u === target ? "bg-ink text-ground" : "bg-ground-2"}`}
+                >
+                  {pretty(u)}
+                </button>
+              ))}
+            </div>
+            <label className="text-sm flex flex-col gap-2">
+              <span className="label text-ink-soft">Preguntas de</span>
+              <select value={tema} onChange={(e) => setTema(e.target.value)} className="w-full min-w-0 h-12 rounded-full bg-ground border-2 border-line px-4 text-sm">
+                <option value="all">Todo el temario</option>
+                {["comun", "especifico"].map((b) => (
+                  <optgroup key={b} label={BLOCKS[b].label}>
+                    {temas
+                      .filter((t) => t.bloque === b)
+                      .map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.numero} · {t.titulo}
+                        </option>
+                      ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            <p className="text-sm text-ink-soft">Juegas tú primero; le llega el aviso y tiene una semana. No suma puntos de liga: es por el honor.</p>
+          </div>
+        }
+        actions={
+          <>
+            <Button
+              variant="ink"
+              onClick={() => {
+                setPicking(false);
+                play({ id: newDuelId(user), from: user, to: target, tema });
+              }}
+            >
+              <Sword size={20} weight="fill" /> Retar a {target ? pretty(target) : ""}
+            </Button>
+            <Button variant="paper" onClick={() => setPicking(false)}>
+              Cancelar
+            </Button>
+          </>
+        }
+      />
 
       {(waiting.length > 0 || done.length > 0) && (
         <ul className="mt-3 flex flex-col gap-1 text-sm">
@@ -710,7 +763,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
   );
 }
 
-export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync, liga, user }) {
+export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, onGoLiga, sync, liga, user }) {
   const intro = useRef(!introPlayed).current;
   useEffect(() => {
     introPlayed = true;
@@ -718,19 +771,26 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
   const streakCount = streakView(store.streak).count;
   const pendingMistakes = Object.keys(store.mistakes).length;
   const dateLabel = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+  // Debajo del saludo, lo que empuja a estudiar hoy: la cuenta atrás y la meta del día.
+  const left = daysUntil(store.plan.examDate, dateKey());
+  const doneToday = store.daily[dateKey()] || 0;
+  const goal = store.plan.dailyGoal;
+  const subtitle =
+    doneToday >= goal
+      ? "Meta de hoy cumplida. ¿Un poco más?"
+      : left > 0
+        ? `Faltan ${left} ${left === 1 ? "día" : "días"} · hoy ${doneToday}/${goal}`
+        : doneToday
+          ? `Vas ${doneToday} de ${goal} hoy`
+          : "Toca estudiar";
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <Pollo face="happy" className="w-[68px] h-auto shrink-0 anim-hop" />
-            <div className="min-w-0">
-              <h1 className="display text-[34px] lg:text-[44px] leading-[1.05]">¡Hola{user ? `, ${pretty(user)}` : ""}!</h1>
-              <p className="text-[17px] font-semibold mt-0.5">Toca estudiar</p>
-            </div>
-          </div>
-          <p className="label text-ink-soft mt-3 first-letter:uppercase">{dateLabel}</p>
+          <h1 className="display text-[34px] lg:text-[44px] leading-[1.05]">¡Hola{user ? `, ${pretty(user)}` : ""}!</h1>
+          <p className="text-[17px] font-semibold mt-1">{subtitle}</p>
+          <p className="label text-ink-soft mt-2 first-letter:uppercase">{dateLabel}</p>
           {sync && sync !== "off" && (
             <p className="text-xs text-ink-soft mt-1 flex items-center gap-1.5 lg:hidden">
               <span className={`w-2 h-2 rounded-full ${sync === "ok" ? "bg-olive" : sync === "syncing" ? "bg-sun" : "bg-line-strong"}`} aria-hidden="true" />
@@ -796,55 +856,35 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
         </Paper>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start">
-        <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start">
+        <div className="flex flex-col gap-6 min-w-0">
+          {/* Primero, lo que toca ahora; justo debajo, todo lo demás a un toque */}
           <TutorCard bank={bank} store={store} onAction={onAction} />
-          <MasteryCard bank={bank} store={store} onGoDominio={onGoDominio} onAction={onAction} />
-          <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
-          <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
-          <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
-          <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
-        </div>
-        <div className="flex flex-col gap-6">
-          <HomeCabinet store={store} onPlan={onPlan} intro={intro} />
-
-          {/* Test rápido de un toque: para los ratos muertos */}
-          <button type="button" onClick={onQuickTest} className="tap press text-left rounded-folder bg-ink text-ground p-5 flex items-center gap-4">
-            <span className="w-12 h-12 blob bg-sun text-ink flex items-center justify-center shrink-0">
-              <Lightning size={24} weight="fill" />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="display text-[26px] block">Test rápido</span>
-              <span className="text-sm leading-snug block mt-1 text-ground/85">10 preguntas de lo que ya has estudiado, con la corrección al momento</span>
-            </span>
-            <CaretRight size={22} weight="bold" className="shrink-0" />
-          </button>
+          <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} />
 
           {pendingMistakes > 0 && (
-            <button type="button" onClick={onReview} className="tap press text-left rounded-folder bg-sky text-ink p-5 flex items-center gap-4">
+            <button type="button" onClick={onReview} className="tap press text-left rounded-folder bg-sky text-ink p-4 flex items-center gap-4">
               <span className="w-12 h-12 blob bg-card text-ink flex items-center justify-center shrink-0">
                 <ArrowCounterClockwise size={24} weight="bold" />
               </span>
               <span className="flex-1 min-w-0">
-                <span className="display text-[28px] block">Repasar fallos</span>
-                <span className="text-sm leading-snug block mt-1">Salen del repaso cuando las aciertas {MASTERED_AFTER} veces seguidas</span>
+                <span className="display text-[24px] block">Repasar fallos</span>
+                <span className="text-sm leading-snug block mt-0.5">Salen cuando las aciertas {MASTERED_AFTER} veces seguidas</span>
               </span>
-              <span className="brand text-[44px]" aria-label={`${pendingMistakes} pendientes`}>
+              <span className="brand text-[40px]" aria-label={`${pendingMistakes} pendientes`}>
                 {pendingMistakes}
               </span>
             </button>
           )}
 
-          <button type="button" onClick={onGoTemario} className="tap press w-full text-left flex items-center gap-3 rounded-folder bg-card paper-shadow px-4 py-3 lg:hidden">
-            <span className="w-11 h-11 blob bg-mint flex items-center justify-center shrink-0">
-              <BookOpen size={22} weight="fill" />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block font-semibold">Apuntes</span>
-              <span className="block text-sm text-ink-soft">La teoría de cada tema, para leerla del tirón</span>
-            </span>
-            <CaretRight size={20} weight="bold" className="text-ink-soft shrink-0" />
-          </button>
+          <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
+        </div>
+        <div className="flex flex-col gap-6 min-w-0">
+          {/* Retarse: contra el reto común y contra los demás */}
+          <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
+          <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
+          <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
+          <HomeCabinet store={store} onPlan={onPlan} intro={intro} />
         </div>
       </div>
     </div>

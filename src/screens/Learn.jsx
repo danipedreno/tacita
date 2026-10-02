@@ -130,28 +130,31 @@ const readSeen = () => {
 
 function Node({ state, color, label, offset, onClick, isNext, nodeRef, index, crown, hatch }) {
   return (
-    <li className="relative flex justify-center" style={{ transform: `translateX(${offset}px)` }}>
-      {isNext && (
-        <span className={`absolute top-1/2 z-[1] ${offset > 0 ? "right-1/2 mr-14" : "left-1/2 ml-14"}`} aria-hidden="true">
-          <span className="block -translate-y-1/2 anim-bob-x relative rounded-full bg-ink text-ground text-sm font-bold px-3.5 py-2 whitespace-nowrap">
-            ¡Sigue aquí!
-            <span className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rotate-45 bg-ink ${offset > 0 ? "-right-1" : "-left-1"}`} />
+    <li className="flex justify-center">
+      {/* Solo se desplaza el huevo (no la fila entera): si no, el zigzag ensancha la página en el móvil */}
+      <span className="relative" style={{ transform: `translateX(${offset}px)` }}>
+        {isNext && (
+          <span className={`absolute top-1/2 z-[1] ${offset > 0 ? "right-1/2 mr-14" : "left-1/2 ml-14"}`} aria-hidden="true">
+            <span className="block -translate-y-1/2 anim-bob-x relative rounded-full bg-ink text-ground text-sm font-bold px-3.5 py-2 whitespace-nowrap">
+              ¡Sigue aquí!
+              <span className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rotate-45 bg-ink ${offset > 0 ? "-right-1" : "-left-1"}`} />
+            </span>
           </span>
-        </span>
-      )}
-      <button
-        ref={nodeRef}
-        type="button"
-        onClick={onClick}
-        aria-label={label}
-        className="tap press relative w-[92px] h-[100px] flex items-end justify-center"
-      >
-        {state === "done" ? (
-          <PolloEnHuevo face={crown ? "sparkle" : doneFace(index)} tint={color} crown={crown} hatch={hatch} className="w-full h-full" />
-        ) : (
-          <Huevo state={state === "next" ? "awake" : "sleep"} tint={color} crown={crown} className="w-full h-full" />
         )}
-      </button>
+        <button
+          ref={nodeRef}
+          type="button"
+          onClick={onClick}
+          aria-label={label}
+          className="tap press relative w-[92px] h-[100px] flex items-end justify-center"
+        >
+          {state === "done" ? (
+            <PolloEnHuevo face={crown ? "sparkle" : doneFace(index)} tint={color} crown={crown} hatch={hatch} className="w-full h-full" />
+          ) : (
+            <Huevo state={state === "next" ? "awake" : "sleep"} tint={color} crown={crown} className="w-full h-full" />
+          )}
+        </button>
+      </span>
     </li>
   );
 }

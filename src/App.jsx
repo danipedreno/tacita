@@ -421,7 +421,7 @@ function UserApp({ user, bank, logout }) {
             <>
               <SideNav tab={tab} onChange={goTab} xp={store.xp} user={user} sync={sync} />
               <main ref={mainRef} className="absolute inset-0 lg:left-64 scroll-area">
-                <div key={tab} className={`mx-auto px-4 lg:px-10 pt-safe lg:pt-10 ${pod.index >= 0 ? "pb-tabbar-player" : "pb-tabbar"} lg:pb-24 anim-rise ${tab === "home" ? "max-w-md lg:max-w-5xl" : "max-w-md lg:max-w-3xl"}`}>
+                <div key={tab} className={`mx-auto px-4 lg:px-10 pt-safe lg:pt-10 ${pod.index >= 0 ? "pb-tabbar-player" : "pb-tabbar"} lg:pb-24 overflow-x-clip anim-rise ${tab === "home" ? "max-w-md lg:max-w-5xl" : "max-w-md lg:max-w-3xl"}`}>
                   {tab === "home" && (
                     <Home
                       store={store}
@@ -430,6 +430,7 @@ function UserApp({ user, bank, logout }) {
                       onDismissInstall={() => setStore((s) => ({ ...s, installDismissed: true }))}
                       onGoTemario={() => goTab("temario")}
                       onGoDominio={() => goTab("dominio")}
+                      onGoLiga={() => goTab("badges")}
                       liga={liga}
                       user={user}
                       onReview={onReview}
