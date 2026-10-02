@@ -77,6 +77,7 @@ export function mergeStores(local, remote, localNewer) {
     goalDays: [...new Set([...(local.goalDays || []), ...(remote.goalDays || [])])].sort(),
     mistakes: mergeMap(local.mistakes, remote.mistakes, (x, y) => maxBy(x, y, (m) => m.last || "")),
     cards: mergeMap(local.cards, remote.cards, (x, y) => maxBy(x, y, (c) => c.seen || 0)),
+    srs: mergeMap(local.srs, remote.srs, (x, y) => maxBy(x, y, (q) => `${q.last || ""}|${String(q.seen || 0).padStart(5, "0")}`)),
     lessons: mergeMap(local.lessons, remote.lessons, (x, y) => ({
       done: !!(x.done || y.done),
       best: Math.max(x.best || 0, y.best || 0),

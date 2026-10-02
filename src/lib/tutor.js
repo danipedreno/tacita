@@ -8,6 +8,7 @@
    Además, tres misiones diarias: lecciones, tarjetas y preguntas de test. */
 import { MASTERED_BOX, dateKey, lessonKey } from "./logic.js";
 import { learnTemas, temaLabel } from "./bank.js";
+import { reviewState } from "./srs.js";
 
 export const unitDoneCount = (tema, store) => tema.lecciones.filter((_, i) => store.lessons?.[lessonKey(tema.id, i)]?.done).length;
 
@@ -47,7 +48,7 @@ export function missions(store, today = dateKey()) {
 
 /**
  * Recomendación principal y alternativas. Cada una: { id, kicker, title, text, action, cta }.
- * `action`: { type: "lesson", temaId, index } | { type: "cards" } | { type: "mistakes" } | { type: "temaExam", temaId } | { type: "weak", temaId }
+ * `action`: { type: "review" } | { type: "lesson", temaId, index } | { type: "cards" } | { type: "mistakes" } | { type: "temaExam", temaId } | { type: "weak", temaId }
  */
 export function recommend(bank, store, today = dateKey()) {
   const recs = [];
@@ -56,6 +57,17 @@ export function recommend(bank, store, today = dateKey()) {
   const next = nextLesson(bank, store);
   const lessonsToday = store.log?.[today]?.lessons || 0;
 
+  const review = reviewState(bank, store, today);
+  if (review.due.length >= 5) {
+    recs.push({
+      id: "review",
+      kicker: "Lo primero de hoy",
+      title: `${review.due.length} preguntas para no olvidar`,
+      text: "Es lo que toca repasar hoy según tu calendario de repaso: lo que fallaste vuelve pronto y lo que dominas, cada vez más tarde. Así se queda para siempre.",
+      cta: "Repaso del día",
+      action: { type: "review" },
+    });
+  }
   if (due >= 10) {
     recs.push({
       id: "cards",

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, BookOpen, CaretRight, Check, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
 import { DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { GoalRing } from "./Celebration.jsx";
 import { useCountUp } from "../lib/motion.js";
 import { greeting, missions, nextLesson, recommend } from "../lib/tutor.js";
+import { masteryOf, reviewState } from "../lib/srs.js";
+import { MasteryBar } from "./Mastery.jsx";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -441,7 +443,41 @@ function Missions({ store, bank, onAction, onQuickTest }) {
   );
 }
 
-export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync }) {
+/** Tarjeta de dominio: cuánto llevas memorizado y lo que toca repasar hoy. */
+function MasteryCard({ bank, store, onGoDominio, onAction }) {
+  const m = masteryOf((bank?.preguntas || []).filter((q) => q.tema !== "casos"), store.srs);
+  const { due, fresh } = reviewState(bank, store);
+  const can = due.length || fresh.length;
+  return (
+    <section aria-labelledby="dominio-title" className="rounded-folder bg-card paper-shadow p-4">
+      <button type="button" onClick={onGoDominio} className="tap w-full text-left">
+        <span className="flex items-baseline justify-between gap-2">
+          <span id="dominio-title" className="display text-[24px] flex items-center gap-2">
+            <Brain size={22} weight="fill" className="text-plum" /> Tu dominio
+          </span>
+          <span className="flex items-center gap-1 font-mono text-sm">
+            {m.pct}% <CaretRight size={16} weight="bold" className="text-ink-soft" />
+          </span>
+        </span>
+        <MasteryBar m={m} className="h-2.5 mt-3" />
+        <span className="block text-xs text-ink-soft mt-2">
+          {m.dominada} dominadas · {m.casi + m.aprendiendo} en repaso · {m.nueva} sin ver
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onAction({ type: "review" })}
+        disabled={!can}
+        className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
+      >
+        <ArrowCounterClockwise size={18} weight="bold" />
+        {due.length ? `Repaso del día · ${due.length} pendientes` : fresh.length ? "Repaso del día" : "Hoy no hay nada pendiente"}
+      </button>
+    </section>
+  );
+}
+
+export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, sync }) {
   const intro = useRef(!introPlayed).current;
   useEffect(() => {
     introPlayed = true;
@@ -525,6 +561,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex flex-col gap-6">
           <TutorCard bank={bank} store={store} onAction={onAction} />
+          <MasteryCard bank={bank} store={store} onGoDominio={onGoDominio} onAction={onAction} />
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6">

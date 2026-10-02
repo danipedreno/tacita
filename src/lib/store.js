@@ -23,6 +23,7 @@ export const DEFAULT_STORE = {
   goalDays: [], // días en que se cumplió la meta
   counters: { marathons: 0, mastered: 0, highScores: 0 },
   cards: {}, // estado de cada tarjeta: { box, due, seen, last }
+  srs: {}, // repaso espaciado de cada pregunta: { box, due, seen, right, last }
   cardsHistory: [], // repasos de tarjetas terminados
   activeExam: null,
   lastResult: null,

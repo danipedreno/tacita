@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowCounterClockwise, BookOpen, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, Brain, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
 import { applyCardsResult, applyExamResult, applyLessonResult, createExam, mistakePool, rankInfo } from "./lib/logic.js";
 import { bankQuestions, getAccess, temaById, temaLabel, useBank } from "./lib/bank.js";
 import { useClasificacion, useSync } from "./lib/sync.js";
 import { ligaInfo, ligaTotals, tramoLabel } from "./lib/liga.js";
 import { FoodIcon } from "./foods.jsx";
 import { studiedTemas } from "./lib/tutor.js";
+import { dailyReviewPool, srsAfterExam, srsAfterLesson, temaReviewPool } from "./lib/srs.js";
+import Mastery from "./screens/Mastery.jsx";
+import { dateKey } from "./lib/logic.js";
 import CardsScreen from "./screens/Cards.jsx";
 import { DEFAULT_STORE, useInstallPrompt, useNow, usePersistentStore } from "./lib/store.js";
 import { AppToaster, notify } from "./ui.jsx";
@@ -31,7 +34,7 @@ const TABS = [
   { id: "badges", label: "Logros", Icon: Trophy, color: PAL.lilac },
 ];
 // En escritorio, los apuntes tienen su propia entrada en la barra lateral.
-const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon: BookOpen, color: PAL.mint }, TABS[4]];
+const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon: BookOpen, color: PAL.mint }, { id: "dominio", label: "Dominio", Icon: Brain, color: PAL.sky }, TABS[4]];
 
 /**
  * Barra de pestañas (móvil). La pestaña activa es una capa de color recortada con clip-path que se desliza
@@ -211,8 +214,10 @@ function UserApp({ user, bank, logout }) {
       const s = storeRef.current;
       if (!s.activeExam || finishedIds.current.has(s.activeExam.id)) return;
       finishedIds.current.add(s.activeExam.id);
-      const { store: next, report } = applyExamResult(s, s.activeExam, reason, new Date());
-      setStore(next);
+      const now = new Date();
+      const { store: next, report } = applyExamResult(s, s.activeExam, reason, now);
+      // Todo lo respondido entra en el repaso espaciado.
+      setStore({ ...next, srs: srsAfterExam(s.srs, s.activeExam, dateKey(now)) });
       setTab("test");
       // Pantallas de «¡Enhorabuena!» encadenadas; debajo queda el resultado.
       setCelebration({ queue: report.celebrations, report });
@@ -261,6 +266,19 @@ function UserApp({ user, bank, logout }) {
     const pool = bankQuestions(bank, "all", temaId);
     startExam({ pool, count: 15, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "temario", temaExam: temaId, title: `Examen del ${temaLabel(bank, temaId)}` });
   };
+  // Repaso del día: lo que toca según el calendario de repaso, mezclado entre temas.
+  const onDailyReview = () => {
+    const s = storeRef.current;
+    const pool = dailyReviewPool(bank, s);
+    if (!pool.length) return;
+    startExam({ pool, count: pool.length, ordered: true, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "review", title: "Repaso del día" });
+  };
+  const onTemaReview = (temaId) => {
+    const s = storeRef.current;
+    const pool = temaReviewPool(bank, s, temaId);
+    if (!pool.length) return;
+    startExam({ pool, count: pool.length, ordered: true, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "review", title: `Repaso · ${temaLabel(bank, temaId)}` });
+  };
   const onPractice = ({ type, id }) => {
     const s = storeRef.current;
     if (type === "repaso") startExam({ pool: bankQuestions(bank, "all", "rep"), count: 20, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "temario", title: "Test de repaso" });
@@ -279,8 +297,10 @@ function UserApp({ user, bank, logout }) {
     setCelebration({ queue: report.celebrations, report });
   };
   const onLessonFinish = (result) => {
-    const { store: next, report } = applyLessonResult(storeRef.current, result, new Date());
-    setStore(next);
+    const now = new Date();
+    const { store: next, report } = applyLessonResult(storeRef.current, result, now);
+    const lessonTitle = temaById(bank, result.temaId)?.lecciones[result.index]?.titulo;
+    setStore({ ...next, srs: srsAfterLesson(next.srs, bank, result.temaId, lessonTitle, dateKey(now)) });
     setLesson(null);
     setCelebration({ queue: report.celebrations, report });
   };
@@ -294,6 +314,8 @@ function UserApp({ user, bank, logout }) {
       setTab("cards");
     } else if (a.type === "mistakes") onReview();
     else if (a.type === "temaExam") onTemaExam(a.temaId);
+    else if (a.type === "review") onDailyReview();
+    else if (a.type === "temaReview") onTemaReview(a.temaId);
     else if (a.type === "weak") {
       const s = storeRef.current;
       startExam({ pool: bankQuestions(bank, "all", a.temaId), count: 10, feedback: "immediate", secsPerQ: s.settings.secsPerQ, source: "temario", title: `Refuerzo · ${temaLabel(bank, a.temaId)}` });
@@ -349,6 +371,7 @@ function UserApp({ user, bank, logout }) {
                       install={install}
                       onDismissInstall={() => setStore((s) => ({ ...s, installDismissed: true }))}
                       onGoTemario={() => goTab("temario")}
+                      onGoDominio={() => goTab("dominio")}
                       onReview={onReview}
                       onPlan={(patch) => setStore((s) => ({ ...s, plan: { ...s.plan, ...patch } }))}
                       onQuickTest={onQuickTest}
@@ -398,6 +421,7 @@ function UserApp({ user, bank, logout }) {
                       }}
                     />
                   )}
+                  {tab === "dominio" && <Mastery bank={bank} store={store} onReview={onDailyReview} onTemaReview={onTemaReview} onStartLesson={startLesson} />}
                   {tab === "badges" && <Achievements store={store} user={user} liga={liga} onReset={onReset} />}
                 </div>
               </main>
