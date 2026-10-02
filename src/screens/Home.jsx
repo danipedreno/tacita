@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowCounterClockwise, BookOpen, CaretRight, Check, Flag, DeviceMobile, Fire, Headphones, Lightning, SpeakerHigh, SpeakerSlash, Sword, Trophy, X, XCircle } from "@phosphor-icons/react";
-import { BLOCKS, DAILY_GOALS, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
+import { BLOCKS, DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
 import { Button, Folder, Galones, IconButton, ArtIcon, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { GoalRing } from "./Celebration.jsx";
@@ -490,24 +490,12 @@ function Missions({ store, bank, onAction, onQuickTest }) {
 }
 
 /** Accesos directos: lo que no está en la barra de abajo (pódcast, apuntes, liga…) a un toque. */
-function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, onGoDominio, onGoLiga, onGoPodcast }) {
+function Shortcuts({ bank, onGoTemario, onGoLiga, onGoPodcast }) {
   const pod = usePodcast();
   const playing = pod.queue[pod.index];
   const eps = learnTemas(bank).flatMap((t) => episodesOf(bank, t.id));
   const heard = eps.filter((e) => pod.heard[e.key]).length;
-  const { due, fresh } = reviewState(bank, store);
-  const mistakes = Object.keys(store.mistakes || {}).length;
   const items = [
-    { id: "test", label: "Test rápido", sub: "10 preguntas", Icon: Lightning, color: PAL.peach, onClick: onQuickTest },
-    {
-      id: "repaso",
-      label: "Repaso",
-      sub: due.length ? `${due.length} pendientes` : fresh.length ? "Preguntas nuevas" : "Al día",
-      Icon: ArrowCounterClockwise,
-      color: PAL.lilac,
-      badge: due.length || null,
-      onClick: () => (due.length || fresh.length ? onAction({ type: "review" }) : onGoDominio()),
-    },
     {
       id: "podcast",
       label: "Pódcast",
@@ -517,15 +505,6 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
       onClick: onGoPodcast,
     },
     { id: "apuntes", label: "Apuntes", sub: "Teoría y esquemas", Icon: BookOpen, color: PAL.mint, onClick: onGoTemario },
-    {
-      id: "fallos",
-      label: "Fallos",
-      sub: mistakes ? `${mistakes} por repasar` : "Ninguno pendiente",
-      Icon: XCircle,
-      color: PAL.sky,
-      badge: mistakes || null,
-      onClick: () => (mistakes ? onReview() : onGoDominio()),
-    },
     { id: "liga", label: "Liga y logros", sub: "Clasificación y medallas", Icon: Trophy, color: PAL.peach, onClick: onGoLiga },
   ];
   return (
@@ -543,6 +522,105 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
         </button>
       ))}
     </nav>
+  );
+}
+
+/* Tarjetas de práctica: mismo formato que el reto y los duelos (título con icono, etiquetas, texto y botón). */
+function PracticeCard({ id, color, Icon, title, tags, children, cta, onClick, disabled, secondary }) {
+  return (
+    <section aria-labelledby={`${id}-title`} className="rounded-folder p-4" style={{ background: color }}>
+      <h2 id={`${id}-title`} className="display text-[26px] flex items-center gap-2">
+        <Icon size={22} weight="fill" /> {title}
+      </h2>
+      <p className="mt-2 flex flex-wrap gap-1.5">
+        {tags.map((t) => (
+          <span key={t} className="tag">
+            {t}
+          </span>
+        ))}
+      </p>
+      <p className="mt-2 text-[15px] leading-snug">{children}</p>
+      {cta && (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold disabled:bg-transparent disabled:text-ink disabled:border disabled:border-ink/40"
+        >
+          {cta}
+        </button>
+      )}
+      {secondary}
+    </section>
+  );
+}
+
+function ReviewCard({ bank, store, onAction, onGoDominio }) {
+  const { due, fresh } = reviewState(bank, store);
+  const can = due.length || fresh.length;
+  return (
+    <PracticeCard
+      id="repaso"
+      color={PAL.lilac}
+      Icon={ArrowCounterClockwise}
+      title="Repaso del día"
+      tags={[due.length ? `${due.length} pendientes` : fresh.length ? "Preguntas nuevas" : "Al día", "Repaso espaciado"]}
+      cta={can ? (due.length ? `Repasar ${due.length} preguntas` : "Empezar el repaso") : "Hoy no hay nada pendiente"}
+      disabled={!can}
+      onClick={() => onAction({ type: "review" })}
+      secondary={
+        <button type="button" onClick={onGoDominio} className="mt-2 w-full text-sm font-semibold underline underline-offset-4">
+          Ver tu dominio del temario
+        </button>
+      }
+    >
+      Lo que toca repasar hoy para no olvidarlo. Cada pregunta que aciertas tarda más en volver; la que fallas vuelve pronto.
+    </PracticeCard>
+  );
+}
+
+function QuickTestCard({ onQuickTest }) {
+  return (
+    <PracticeCard id="rapido" color={PAL.mint} Icon={Lightning} title="Test rápido" tags={["10 preguntas", "Corrección al momento"]} cta="Hacer un test rápido" onClick={onQuickTest}>
+      Preguntas de los temas que ya has empezado, para los ratos muertos: el autobús, la cola del médico…
+    </PracticeCard>
+  );
+}
+
+function MistakesCard({ store, onReview }) {
+  const n = Object.keys(store.mistakes || {}).length;
+  return (
+    <PracticeCard
+      id="fallos"
+      color={PAL.sky}
+      Icon={XCircle}
+      title="Tus fallos"
+      tags={[n ? `${n} ${n === 1 ? "pendiente" : "pendientes"}` : "Ninguno pendiente", `Fuera al acertar ${MASTERED_AFTER} veces`]}
+      cta={n ? `Repasar ${n} ${n === 1 ? "fallo" : "fallos"}` : null}
+      onClick={onReview}
+    >
+      {n
+        ? `Las preguntas que has fallado en tests y lecciones. Salen de aquí cuando las aciertas ${MASTERED_AFTER} veces seguidas.`
+        : "No tienes fallos pendientes. Cuando falles una pregunta, aparecerá aquí para repasarla."}
+    </PracticeCard>
+  );
+}
+
+/* Pila de tarjetas: al bajar, cada una se queda arriba y la siguiente sube por encima (solo en el móvil). */
+function CardStack({ children }) {
+  const items = [].concat(children).filter(Boolean);
+  return (
+    <div className="flex flex-col gap-4 lg:gap-6">
+      {items.map((c, i) => (
+        <div
+          key={i}
+          className="stack-card sticky lg:static rounded-folder"
+          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${12 + i * 12}px)`, zIndex: i + 1 }}
+        >
+          {c}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -922,15 +1000,20 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
         <div className="flex flex-col gap-6 min-w-0">
           {/* Primero, lo que toca ahora; justo debajo, todo lo demás a un toque */}
           <HomeCabinet bank={bank} store={store} onPlan={onPlan} onAction={onAction} intro={intro} />
-          <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onReview={onReview} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} onGoPodcast={onGoPodcast} />
+          <Shortcuts bank={bank} onGoTemario={onGoTemario} onGoLiga={onGoLiga} onGoPodcast={onGoPodcast} />
 
 
           <Missions store={store} bank={bank} onAction={onAction} onQuickTest={onQuickTest} />
         </div>
         <div className="flex flex-col gap-6 min-w-0">
-          {/* Retarse: contra el reto común y contra los demás */}
-          <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
-          <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
+          {/* Practicar y retarse: tarjetas que se apilan al hacer scroll */}
+          <CardStack>
+            <ReviewCard bank={bank} store={store} onAction={onAction} onGoDominio={onGoDominio} />
+            <QuickTestCard onQuickTest={onQuickTest} />
+            <MistakesCard store={store} onReview={onReview} />
+            <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
+            <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
+          </CardStack>
           <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
         </div>
       </div>
