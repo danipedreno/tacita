@@ -269,21 +269,113 @@ function PlanContent({ store, onPlan }) {
   );
 }
 
-/* «Tu examen» en Inicio: la cuenta atrás y la meta de hoy. El nivel y la racha completa están en Logros. */
-function ExamFolder({ store, onPlan, intro }) {
+/* Archivador de Inicio, unido al tutor: «Hoy» (el pollo y lo que toca), «Tu examen», «Racha» y «Nivel».
+   Las novedades se avisan en la pestaña: un punto en Racha si ha cambiado y «+N» en Nivel si has ganado XP. */
+const HOME_FOLDERS = [
+  { id: "hoy", label: "Hoy", color: PAL.navy, dark: true },
+  { id: "examen", label: "Examen", color: PAL.sun },
+  { id: "racha", label: "Racha", color: PAL.peach },
+  { id: "nivel", label: "Nivel", color: PAL.lilac },
+];
+let lastFolder = "hoy";
+
+function HomeCabinet({ bank, store, onPlan, onAction, intro }) {
+  const [active, setActive] = useState(lastFolder);
+  const [xpFrom, setXpFrom] = useState(undefined);
+  const [seenXp, setSeenXp] = useState(readXpSeen);
+  const [streakSeen, setStreakSeen] = useState(readStreakSeen);
+  const newXp = seenXp === null ? 0 : Math.max(0, store.xp - seenXp);
+  const streakNew = streakView(store.streak).state !== "none" && streakSeen !== streakNoticeKey(store.streak);
+  // Al abrir una pestaña con novedades, se marca como vista (y el nivel anima la subida de XP).
+  useEffect(() => {
+    if (active === "nivel" && (newXp || seenXp === null)) {
+      setXpFrom(newXp ? seenXp : undefined);
+      writeXpSeen(store.xp);
+      setSeenXp(store.xp);
+    }
+    if (active === "racha" && streakNew) {
+      markStreakSeen(store.streak);
+      setStreakSeen(streakNoticeKey(store.streak));
+    }
+  }, [active, newXp, seenXp, streakNew, store.xp, store.streak]);
+  const tabs = useRef([]);
+  const current = HOME_FOLDERS.find((f) => f.id === active) || HOME_FOLDERS[0];
+  const choose = (id) => {
+    lastFolder = id;
+    if (id !== "nivel") setXpFrom(undefined);
+    setActive(id);
+  };
+  const onKey = (e, k) => {
+    const dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const next = (k + dir + HOME_FOLDERS.length) % HOME_FOLDERS.length;
+    choose(HOME_FOLDERS[next].id);
+    tabs.current[next]?.focus();
+  };
   return (
-    <Folder color={PAL.sun} tab="Tu examen" className={intro ? "anim-folder" : ""}>
-      <PlanContent store={store} onPlan={onPlan} />
-    </Folder>
+    <section className={intro ? "anim-folder" : ""}>
+      <div role="tablist" aria-label="Hoy y tu progreso" className="flex items-end gap-1">
+        {HOME_FOLDERS.map((f, k) => {
+          const on = f.id === current.id;
+          const badge = f.id === "nivel" && newXp > 0 ? `+${newXp}` : f.id === "racha" && streakNew ? "•" : null;
+          return (
+            <button
+              key={f.id}
+              ref={(el) => (tabs.current[k] = el)}
+              type="button"
+              role="tab"
+              id={`carpeta-tab-${f.id}`}
+              aria-selected={on}
+              aria-controls="carpeta-inicio"
+              tabIndex={on ? 0 : -1}
+              onClick={() => choose(f.id)}
+              onKeyDown={(e) => onKey(e, k)}
+              className={`relative min-w-0 flex-1 -mb-px px-2 rounded-t-[16px] text-[14px] leading-none whitespace-nowrap transition-[height,background-color,color] duration-200 ease-out ${
+                on ? `h-[50px] z-10 font-semibold ${f.dark ? "text-ground" : "text-ink"}` : "h-11 z-0 font-medium text-ink-soft hover:text-ink"
+              }`}
+              style={{ background: on ? f.color : PAL.ground2 }}
+            >
+              {f.label}
+              {badge && (
+                <span className={`absolute -top-1.5 right-1 rounded-full bg-sky text-ink font-bold ${badge === "•" ? "w-3 h-3" : "px-1.5 py-0.5 text-[10px]"}`} aria-label={badge === "•" ? "novedad" : `${badge} XP`}>
+                  {badge === "•" ? "" : badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        id="carpeta-inicio"
+        role="tabpanel"
+        aria-labelledby={`carpeta-tab-${current.id}`}
+        className={`rounded-folder ${current.id === HOME_FOLDERS[0].id ? "rounded-tl-none" : ""} ${current.dark ? "text-ground" : "text-ink"} transition-colors duration-200 ease-out`}
+        style={{ background: current.color }}
+      >
+        <div key={current.id} className="anim-fade">
+          {current.id === "hoy" && <TutorCard bank={bank} store={store} onAction={onAction} bare />}
+          {current.id === "examen" && <PlanContent store={store} onPlan={onPlan} />}
+          {current.id === "racha" && <StreakContent streak={store.streak} />}
+          {current.id === "nivel" && <RankContent key={xpFrom ?? "sin-animar"} xp={store.xp} from={xpFrom} />}
+        </div>
+      </div>
+    </section>
   );
 }
 
-/* Aviso de racha: sale en Inicio cuando la racha cambia (sube, está en peligro o se corta) y, una vez visto,
-   se queda en Logros. La clave recuerda el estado ya visto. */
+/* Racha ya vista: la clave recuerda el estado (día, estado y días seguidos) que ya se enseñó. */
 const STREAK_SEEN_KEY = "tacita-racha-vista.v1";
 export const streakNoticeKey = (streak) => {
   const v = streakView(streak);
   return `${dateKey()}|${v.state}|${v.count}`;
+};
+const readStreakSeen = () => {
+  try {
+    return localStorage.getItem(STREAK_SEEN_KEY);
+  } catch (e) {
+    return null;
+  }
 };
 export const markStreakSeen = (streak) => {
   try {
@@ -293,50 +385,14 @@ export const markStreakSeen = (streak) => {
   }
 };
 
-function StreakNotice({ streak, onOpen }) {
-  const key = streakNoticeKey(streak);
-  const [hidden, setHidden] = useState(() => {
-    try {
-      return localStorage.getItem(STREAK_SEEN_KEY) === key;
-    } catch (e) {
-      return false;
-    }
-  });
-  const view = streakView(streak);
-  if (hidden || view.state === "none") return null;
-  const text = {
-    done: { kicker: `¡Racha de ${view.count} ${view.count === 1 ? "día" : "días"}!`, body: "Hoy ya has cumplido. Vuelve mañana para seguir sumando." },
-    pending: { kicker: `Tu racha de ${view.count} ${view.count === 1 ? "día" : "días"} está en juego`, body: "Haz una lección o un test hoy para no perderla." },
-    broken: { kicker: "La racha se ha cortado", body: "Empieza otra hoy: con una lección basta." },
-  }[view.state];
-  const seen = () => {
-    markStreakSeen(streak);
-    setHidden(true);
-  };
-  return (
-    <div className="rounded-folder bg-peach p-3 pl-4 flex items-center gap-3 anim-pop" role="status">
-      <button type="button" onClick={() => (seen(), onOpen())} className="tap flex-1 min-w-0 flex items-center gap-3 text-left">
-        <Fire size={28} weight="fill" className={view.state === "broken" ? "text-ink/40 shrink-0" : "text-plum anim-flicker shrink-0"} />
-        <span className="min-w-0">
-          <span className="block font-semibold leading-tight">{text.kicker}</span>
-          <span className="block text-sm leading-snug mt-0.5">{text.body}</span>
-        </span>
-      </button>
-      <IconButton label="Ocultar aviso de racha" onClick={seen} className="text-ink shrink-0 -my-1">
-        <X size={20} weight="bold" />
-      </IconButton>
-    </div>
-  );
-}
-
 /** El tutor: saludo, lo que te recomienda ahora y otras opciones. */
-function TutorCard({ bank, store, onAction }) {
+function TutorCard({ bank, store, onAction, bare = false }) {
   const recs = recommend(bank, store);
   const [main, ...rest] = recs;
   // «¡Buenas tardes! Soy tu tutor…» → titular «¡Buenas tardes!» y el resto como entradilla
   const [, hi, intro] = greeting(store).match(/^(.*?[!?])\s*(.*)$/) || [, greeting(store), ""];
   return (
-    <section aria-labelledby="tutor-title" className="rounded-folder bg-forest text-ground p-4 relative overflow-hidden">
+    <section aria-labelledby="tutor-title" className={`${bare ? "" : "rounded-folder bg-forest"} text-ground p-4 relative overflow-hidden`}>
       {/* Habla el tutor: el saludo sale de su boca en un bocadillo de cómic */}
       <div className="flex items-center gap-1 mb-3">
         <span className="w-[84px] shrink-0 -ml-1 anim-peek" aria-hidden="true">
@@ -441,8 +497,6 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
   const heard = eps.filter((e) => pod.heard[e.key]).length;
   const { due, fresh } = reviewState(bank, store);
   const mistakes = Object.keys(store.mistakes || {}).length;
-  const seenXp = readXpSeen();
-  const newXp = seenXp === null ? 0 : Math.max(0, store.xp - seenXp);
   const items = [
     { id: "test", label: "Test rápido", sub: "10 preguntas", Icon: Lightning, color: PAL.peach, onClick: onQuickTest },
     {
@@ -472,7 +526,7 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
       badge: mistakes || null,
       onClick: () => (mistakes ? onReview() : onGoDominio()),
     },
-    { id: "liga", label: "Liga y logros", sub: newXp > 0 ? `+${newXp} XP nuevos` : "Nivel y medallas", Icon: Trophy, color: PAL.peach, badge: newXp > 0 ? `+${newXp}` : null, onClick: onGoLiga },
+    { id: "liga", label: "Liga y logros", sub: "Clasificación y medallas", Icon: Trophy, color: PAL.peach, onClick: onGoLiga },
   ];
   return (
     <nav aria-label="Accesos directos" className="grid grid-cols-3 gap-2">
@@ -822,8 +876,6 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
         </div>
       </header>
 
-      <StreakNotice streak={store.streak} onOpen={onGoLiga} />
-
       {!install.installed && !install.canInstall && !store.installDismissed && install.browser !== "desktop" && (
         <Paper className="p-4 flex gap-3 anim-pop">
           <div className="w-12 h-12 shrink-0 self-start bg-mist blob flex items-center justify-center">
@@ -869,7 +921,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex flex-col gap-6 min-w-0">
           {/* Primero, lo que toca ahora; justo debajo, todo lo demás a un toque */}
-          <TutorCard bank={bank} store={store} onAction={onAction} />
+          <HomeCabinet bank={bank} store={store} onPlan={onPlan} onAction={onAction} intro={intro} />
           <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onReview={onReview} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} onGoPodcast={onGoPodcast} />
 
 
@@ -880,7 +932,6 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
           <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
           <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
-          <ExamFolder store={store} onPlan={onPlan} intro={intro} />
         </div>
       </div>
     </div>
