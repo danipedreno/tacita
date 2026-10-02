@@ -42,14 +42,14 @@ const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon:
 
 /**
  * Barra de pestañas (móvil). La pestaña activa es una capa de color recortada con clip-path que se desliza
- * de una pestaña a otra: el pastel de cada sección cambia exactamente en el borde.
+ * de una pestaña a otra: la píldora negra (como el «Subscribe» de Creative Boom) cambia exactamente en el borde.
  */
 function TabBar({ tab, onChange }) {
   const index = TABS.findIndex((t) => t.id === tab);
   const n = TABS.length;
   return (
     <nav className="fixed left-3 right-3 tabbar-pos z-40 lg:hidden" aria-label="Navegación principal">
-      <div className="relative max-w-md mx-auto rounded-full bg-card p-1.5 shadow-[0_0_0_1px_#e4dbcc,0_18px_40px_-16px_rgba(33,38,51,0.45)]">
+      <div className="relative max-w-md mx-auto rounded-full bg-card p-1.5 shadow-[0_0_0_1px_#000,0_14px_32px_-18px_rgba(0,0,0,0.35)]">
         <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
           {TABS.map(({ id, label, Icon }) => (
             <button
@@ -70,8 +70,8 @@ function TabBar({ tab, onChange }) {
           className="absolute inset-1.5 grid gap-1 pointer-events-none transition-[clip-path] duration-[250ms] ease-in-out"
           style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))`, clipPath: `inset(0 ${((n - 1 - index) / n) * 100}% 0 ${(index / n) * 100}% round 999px)` }}
         >
-          {TABS.map(({ id, label, Icon, color }) => (
-            <div key={id} className="h-14 rounded-full flex flex-col items-center justify-center gap-0.5 text-ink" style={{ background: color }}>
+          {TABS.map(({ id, label, Icon }) => (
+            <div key={id} className="h-14 rounded-full flex flex-col items-center justify-center gap-0.5 bg-ink text-card">
               <Icon size={23} weight="fill" />
               <span className="text-[11px] font-semibold">{label}</span>
             </div>
@@ -91,7 +91,7 @@ function SideNav({ tab, onChange, xp, user, sync }) {
     <nav className="hidden lg:flex fixed inset-y-0 left-0 w-64 z-40 flex-col gap-1 border-r border-line bg-ground px-4 py-6" aria-label="Navegación principal">
       <p className="brand text-[34px] px-3 mb-1">Opoempollo</p>
       <p className="text-xs text-ink-soft px-3 mb-6 leading-snug">Subalterno · Ayuntamiento de Cádiz</p>
-      {SIDE_TABS.map(({ id, label, Icon, color }) => {
+      {SIDE_TABS.map(({ id, label, Icon }) => {
         const on = tab === id;
         return (
           <button
@@ -99,8 +99,7 @@ function SideNav({ tab, onChange, xp, user, sync }) {
             type="button"
             onClick={() => onChange(id)}
             aria-current={on ? "page" : undefined}
-            className={`tap press h-12 px-3 rounded-[14px] flex items-center gap-3 text-[16px] ${on ? "font-semibold text-ink" : "font-medium text-ink-soft hover:text-ink hover:bg-ground-2"}`}
-            style={on ? { background: color } : undefined}
+            className={`tap press h-12 px-4 rounded-full flex items-center gap-3 text-[16px] ${on ? "font-semibold bg-ink text-card" : "font-medium text-ink-soft hover:text-ink hover:bg-ground-2"}`}
           >
             <Icon size={24} weight={on ? "fill" : "regular"} />
             {label}
@@ -212,7 +211,7 @@ function UserApp({ user, bank, logout }) {
   useEffect(() => () => player.stop(), []); // al salir de la cuenta, se calla
   const ligaRef = useRef(liga);
   ligaRef.current = liga;
-  const [tab, setTab] = useState(() => (store.activeExam || store.lastResult ? "test" : "home"));
+  const [tab, setTab] = useState(() => (store.activeExam ? "test" : "home"));
   const install = useInstallPrompt();
   const [celebration, setCelebration] = useState(null); // { queue, report }
   const [lesson, setLesson] = useState(null); // { temaId, index }

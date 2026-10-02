@@ -1,4 +1,5 @@
-@import "@fontsource-variable/figtree/index.css";
+@import "@fontsource-variable/geist/index.css";
+@import "@fontsource-variable/space-grotesk/index.css";
 
 @tailwind base;
 @tailwind components;
@@ -15,26 +16,26 @@
   body,
   #root {
     height: 100%;
-    background: #f6f1e9;
+    background: #fbf7ef;
     overscroll-behavior: none;
   }
   body {
     @apply font-sans text-ink antialiased;
     font-optical-sizing: auto;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.005em;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 400;
     line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
   }
   ::selection {
-    background: #a9bccf;
-    color: #1e1e1c;
+    background: #ffc828;
+    color: #000000;
   }
   html {
-    scrollbar-color: #cfc4b1 transparent;
-    caret-color: #1e1e1c;
+    scrollbar-color: #c9c2b4 transparent;
+    caret-color: #000000;
   }
   .font-mono {
     font-variant-numeric: tabular-nums;
@@ -51,27 +52,50 @@
     cursor: pointer;
   }
   :focus-visible {
-    outline: 3px solid #1e1e1c;
+    outline: 3px solid #000000;
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Titulares: grotesca de peso medio, apretada, en caja baja (como Pelago) */
-  /* Titulares: grotesca muy gruesa y apretada (como Marshmallow) */
+  /* Titulares: grotesca de peso medio, grande y suelta (como Creative Boom con Roobert) */
   .display {
-    font-family: "Figtree Variable", system-ui, sans-serif;
-    font-weight: 800;
-    line-height: 0.98;
-    letter-spacing: -0.045em;
+    font-family: "Space Grotesk Variable", system-ui, sans-serif;
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
     text-wrap: balance;
   }
   /* La marca y las cifras grandes */
   .brand {
-    font-family: "Figtree Variable", system-ui, sans-serif;
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    line-height: 0.95;
+    font-family: "Space Grotesk Variable", system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  /* Etiqueta editorial: píldora con filo de tinta, en mayúsculas pequeñas (las «tags» de Creative Boom) */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  /* Antetítulo de sección: mayúsculas, negrita, espaciado */
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.2;
   }
   .label {
     @apply text-sm font-medium;
@@ -98,12 +122,12 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  /* Pelago es plano: nada de sombras duras, solo un filo tenue para separar del crema */
+  /* Plano, como Creative Boom: sin sombras, solo un filo fino para separar el blanco del crema */
   .folder-shadow {
     box-shadow: none;
   }
   .paper-shadow {
-    box-shadow: 0 0 0 1px #e4dbcc;
+    box-shadow: 0 0 0 1px #e6dfd1;
   }
   /* Mancha orgánica detrás de las ilustraciones */
   .blob {

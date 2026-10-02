@@ -50,7 +50,7 @@ export function Paper({ className = "", children, as: Tag = "div", ...rest }) {
    Controles
    --------------------------------------------------------------------- */
 const BUTTON_VARIANTS = {
-  yellow: "bg-sun text-ink hover:brightness-95",
+  yellow: "bg-peach text-ink hover:brightness-95",
   blue: "bg-ink text-ground hover:bg-navy",
   paper: "bg-card text-ink border-2 border-line hover:border-line-strong",
   ghost: "bg-transparent text-ink border-2 border-ink/80 hover:bg-ink/5",
@@ -147,7 +147,7 @@ export function ChoiceTile({ selected, onClick, color, title, note, illustration
       onClick={onClick}
       className={`tap press relative text-left rounded-[22px] p-3 transition-shadow duration-150 ${
         wide ? `col-span-2 flex items-center gap-3 ${compact ? "min-h-[72px]" : "min-h-[88px]"}` : `flex flex-col ${compact ? "min-h-[108px]" : "min-h-[128px]"}`
-      } ${selected ? "shadow-[inset_0_0_0_3px_#1e1e1c]" : ""}`}
+      } ${selected ? "shadow-[inset_0_0_0_3px_#000000]" : ""}`}
       style={{ background: color }}
     >
       <span
@@ -257,7 +257,7 @@ export function Picker({ id, label, value, options, onChange }) {
 }
 
 /** Barra de progreso animada con transform (scaleX), no con width: no recalcula el layout. */
-export function ProgressBar({ pct, color = "#1e1e1c", track = "bg-ground-2", className = "h-2", label }) {
+export function ProgressBar({ pct, color = "#000000", track = "bg-ground-2", className = "h-2", label }) {
   const v = Math.max(0, Math.min(100, pct));
   return (
     <div className={`${track} rounded-full overflow-hidden ${className}`} role="progressbar" aria-valuenow={Math.round(v)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
@@ -403,7 +403,7 @@ export function AppToaster() {
   return <Toaster position="top-center" offset={{ top }} mobileOffset={{ top, left: 16, right: 16 }} gap={8} />;
 }
 
-export function notify({ icon, color = "#a9bccf", kicker, text, duration = 3800 }) {
+export function notify({ icon, color = "#b4dcdc", kicker, text, duration = 3800 }) {
   toast.custom(
     () => (
       <Paper className="w-full px-3 py-3 flex items-center gap-3">

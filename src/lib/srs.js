@@ -77,10 +77,10 @@ export function temaReviewPool(bank, store, temaId, size = 15, today = dateKey()
 }
 
 export const LEVELS = [
-  { id: "nueva", label: "Sin ver", color: "var(--color-line, #e4dbcc)" },
-  { id: "aprendiendo", label: "Aprendiendo", color: "#f2b48c" },
-  { id: "casi", label: "Casi", color: "#c3ca85" },
-  { id: "dominada", label: "Dominada", color: "#5f6b25" },
+  { id: "nueva", label: "Sin ver", color: "var(--color-line, #e6dfd1)" },
+  { id: "aprendiendo", label: "Aprendiendo", color: "#ffc828" },
+  { id: "casi", label: "Casi", color: "#05aa82" },
+  { id: "dominada", label: "Dominada", color: "#03765a" },
 ];
 
 export const levelOf = (s) => (!s ? "nueva" : s.box >= MASTERED ? "dominada" : s.box === MASTERED - 1 ? "casi" : "aprendiendo");

@@ -17,8 +17,8 @@ export default defineConfig({
         short_name: "Opoempollo",
         description: "Tu tutor para la oposición de Subalterno del Ayuntamiento de Cádiz: lecciones, tests, tarjetas y casos prácticos.",
         lang: "es",
-        theme_color: "#f6f1e9",
-        background_color: "#f6f1e9",
+        theme_color: "#fbf7ef",
+        background_color: "#fbf7ef",
         display: "standalone",
         orientation: "any",
         // Igual que la otra webapp que sí se instala en el mismo móvil: rutas relativas al manifiesto e id estable.

@@ -473,7 +473,7 @@ function MasteryCard({ bank, store, onGoDominio, onAction }) {
         type="button"
         onClick={() => onAction({ type: "review" })}
         disabled={!can}
-        className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
+        className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2 disabled:bg-transparent disabled:text-ink-soft disabled:border disabled:border-line"
       >
         <ArrowCounterClockwise size={18} weight="bold" />
         {due.length ? `Repaso del día · ${due.length} pendientes` : fresh.length ? "Repaso del día" : "Hoy no hay nada pendiente"}

@@ -35,7 +35,7 @@ export const BLOCKS = {
     id: "comun",
     label: "Parte común",
     short: "Común",
-    hex: "#8da4ba",
+    hex: "#ff614c",
     bg: "bg-sky",
     illustration: "bloque-penal",
   },
@@ -43,7 +43,7 @@ export const BLOCKS = {
     id: "especifico",
     label: "Parte específica",
     short: "Específica",
-    hex: "#c3ca85",
+    hex: "#05aa82",
     bg: "bg-mint",
     illustration: "bloque-funcion-publica",
   },
@@ -51,7 +51,7 @@ export const BLOCKS = {
     id: "practica",
     label: "Repasos y casos prácticos",
     short: "Práctica",
-    hex: "#a9bccf",
+    hex: "#b4dcdc",
     bg: "bg-lilac",
     illustration: "simulacro",
   },
@@ -59,7 +59,7 @@ export const BLOCKS = {
 export const BLOCK_IDS = ["comun", "especifico", "practica"];
 
 /* Colores de las unidades del camino de aprendizaje (se reparten en ciclo). */
-export const UNIT_COLORS = ["#8da4ba", "#f2b48c", "#c3ca85", "#a9bccf", "#ff8ac8"];
+export const UNIT_COLORS = ["#ff614c", "#ffc828", "#05aa82", "#b4dcdc", "#ed91fa"];
 
 export const RANKS = [
   { level: 1, name: "Aspirante", min: 0, illustration: "rango-1-novato" },
@@ -80,20 +80,20 @@ export const ACHIEVEMENTS = [
 /* Medallas por niveles (estilo Duolingo): cada familia tiene umbrales repartidos a lo largo del mes
    y siempre muestra cuánto falta para el siguiente nivel. `value` lee el progreso del estado guardado. */
 export const MEDAL_FAMILIES = [
-  { id: "lecciones", name: "Alumno aplicado", icon: "graduation", color: "#ff8ac8", unit: "lecciones completadas", tiers: [5, 20, 50, 90, 121], value: (s) => Object.values(s.lessons || {}).filter((l) => l.done).length },
-  { id: "racha", illustration: "medalla-racha", name: "En racha", icon: "fire", color: "#ff8ac8", unit: "días seguidos", tiers: [3, 7, 14, 21, 30], value: (s) => s.streak.best || 0 },
-  { id: "meta", illustration: "medalla-meta", name: "Meta cumplida", icon: "target", color: "#c3ca85", unit: "días con la meta diaria", tiers: [1, 5, 10, 20, 28], value: (s) => s.goalDays.length },
-  { id: "respondidas", illustration: "medalla-respondidas", name: "Fondo de armario", icon: "books", color: "#8da4ba", unit: "preguntas respondidas", tiers: [100, 300, 700, 1200, 2000], value: (s) => s.totals.answered },
-  { id: "maraton", illustration: "medalla-maraton", name: "Maratón", icon: "timer", color: "#f2b48c", unit: "tests de 30 o más preguntas", tiers: [1, 5, 10, 20], value: (s) => s.counters.marathons },
-  { id: "repaso", illustration: "medalla-repaso", name: "Sin cuentas pendientes", icon: "repeat", color: "#a9bccf", unit: "fallos dominados", tiers: [5, 20, 50, 100], value: (s) => s.counters.mastered },
-  { id: "tarjetero", illustration: "medalla-tarjetero", name: "Tarjetero", icon: "cards", color: "#f2b48c", unit: "tarjetas dominadas", tiers: [20, 100, 300, 600, 900], value: (s) => Object.values(s.cards || {}).filter((c) => c.box >= 4).length },
-  { id: "matricula", illustration: "medalla-matricula", name: "Matrícula", icon: "star", color: "#8da4ba", unit: "tests de 20+ con nota ≥ 8", tiers: [1, 5, 15], value: (s) => s.counters.highScores },
+  { id: "lecciones", name: "Alumno aplicado", icon: "graduation", color: "#ed91fa", unit: "lecciones completadas", tiers: [5, 20, 50, 90, 121], value: (s) => Object.values(s.lessons || {}).filter((l) => l.done).length },
+  { id: "racha", illustration: "medalla-racha", name: "En racha", icon: "fire", color: "#ed91fa", unit: "días seguidos", tiers: [3, 7, 14, 21, 30], value: (s) => s.streak.best || 0 },
+  { id: "meta", illustration: "medalla-meta", name: "Meta cumplida", icon: "target", color: "#05aa82", unit: "días con la meta diaria", tiers: [1, 5, 10, 20, 28], value: (s) => s.goalDays.length },
+  { id: "respondidas", illustration: "medalla-respondidas", name: "Fondo de armario", icon: "books", color: "#ff614c", unit: "preguntas respondidas", tiers: [100, 300, 700, 1200, 2000], value: (s) => s.totals.answered },
+  { id: "maraton", illustration: "medalla-maraton", name: "Maratón", icon: "timer", color: "#ffc828", unit: "tests de 30 o más preguntas", tiers: [1, 5, 10, 20], value: (s) => s.counters.marathons },
+  { id: "repaso", illustration: "medalla-repaso", name: "Sin cuentas pendientes", icon: "repeat", color: "#b4dcdc", unit: "fallos dominados", tiers: [5, 20, 50, 100], value: (s) => s.counters.mastered },
+  { id: "tarjetero", illustration: "medalla-tarjetero", name: "Tarjetero", icon: "cards", color: "#ffc828", unit: "tarjetas dominadas", tiers: [20, 100, 300, 600, 900], value: (s) => Object.values(s.cards || {}).filter((c) => c.box >= 4).length },
+  { id: "matricula", illustration: "medalla-matricula", name: "Matrícula", icon: "star", color: "#ff614c", unit: "tests de 20+ con nota ≥ 8", tiers: [1, 5, 15], value: (s) => s.counters.highScores },
   {
     id: "especialista",
     illustration: "medalla-especialista",
     name: "Tema a tema",
     icon: "scales",
-    color: "#c3ca85",
+    color: "#05aa82",
     unit: "temas terminados (todas sus lecciones)",
     tiers: [1, 3, 6, 10, 15],
     value: (s) => Object.keys(s.units || {}).length,

@@ -37,8 +37,8 @@ export default function Achievements({ store, user, liga, onReset }) {
 
       <MedalCarousel items={carousel} />
 
-      <section aria-labelledby="escalafon-title" className="rounded-folder bg-plum text-ground p-3">
-        <h2 id="escalafon-title" className="display text-[30px] text-lilac px-2 pt-2 pb-3">
+      <section aria-labelledby="escalafon-title" className="rounded-folder bg-ink text-ground p-3">
+        <h2 id="escalafon-title" className="display text-[30px] text-peach px-2 pt-2 pb-3">
           Escalafón
         </h2>
         <ol className="flex flex-col gap-1">
@@ -46,15 +46,15 @@ export default function Achievements({ store, user, liga, onReset }) {
             const reached = store.xp >= r.min;
             const current = r.level === rank.level;
             return (
-              <li key={r.level} className={`flex items-center gap-3 rounded-[14px] p-2 ${current ? "bg-lilac text-ink" : ""}`}>
-                <span className={`w-11 h-11 blob shrink-0 flex items-center justify-center ${reached ? "bg-card text-plum" : "bg-card/40 text-ground"}`}>
+              <li key={r.level} className={`flex items-center gap-3 rounded-[14px] p-2 ${current ? "bg-peach text-ink" : ""}`}>
+                <span className={`w-11 h-11 blob shrink-0 flex items-center justify-center ${reached ? "bg-card text-ink" : "bg-card/15 text-ground"}`}>
                   <ArtIcon name={r.illustration} size="50%" weight={reached ? "fill" : "regular"} />
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-semibold leading-tight">{r.name}</span>
-                  <span className={`block text-xs ${current ? "text-ink" : "text-lilac"}`}>Nivel {r.level} · {r.min} XP</span>
+                  <span className={`block text-xs ${current ? "text-ink" : "text-ground/70"}`}>Nivel {r.level} · {r.min} XP</span>
                 </span>
-                {reached && <Check size={20} weight="bold" className={current ? "text-plum" : "text-lilac"} aria-label="Alcanzado" />}
+                {reached && <Check size={20} weight="bold" className={current ? "text-ink" : "text-peach"} aria-label="Alcanzado" />}
               </li>
             );
           })}

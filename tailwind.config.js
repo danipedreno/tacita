@@ -1,4 +1,4 @@
-/** Paleta inspirada en Pelago: crema, tinta, cinco pasteles y dos tonos hondos. */
+/** Paleta inspirada en Creative Boom: crema, negro puro y acentos saturados (amarillo, coral, rosa, aguamarina, verde). */
 export default {
   // En táctil, :hover se queda «pegado» tras tocar: solo se aplica con ratón.
   future: { hoverOnlyWhenSupported: true },
@@ -6,35 +6,35 @@ export default {
   theme: {
     extend: {
       colors: {
-        ground: { DEFAULT: "#f6f1e9", 2: "#ece4d7" },
-        card: "#fffcf7",
-        line: { DEFAULT: "#e4dbcc", strong: "#b3a892" },
-        ink: { DEFAULT: "#1e1e1c", soft: "#5e5850" },
-        navy: "#2b4a39",
-        sun: "#ff8ac8",
-        lilac: "#a9bccf",
-        peach: "#f2b48c",
-        mint: "#c3ca85",
-        sky: "#8da4ba",
-        mist: "#dfe6ec",
-        plum: "#a9521f",
-        olive: "#5f6b25",
-        // Paleta de personajes (Marshmallow)
-        pink: { DEFAULT: "#ff8ac8", soft: "#ffd0e9" },
-        moss: "#848f3e",
-        slate: "#8da4ba",
-        forest: "#2b4a39",
-        rust: "#c4692c",
-        taupe: "#a39780",
+        // Creative Boom: crema, blanco y negro puro, gris editorial y cinco acentos saturados.
+        ground: { DEFAULT: "#fbf7ef", 2: "#f1ebdf" },
+        card: "#ffffff",
+        line: { DEFAULT: "#e6dfd1", strong: "#9a958c" },
+        ink: { DEFAULT: "#000000", soft: "#5f5f5f" },
+        navy: "#1a1a1a",
+        sun: "#ed91fa",
+        lilac: "#b4dcdc",
+        peach: "#ffc828",
+        mint: "#05aa82",
+        sky: "#ff614c",
+        mist: "#e3f1f1",
+        plum: "#c2361f",
+        olive: "#03765a",
+        pink: { DEFAULT: "#ed91fa", soft: "#f8d8fd" },
+        moss: "#05aa82",
+        slate: "#b4dcdc",
+        forest: "#1a1a1a",
+        rust: "#ff6432",
+        taupe: "#9a958c",
       },
       fontFamily: {
-        display: ['"Figtree Variable"', "system-ui", "sans-serif"],
-        brand: ['"Figtree Variable"', "system-ui", "sans-serif"],
-        serif: ['"Figtree Variable"', "system-ui", "sans-serif"],
-        sans: ['"Figtree Variable"', "system-ui", "-apple-system", "Roboto", "sans-serif"],
-        mono: ['"Figtree Variable"', "system-ui", "sans-serif"],
+        display: ['"Space Grotesk Variable"', "system-ui", "sans-serif"],
+        brand: ['"Space Grotesk Variable"', "system-ui", "sans-serif"],
+        serif: ['"Geist Variable"', "system-ui", "sans-serif"],
+        sans: ['"Geist Variable"', "system-ui", "-apple-system", "Roboto", "sans-serif"],
+        mono: ['"Geist Variable"', "system-ui", "sans-serif"],
       },
-      borderRadius: { folder: "26px" },
+      borderRadius: { folder: "16px" },
       transitionTimingFunction: {
         out: "cubic-bezier(0.23, 1, 0.32, 1)",
         "in-out": "cubic-bezier(0.77, 0, 0.175, 1)",

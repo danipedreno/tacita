@@ -209,7 +209,8 @@ export default function Learn({ bank, store, onStartLesson, onTemaExam, onApunte
         <div ref={chipsRef} className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
           {groups.map(({ b, temas: list }) => (
             <div key={b} className="flex items-center gap-1.5 shrink-0">
-              <span className="label text-ink-soft px-1 shrink-0" style={{ color: BLOCKS[b].hex }}>
+              <span className="label font-semibold text-ink px-1 shrink-0 flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: BLOCKS[b].hex }} aria-hidden="true" />
                 {BLOCKS[b].short}
               </span>
               {list.map((t) => {
