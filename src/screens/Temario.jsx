@@ -4,8 +4,7 @@ import { BLOCKS } from "../lib/logic.js";
 import { bankCards, bankQuestions, learnTemas, temaById } from "../lib/bank.js";
 import { unitDoneCount } from "../lib/tutor.js";
 import { Button, Folder, Paper, Segmented, Sheet } from "../ui.jsx";
-import { Esquemas, ReaderBar, TextoCompleto } from "./FullNotes.jsx";
-import { useReader } from "../lib/speech.js";
+import { Esquemas, TextoCompleto } from "./FullNotes.jsx";
 import { hasPodcast } from "../lib/podcast.js";
 import { EpisodeList } from "./Podcast.jsx";
 import { Rich } from "./Lesson.jsx";
@@ -19,10 +18,6 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
   const nEsq = docs?.esquemas?.reduce((a, e) => a + e.imgs.length, 0) || 0;
   const pod = hasPodcast(bank, tema.id);
   const [view, setView] = useState("resumen");
-  // Modo escuchar del resumen: la teoría de cada lección, en orden.
-  const theory = tema.lecciones.flatMap((l, i) => l.pasos.filter((p) => p.t === "teoria").map((p, k) => ({ id: `rd-${i}-${k}`, text: [l.titulo + ". " + p.titulo + ".", p.texto, ...(p.puntos || []), p.truco ? "Truco: " + p.truco : ""].join(" ") })));
-  const reader = useReader(theory);
-  const reading = reader.index >= 0 ? theory[reader.index]?.id : null;
   useEffect(() => {
     document.querySelector("main")?.scrollTo?.({ top: 0 });
   }, [tema.id]);
@@ -46,14 +41,13 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
             { value: "resumen", label: "Resumen", sub: `${tema.lecciones.length} lecciones` },
             { value: "esquemas", label: "Esquemas", sub: nEsq ? `${nEsq} imágenes` : "—" },
             { value: "completo", label: "Temario", sub: "completo" },
-            ...(pod ? [{ value: "escuchar", label: "Escuchar", sub: "pódcast" }] : []),
+            { value: "escuchar", label: "Escuchar", sub: pod ? "pódcast" : "grabando" },
           ]}
         />
       )}
       {view === "esquemas" && <Esquemas bank={bank} esquemas={docs?.esquemas} />}
       {view === "completo" && <TextoCompleto bank={bank} textos={docs?.textos} />}
       {view === "escuchar" && <EpisodeList bank={bank} temaId={tema.id} color={color} />}
-      {view === "resumen" && !pod && <ReaderBar reader={reader} total={theory.length} idOf={(k) => theory[k]?.id} />}
       {view === "resumen" && tema.lecciones.map((l, i) => (
         <Folder key={i} color={color} tab={`Lección ${i + 1}`}>
           <div className="p-2.5 flex flex-col gap-2.5">
@@ -66,7 +60,7 @@ function TemaNotes({ bank, tema, onBack, onStartLesson }) {
             {l.pasos
               .filter((p) => p.t === "teoria")
               .map((p, k) => (
-                <Paper key={k} id={`rd-${i}-${k}`} className={`p-4 lg:p-5 scroll-mt-20 transition-shadow ${reading === `rd-${i}-${k}` ? "ring-4 ring-sun" : ""}`}>
+                <Paper key={k} id={`rd-${i}-${k}`} className={`p-4 lg:p-5 scroll-mt-20 transition-shadow`}>
                   <h3 className="font-semibold text-lg leading-tight">{p.titulo}</h3>
                   <Rich text={p.texto} className="font-serif text-[17px] leading-relaxed mt-2" />
                   {p.puntos?.length > 0 && (
