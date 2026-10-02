@@ -31,7 +31,7 @@ export function RankFolder({ xp, from, tab = "Nivel", intro = false }) {
 
 /* XP que ya has visto en Inicio: si al volver hay más, se anima la subida (+XP que vuela, barra que se llena). */
 const XP_SEEN_KEY = "tacita-xp-visto.v1";
-const readXpSeen = () => {
+export const readXpSeen = () => {
   try {
     const v = localStorage.getItem(XP_SEEN_KEY);
     return v === null ? null : Number(v);
@@ -39,7 +39,7 @@ const readXpSeen = () => {
     return null;
   }
 };
-const writeXpSeen = (xp) => {
+export const writeXpSeen = (xp) => {
   try {
     localStorage.setItem(XP_SEEN_KEY, String(xp));
   } catch (e) {
@@ -51,7 +51,7 @@ const writeXpSeen = (xp) => {
  * Hoja de nivel. Con `from` (XP anterior) la cifra cuenta desde ahí, la barra se llena desde el
  * punto anterior y un «+N XP» sube y se desvanece. Pasa pocas veces al día: aquí sí hay deleite.
  */
-function RankContent({ xp, from }) {
+export function RankContent({ xp, from }) {
   const { rank, next, pct, toNext } = rankInfo(xp);
   const gained = from != null && xp > from ? xp - from : 0;
   const startPct = gained ? (rankInfo(from).rank.level === rank.level ? rankInfo(from).pct : 0) : pct;
@@ -94,7 +94,7 @@ function RankContent({ xp, from }) {
   );
 }
 
-function StreakContent({ streak }) {
+export function StreakContent({ streak }) {
   const view = streakView(streak);
   const today = new Date();
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -269,92 +269,63 @@ function PlanContent({ store, onPlan }) {
   );
 }
 
-/* Archivador de Inicio: tres carpetas y una sola delante; se cambia tocando su pestaña.
-   Se recuerda la última elegida mientras la app esté abierta. */
-const HOME_FOLDERS = [
-  { id: "examen", label: "Tu examen", color: PAL.sun },
-  { id: "racha", label: "Racha", color: PAL.peach },
-  { id: "hoja", label: "Nivel", color: PAL.lilac },
-];
-let lastFolder = "examen";
-
-function HomeCabinet({ store, onPlan, intro }) {
-  const [active, setActive] = useState(lastFolder);
-  // XP visto la última vez: la primera vez no hay animación; después, lo ganado se celebra al abrir «Nivel».
-  const [xpSeen, setXpSeen] = useState(() => {
-    const v = readXpSeen();
-    if (v === null) writeXpSeen(store.xp);
-    return v === null ? store.xp : v;
-  });
-  const [animFrom, setAnimFrom] = useState(undefined); // XP desde el que animar la hoja abierta
-  const pendingXp = Math.max(0, store.xp - xpSeen);
-  useEffect(() => {
-    if (active !== "hoja" || !pendingXp) return;
-    setAnimFrom(xpSeen);
-    setXpSeen(store.xp);
-    writeXpSeen(store.xp);
-  }, [active, pendingXp, xpSeen, store.xp]);
-  const tabs = useRef([]);
-  const current = HOME_FOLDERS.find((f) => f.id === active);
-  const choose = (id) => {
-    lastFolder = id;
-    if (id !== "hoja") setAnimFrom(undefined);
-    setActive(id);
-  };
-  // Patrón de pestañas: flechas para moverse entre ellas.
-  const onKey = (e, k) => {
-    const dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-    if (!dir) return;
-    e.preventDefault();
-    const next = (k + dir + HOME_FOLDERS.length) % HOME_FOLDERS.length;
-    choose(HOME_FOLDERS[next].id);
-    tabs.current[next]?.focus();
-  };
-
+/* «Tu examen» en Inicio: la cuenta atrás y la meta de hoy. El nivel y la racha completa están en Logros. */
+function ExamFolder({ store, onPlan, intro }) {
   return (
-    <section className={intro ? "anim-folder" : ""}>
-      <div role="tablist" aria-label="Tu progreso" className="flex items-end gap-1">
-        {HOME_FOLDERS.map((f, k) => {
-          const on = f.id === active;
-          return (
-            <button
-              key={f.id}
-              ref={(el) => (tabs.current[k] = el)}
-              type="button"
-              role="tab"
-              id={`carpeta-tab-${f.id}`}
-              aria-selected={on}
-              aria-controls="carpeta-inicio"
-              tabIndex={on ? 0 : -1}
-              onClick={() => choose(f.id)}
-              onKeyDown={(e) => onKey(e, k)}
-              className={`relative shrink-0 -mb-px px-4 rounded-t-[16px] text-[15px] leading-none whitespace-nowrap transition-[height,background-color,color] duration-200 ease-out ${
-                on ? "h-[52px] z-10 font-semibold text-ink" : "h-11 z-0 font-medium text-ink-soft hover:text-ink"
-              }`}
-              style={{ background: on ? f.color : PAL.ground2 }}
-            >
-              {f.label}
-              {f.id === "hoja" && !on && pendingXp > 0 && (
-                <span className="ml-1.5 rounded-full bg-sun px-1.5 py-0.5 text-[11px] font-bold text-ink align-middle">+{pendingXp}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <div
-        id="carpeta-inicio"
-        role="tabpanel"
-        aria-labelledby={`carpeta-tab-${active}`}
-        className="rounded-folder rounded-tl-none text-ink transition-colors duration-200 ease-out"
-        style={{ background: current.color }}
-      >
-        <div key={active} className="anim-fade">
-          {active === "examen" && <PlanContent store={store} onPlan={onPlan} />}
-          {active === "racha" && <StreakContent streak={store.streak} />}
-          {active === "hoja" && <RankContent key={animFrom ?? "sin-animar"} xp={store.xp} from={animFrom} />}
-        </div>
-      </div>
-    </section>
+    <Folder color={PAL.sun} tab="Tu examen" className={intro ? "anim-folder" : ""}>
+      <PlanContent store={store} onPlan={onPlan} />
+    </Folder>
+  );
+}
+
+/* Aviso de racha: sale en Inicio cuando la racha cambia (sube, está en peligro o se corta) y, una vez visto,
+   se queda en Logros. La clave recuerda el estado ya visto. */
+const STREAK_SEEN_KEY = "tacita-racha-vista.v1";
+export const streakNoticeKey = (streak) => {
+  const v = streakView(streak);
+  return `${dateKey()}|${v.state}|${v.count}`;
+};
+export const markStreakSeen = (streak) => {
+  try {
+    localStorage.setItem(STREAK_SEEN_KEY, streakNoticeKey(streak));
+  } catch (e) {
+    /* sin almacenamiento */
+  }
+};
+
+function StreakNotice({ streak, onOpen }) {
+  const key = streakNoticeKey(streak);
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(STREAK_SEEN_KEY) === key;
+    } catch (e) {
+      return false;
+    }
+  });
+  const view = streakView(streak);
+  if (hidden || view.state === "none") return null;
+  const text = {
+    done: { kicker: `¡Racha de ${view.count} ${view.count === 1 ? "día" : "días"}!`, body: "Hoy ya has cumplido. Vuelve mañana para seguir sumando." },
+    pending: { kicker: `Tu racha de ${view.count} ${view.count === 1 ? "día" : "días"} está en juego`, body: "Haz una lección o un test hoy para no perderla." },
+    broken: { kicker: "La racha se ha cortado", body: "Empieza otra hoy: con una lección basta." },
+  }[view.state];
+  const seen = () => {
+    markStreakSeen(streak);
+    setHidden(true);
+  };
+  return (
+    <div className="rounded-folder bg-peach p-3 pl-4 flex items-center gap-3 anim-pop" role="status">
+      <button type="button" onClick={() => (seen(), onOpen())} className="tap flex-1 min-w-0 flex items-center gap-3 text-left">
+        <Fire size={28} weight="fill" className={view.state === "broken" ? "text-ink/40 shrink-0" : "text-plum anim-flicker shrink-0"} />
+        <span className="min-w-0">
+          <span className="block font-semibold leading-tight">{text.kicker}</span>
+          <span className="block text-sm leading-snug mt-0.5">{text.body}</span>
+        </span>
+      </button>
+      <IconButton label="Ocultar aviso de racha" onClick={seen} className="text-ink shrink-0 -my-1">
+        <X size={20} weight="bold" />
+      </IconButton>
+    </div>
   );
 }
 
@@ -470,6 +441,8 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
   const heard = eps.filter((e) => pod.heard[e.key]).length;
   const { due, fresh } = reviewState(bank, store);
   const mistakes = Object.keys(store.mistakes || {}).length;
+  const seenXp = readXpSeen();
+  const newXp = seenXp === null ? 0 : Math.max(0, store.xp - seenXp);
   const items = [
     { id: "test", label: "Test rápido", sub: "10 preguntas", Icon: Lightning, color: PAL.peach, onClick: onQuickTest },
     {
@@ -499,7 +472,7 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
       badge: mistakes || null,
       onClick: () => (mistakes ? onReview() : onGoDominio()),
     },
-    { id: "liga", label: "Liga y logros", sub: "Clasificación", Icon: Trophy, color: PAL.peach, onClick: onGoLiga },
+    { id: "liga", label: "Liga y logros", sub: newXp > 0 ? `+${newXp} XP nuevos` : "Nivel y medallas", Icon: Trophy, color: PAL.peach, badge: newXp > 0 ? `+${newXp}` : null, onClick: onGoLiga },
   ];
   return (
     <nav aria-label="Accesos directos" className="grid grid-cols-3 gap-2">
@@ -508,7 +481,7 @@ function Shortcuts({ bank, store, onQuickTest, onReview, onAction, onGoTemario, 
           <span className="w-10 h-10 blob flex items-center justify-center" style={{ background: color }} aria-hidden="true">
             <Icon size={20} weight="fill" />
           </span>
-          {badge && <span className="absolute top-2.5 right-2.5 min-w-[22px] h-[22px] px-1.5 rounded-full bg-ink text-ground font-mono text-[11px] font-semibold flex items-center justify-center">{badge > 99 ? "99+" : badge}</span>}
+          {badge && <span className="absolute top-2.5 right-2.5 min-w-[22px] h-[22px] px-1.5 rounded-full bg-ink text-ground font-mono text-[11px] font-semibold flex items-center justify-center">{typeof badge === "number" && badge > 99 ? "99+" : badge}</span>}
           <span className="w-full min-w-0">
             <span className="block font-semibold text-[15px] leading-tight">{label}</span>
             <span className="block text-xs text-ink-soft leading-tight mt-0.5 truncate">{sub}</span>
@@ -842,12 +815,14 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           >
             {store.settings.sound ? <SpeakerHigh size={20} weight="fill" /> : <SpeakerSlash size={20} weight="bold" className="text-ink-soft" />}
           </IconButton>
-          <div className={`flex items-center gap-1.5 h-11 px-4 rounded-full ${streakCount ? "bg-sun" : "bg-card paper-shadow"}`} aria-label={`Racha de ${streakCount} días`}>
+          <button type="button" onClick={onGoLiga} className={`tap press flex items-center gap-1.5 h-11 px-4 rounded-full ${streakCount ? "bg-sun" : "bg-card paper-shadow"}`} aria-label={`Racha de ${streakCount} días: ver en Logros`}>
             <Fire size={20} weight="fill" className={streakCount ? "text-ink" : "text-line-strong"} />
             <span className="font-mono font-semibold">{streakCount}</span>
-          </div>
+          </button>
         </div>
       </header>
+
+      <StreakNotice streak={store.streak} onOpen={onGoLiga} />
 
       {!install.installed && !install.canInstall && !store.installDismissed && install.browser !== "desktop" && (
         <Paper className="p-4 flex gap-3 anim-pop">
@@ -905,7 +880,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
           <RetoCard store={store} liga={liga} user={user} onAction={onAction} />
           <DuelCard bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
           <DuelInvite bank={bank} store={store} liga={liga} user={user} onAction={onAction} />
-          <HomeCabinet store={store} onPlan={onPlan} intro={intro} />
+          <ExamFolder store={store} onPlan={onPlan} intro={intro} />
         </div>
       </div>
     </div>
