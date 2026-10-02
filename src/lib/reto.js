@@ -1,5 +1,5 @@
 /* Reto del día: las mismas 10 preguntas para todos los usuarios cada día (salen de una semilla con la fecha).
-   Se juega una vez al día, puntúa en la liga como un examen (+3 / −1 / 0) y se compara con los demás. */
+   Se juega una vez al día, puntúa en la liga como un examen (+20 / −5 / −2) y se compara con los demás. */
 import { dateKey } from "./logic.js";
 
 export const RETO_SIZE = 10;

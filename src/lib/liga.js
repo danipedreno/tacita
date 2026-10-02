@@ -1,6 +1,6 @@
 /* Liga gaditana: competición entre los usuarios de Opoempollo con los exámenes de tema.
-   - Cada examen de tema (15 preguntas) suma puntos: acierto +3, fallo −1, en blanco 0. Es la puntuación del
-     juego, más sencilla que la del examen real (−0,25 por fallo y −0,10 en blanco). El total nunca baja de 0.
+   - Cada examen de tema (15 preguntas) suma puntos con la misma proporción que el examen real (+1, −0,25 y
+     −0,10) multiplicada por 20 para que sean enteros: acierto +20, fallo −5, en blanco −2. El total nunca baja de 0.
    - Cada tema puntúa una vez al día (el primer intento): repetir el mismo examen hasta sabérselo no da puntos.
    - El reto del día (t: "reto") también puntúa, una vez al día. Los duelos (t: "duelo") no puntúan.
    - Los puntos llevan por tramos: 4 categorías (comidas de Cádiz) con 3 niveles cada una. Los tramos son
@@ -8,16 +8,16 @@
 import { PAL } from "./palette.js";
 
 export const CATEGORIES = [
-  { id: "churro", name: "Churro de la Guapa", icon: "churro", color: PAL.peach, levels: [0, 45, 105] },
-  { id: "cazon", name: "Cazón en adobo", icon: "pescado", color: PAL.sky, levels: [180, 270, 375] },
-  { id: "garbanzos", name: "Garbanzos con choco", icon: "sepia", color: PAL.mint, levels: [495, 630, 780] },
-  { id: "chicharron", name: "Chicharrón", icon: "cerdo", color: PAL.sun, levels: [945, 1125, 1320] },
+  { id: "churro", name: "Churro de la Guapa", icon: "churro", color: PAL.peach, levels: [0, 300, 700] },
+  { id: "cazon", name: "Cazón en adobo", icon: "pescado", color: PAL.sky, levels: [1200, 1800, 2500] },
+  { id: "garbanzos", name: "Garbanzos con choco", icon: "sepia", color: PAL.mint, levels: [3300, 4200, 5200] },
+  { id: "chicharron", name: "Chicharrón", icon: "cerdo", color: PAL.sun, levels: [6300, 7500, 8800] },
 ];
 
 /** Todos los tramos en orden: { cat, level (1-3), min }. */
 export const TRAMOS = CATEGORIES.flatMap((cat) => cat.levels.map((min, i) => ({ cat, level: i + 1, min })));
 
-export const POINTS = { correct: 3, wrong: -1, blank: 0 };
+export const POINTS = { correct: 20, wrong: -5, blank: -2 };
 const dayOf = (iso = "") => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? iso.slice(0, 10) : `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;

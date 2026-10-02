@@ -1,7 +1,7 @@
 /* Duelos: una persona reta a otra a 10 preguntas (de todo el temario o de un tema). Las preguntas salen de una
    semilla con el id del duelo, así que las dos juegan exactamente las mismas. Cada intento se guarda en
    store.liga con t: "duelo" (es lo único que se comparte entre usuarios) y no suma puntos de liga.
-   Gana quien saque más puntos (+3 acierto, −1 fallo); si empatan, empate. */
+   Gana quien saque más puntos (+20 acierto, −5 fallo, −2 en blanco); si empatan, empate. */
 import { seeded } from "./reto.js";
 import { POINTS } from "./liga.js";
 

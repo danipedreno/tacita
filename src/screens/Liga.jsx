@@ -118,7 +118,7 @@ export default function Liga({ store, user, remote }) {
               ? "Sin conexión: ahora solo se ve lo tuyo."
               : remote.status === "loading"
                 ? "Cargando la clasificación…"
-                : `${remote.at ? `Actualizada a las ${new Date(remote.at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}. ` : ""}` + "Exámenes de tema y reto del día: acierto +3, fallo −1, en blanco 0. Cada tema puntúa una vez al día."}
+                : `${remote.at ? `Actualizada a las ${new Date(remote.at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}. ` : ""}` + "Exámenes de tema y reto del día: acierto +20, fallo −5, en blanco −2 (como el examen real, por 20). Cada tema puntúa una vez al día."}
         </p>
       </div>
     </section>

@@ -647,7 +647,7 @@ function RetoCard({ store, liga, user, onAction }) {
         </p>
       ) : (
         <>
-          <p className="mt-2 text-[15px]">Puntúa en la liga (+3 por acierto, −1 por fallo). Solo hay una oportunidad al día.</p>
+          <p className="mt-2 text-[15px]">Puntúa en la liga: +20 por acierto, −5 por fallo y −2 en blanco. Solo hay una oportunidad al día.</p>
           <button type="button" onClick={() => onAction({ type: "reto" })} className="tap press mt-3 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold">
             Jugar el reto de hoy
           </button>
