@@ -76,7 +76,7 @@ async function go(index) {
   }
   if (ms) {
     try {
-      ms.metadata = new MediaMetadata({ title: ep.title, artist: `Tacita · Tema ${ep.numero}`, album: "Pódcast del temario" });
+      ms.metadata = new MediaMetadata({ title: ep.title, artist: `Opoempollo · Tema ${ep.numero}`, album: "Pódcast del temario" });
     } catch (e) {
       /* sin metadatos */
     }

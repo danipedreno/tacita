@@ -89,7 +89,7 @@ function SideNav({ tab, onChange, xp, user, sync }) {
   const { rank, pct } = rankInfo(xp);
   return (
     <nav className="hidden lg:flex fixed inset-y-0 left-0 w-64 z-40 flex-col gap-1 border-r border-line bg-ground px-4 py-6" aria-label="Navegación principal">
-      <p className="brand text-[44px] px-3 mb-1">Tacita</p>
+      <p className="brand text-[34px] px-3 mb-1">Opoempollo</p>
       <p className="text-xs text-ink-soft px-3 mb-6 leading-snug">Subalterno · Ayuntamiento de Cádiz</p>
       {SIDE_TABS.map(({ id, label, Icon, color }) => {
         const on = tab === id;

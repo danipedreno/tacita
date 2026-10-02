@@ -67,7 +67,7 @@ export const RANKS = [
   { level: 2, name: "Subalterno en prácticas", min: 600, illustration: "rango-2-practicas" },
   { level: 3, name: "Conserje mayor", min: 2000, illustration: "rango-3-jefe-servicio" },
   { level: 4, name: "Jefe de Negociado", min: 5000, illustration: "rango-4-jefe-centro" },
-  { level: 5, name: "Leyenda de la Tacita", min: 9000, illustration: "rango-5-director" },
+  { level: 5, name: "Leyenda del Opoempollo", min: 9000, illustration: "rango-5-director" },
 ];
 
 export const ACHIEVEMENTS = [

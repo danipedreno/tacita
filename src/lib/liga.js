@@ -1,4 +1,4 @@
-/* Liga gaditana: competición entre los usuarios de Tacita con los exámenes de tema.
+/* Liga gaditana: competición entre los usuarios de Opoempollo con los exámenes de tema.
    - Cada examen de tema (15 preguntas) suma puntos: acierto +3, fallo −1, en blanco 0 (como en el examen
      real, fallar penaliza y dejarla en blanco no). El total nunca baja de 0.
    - Cada tema puntúa una vez al día (el primer intento): repetir el mismo examen hasta sabérselo no da puntos.

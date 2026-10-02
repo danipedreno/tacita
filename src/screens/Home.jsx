@@ -12,6 +12,7 @@ import { retoResult } from "../lib/reto.js";
 import { POINTS } from "../lib/liga.js";
 import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
 import { learnTemas } from "../lib/bank.js";
+import { Pollo } from "../pollo.jsx";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -364,7 +365,7 @@ function TutorCard({ bank, store, onAction }) {
     <section aria-labelledby="tutor-title" className="rounded-folder bg-forest text-ground p-5 relative overflow-hidden">
       <div className="flex items-end gap-3">
         <div className="min-w-0 flex-1 pb-2">
-          <p className="label text-pink">Tacita, tu tutora</p>
+          <p className="label text-pink">Opoempollo, tu tutor</p>
           <p className="text-[16px] leading-snug mt-1 text-ground/90">{greeting(store)}</p>
         </div>
         <span className="w-28 shrink-0 -mb-1 anim-peek" aria-hidden="true">
@@ -647,10 +648,15 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="brand text-[46px] lg:hidden">Tacita</h1>
-          <h1 className="hidden lg:block display text-[48px]">Inicio</h1>
-          <p className="label text-ink-soft mt-1.5 first-letter:uppercase">{dateLabel}</p>
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <Pollo face="happy" className="w-[68px] h-auto shrink-0 anim-hop" />
+            <div className="min-w-0">
+              <h1 className="display text-[34px] lg:text-[44px] leading-[1.05]">¡Hola{user ? `, ${pretty(user)}` : ""}!</h1>
+              <p className="text-[17px] font-semibold mt-0.5">Toca estudiar</p>
+            </div>
+          </div>
+          <p className="label text-ink-soft mt-3 first-letter:uppercase">{dateLabel}</p>
           {sync && sync !== "off" && (
             <p className="text-xs text-ink-soft mt-1 flex items-center gap-1.5 lg:hidden">
               <span className={`w-2 h-2 rounded-full ${sync === "ok" ? "bg-olive" : sync === "syncing" ? "bg-sun" : "bg-line-strong"}`} aria-hidden="true" />
@@ -704,7 +710,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
             <Illustration name="instalar" className="w-full" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold leading-tight">Instala Tacita</p>
+            <p className="font-semibold leading-tight">Instala Opoempollo</p>
             <p className="text-sm text-ink-soft leading-snug">Ábrela desde tu pantalla de inicio, también sin conexión.</p>
           </div>
           <button type="button" onClick={install.install} className="tap press h-11 px-4 rounded-full bg-ink text-ground text-sm font-semibold flex items-center gap-1.5">

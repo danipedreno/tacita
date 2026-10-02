@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icons/*.png", "illustrations/*"],
       manifest: {
-        name: "Tacita · Subalterno Ayuntamiento de Cádiz",
-        short_name: "Tacita",
+        name: "Opoempollo · Subalterno Ayuntamiento de Cádiz",
+        short_name: "Opoempollo",
         description: "Tu tutor para la oposición de Subalterno del Ayuntamiento de Cádiz: lecciones, tests, tarjetas y casos prácticos.",
         lang: "es",
         theme_color: "#f6f1e9",

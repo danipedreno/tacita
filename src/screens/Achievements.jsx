@@ -78,6 +78,13 @@ export default function Achievements({ store, user, liga, onReset }) {
         Reiniciar progreso
       </button>
 
+      <p className="text-xs text-ink-soft text-center">
+        Opoempollo, el pollito, está basado en «Hand drawn flat design kawaii face collection» de{" "}
+        <a href="https://www.freepik.com" target="_blank" rel="noreferrer" className="underline">
+          Freepik
+        </a>
+        .
+      </p>
       <Sheet
         open={confirm}
         title="¿Reiniciar?"

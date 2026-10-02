@@ -1,8 +1,9 @@
-/* Personajes de Tacita (inspirados en el sistema de Marshmallow por Ragged Edge):
+/* Personajes de Opoempollo (inspirados en el sistema de Marshmallow por Ragged Edge):
    formas geométricas planas apiladas (sombrero · cabeza · cuerpo) con ojos y expresiones.
    Todo es SVG generado: no hay archivos de imagen. Los ojos abiertos parpadean y, si se pide,
    las pupilas siguen el puntero. */
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { PolloShape } from "./pollo.jsx";
 
 export const MC = {
   pink: "#ff8ac8",
@@ -156,7 +157,14 @@ function Features({ face, cx, cy, gap, r, color, mouth = true }) {
 
 /* ---------- Un personaje ---------- */
 /** cfg: { head: { shape, color, w, h }, hat?: {...}, body?: {...}, face, look, tilt } — coordenadas en un lienzo de 120×150. */
-function Character({ cfg, x = 0, blinkDelay, look }) {
+const PS = 0.64; // escala del pollito dentro del lienzo de 120×150
+function Character({ cfg, x = 0, blinkDelay, look, uid }) {
+  if (cfg.pollo)
+    return (
+      <g transform={`translate(${x + 60 - 100 * PS} ${150 - 190 * PS}) scale(${PS})`}>
+        <PolloShape face={cfg.face} look={look || cfg.look} blink={blinkDelay} shadow={false} uid={`${uid}-${x}`} />
+      </g>
+    );
   const cx = 60 + x;
   const body = cfg.body;
   const head = cfg.head;
@@ -218,13 +226,13 @@ export function makeCharacter(name, overrides = {}) {
 /* ---------- Personajes con nombre (los que más se ven) ---------- */
 const P = MC;
 export const CHARACTERS = {
-  // La tutora: cúpula rosa con ojos grandes y cuerpo oliva.
-  tacita: { head: { shape: "dome", color: P.pink, w: 92, h: 60 }, body: { shape: "bowl", color: P.moss, w: 76, h: 40 }, hat: { shape: "drop", color: P.rust, w: 22, h: 26 }, face: "open", look: [0.4, 0] },
+  // El protagonista: Opoempollo, el pollito tutor (src/pollo.jsx).
+  tacita: { pollo: true, face: "open", look: [0.4, 0] },
 };
 
 /** Configuración de cada ilustración de la app (mismo nombre que el antiguo registro). */
 const MOODS = {
-  bienvenida: { group: ["tacita", "amigo-1", "amigo-2"], face: "open" },
+  bienvenida: { group: ["amigo-1", "tacita", "amigo-2"], face: "happy" },
   simulacro: { group: ["sim-1", "tacita", "sim-2"], face: "open" },
   "racha-activa": { face: "happy", hat: { shape: "drop", color: P.rust, w: 26, h: 30 } },
   "racha-pendiente": { face: "sleepy", hat: { shape: "drop", color: P.rust, w: 14, h: 18 } },
@@ -270,6 +278,8 @@ const MOODS = {
 
 export function characterFor(name) {
   if (CHARACTERS[name]) return CHARACTERS[name];
+  // Las ilustraciones de la app (rachas, resultados, medallas…) las protagoniza el pollito, con su cara.
+  if (MOODS[name] && !MOODS[name].group) return { pollo: true, face: MOODS[name].face || "open", look: MOODS[name].look };
   const m = MOODS[name] || {};
   const { group, ...rest } = m;
   const base = makeCharacter(name);
@@ -355,15 +365,16 @@ export function Mascot({ name = "tacita", cfg, face, look, follow = false, fit =
   if (fit && chars.length === 1) {
     // Lienzo ajustado al personaje (para nodos y avatares pequeños).
     const c = chars[0];
-    const parts = [c.body, c.head, c.hat].filter(Boolean);
+    if (c.pollo) viewBox = `${60 - 92 * PS} ${150 - 180 * PS} ${184 * PS} ${182 * PS}`;
+    const parts = c.pollo ? [] : [c.body, c.head, c.hat].filter(Boolean);
     const total = parts.reduce((a, p) => a + p.h, 0);
     const maxW = Math.max(...parts.map((p) => p.w));
-    viewBox = `${60 - maxW / 2 - 4} ${150 - total - 4} ${maxW + 8} ${total + 8}`;
+    if (!c.pollo) viewBox = `${60 - maxW / 2 - 4} ${150 - total - 4} ${maxW + 8} ${total + 8}`;
   }
   return (
     <svg ref={ref} viewBox={viewBox} preserveAspectRatio={fit === "center" ? "xMidYMid meet" : fit ? "xMidYMax meet" : undefined} className={className} role={title ? "img" : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
       {chars.map((c, k) => (
-        <Character key={k} cfg={avoidColor(face ? { ...c, face } : c, bg)} x={k * 120} blinkDelay={`calc(${blink} + ${k * 0.7}s)`} look={followLook || look} />
+        <Character key={k} cfg={c.pollo ? (face ? { ...c, face } : c) : avoidColor(face ? { ...c, face } : c, bg)} x={k * 120} blinkDelay={`calc(${blink} + ${k * 0.7}s)`} look={followLook || look} uid={id.replace(/:/g, "")} />
       ))}
     </svg>
   );

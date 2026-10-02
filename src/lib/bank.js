@@ -67,7 +67,7 @@ export const getAccess = () => readJSON(ACCESS_KEY);
 
 /** Comprueba que el banco tiene el formato que genera contenido/build.mjs. */
 export function validateBank(json) {
-  if (!json || json.formato !== "tacita-banco") return "El banco no tiene el formato de Tacita.";
+  if (!json || json.formato !== "tacita-banco") return "El banco no tiene el formato de Opoempollo.";
   if (!Array.isArray(json.temas) || !Array.isArray(json.preguntas) || !Array.isArray(json.flashcards)) return "El banco está incompleto.";
   const badQ = json.preguntas.find((q) => !q.id || !q.q || q.options?.length !== 4 || !(q.answer >= 0 && q.answer <= 3));
   if (badQ) return `Hay una pregunta con formato incorrecto (${badQ.id || "sin id"}).`;

@@ -434,8 +434,53 @@
   to { clip-path: inset(0 0 0 0); transform: translateY(0); }
 }
 @keyframes splash-letter {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(16px) scale(0.6); }
+  60% { opacity: 1; transform: translateY(-5px) scale(1.08); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Logo reveal de Opoempollo: huevo que cae, se tambalea, se agrieta y se abre; sale el pollito. */
+.sp-egg, .sp-wobble, .sp-top, .sp-bottom, .sp-chick, .sp-shadow, .sp-spark { transform-box: fill-box; }
+.sp-egg { transform-origin: 50% 100%; animation: sp-drop 560ms cubic-bezier(0.5, 0, 0.75, 0) both, sp-land 380ms cubic-bezier(0.34, 1.56, 0.64, 1) 560ms both; }
+.sp-wobble { transform-origin: 50% 100%; animation: sp-wobble 420ms ease-in-out 900ms both; }
+.sp-crack { stroke-dasharray: 1; stroke-dashoffset: 1; animation: sp-crack 220ms ease-out 1040ms forwards, sp-fade 120ms linear 1240ms forwards; }
+.sp-top { transform-origin: 20% 100%; animation: sp-top 640ms cubic-bezier(0.3, 0.7, 0.4, 1) 1250ms both; }
+.sp-bottom { transform-origin: 50% 100%; animation: sp-bottom 520ms ease-in 1300ms both; }
+.sp-chick { transform-origin: 50% 100%; animation: sp-chick 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 1230ms both; }
+.sp-shadow { transform-origin: 50% 50%; animation: sp-shadow 560ms cubic-bezier(0.5, 0, 0.75, 0) both; }
+.sp-spark { opacity: 0; animation: sp-spark 620ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.sp-tag { animation: fade 400ms ease 2050ms both; }
+@keyframes sp-drop { from { transform: translateY(-120%) scaleY(1.05); } to { transform: translateY(0); } }
+@keyframes sp-land { 0% { transform: scale(1.12, 0.86); } 100% { transform: scale(1, 1); } }
+@keyframes sp-shadow { from { transform: scale(0.3); opacity: 0.2; } to { transform: scale(1); opacity: 1; } }
+@keyframes sp-wobble {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-9deg); }
+  45% { transform: rotate(8deg); }
+  70% { transform: rotate(-5deg); }
+  88% { transform: rotate(3deg); }
+}
+@keyframes sp-crack { to { stroke-dashoffset: 0; } }
+@keyframes sp-fade { to { opacity: 0; } }
+@keyframes sp-top {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(-70%, -150%) rotate(-48deg); opacity: 0; }
+}
+@keyframes sp-bottom {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(18%) scaleY(0.7); opacity: 0; }
+}
+@keyframes sp-chick {
+  0% { transform: translateY(14%) scale(0.5); opacity: 0; }
+  35% { opacity: 1; }
+  55% { transform: translateY(-16%) scale(1.06, 0.98); }
+  78% { transform: translateY(0) scale(1.05, 0.93); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes sp-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.2); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1); }
 }
 
 /* Fuego de la racha en Tarjetas */
@@ -458,6 +503,6 @@
   100% { transform: translateY(-34px) scale(1); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fire-flow, .fire-flash, .splash-logo .logo-blob, .splash-logo .logo-fig, .splash-letter { animation: none !important; }
+  .fire-flow, .fire-flash, .splash-logo .logo-blob, .splash-logo .logo-fig, .splash-letter, .sp-egg, .sp-wobble, .sp-top, .sp-bottom, .sp-chick, .sp-shadow, .sp-spark, .sp-crack, .sp-tag { animation: none !important; }
   .xp-gain { animation: fade 180ms ease both !important; }
 }

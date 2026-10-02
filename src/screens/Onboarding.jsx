@@ -7,7 +7,7 @@ import { PAL } from "../lib/palette.js";
 const SLIDES = [
   {
     bg: PAL.mint,
-    art: "bienvenida",
+    art: "tacita",
     title: "Tu tutor del temario",
     text: "Todo el temario de Subalterno del Ayuntamiento de Cádiz en lecciones cortas: te explico, te pregunto y repetimos lo que falles. En Inicio te digo siempre qué toca.",
   },
@@ -48,7 +48,7 @@ export default function Onboarding({ onDone }) {
       tabIndex={-1}
       role="dialog"
       aria-modal="true"
-      aria-label="Bienvenida a Tacita"
+      aria-label="Bienvenida a Opoempollo"
       className="fixed inset-0 z-[80] flex flex-col outline-none transition-colors duration-300 ease-out"
       style={{ background: s.bg }}
     >

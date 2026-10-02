@@ -29,7 +29,7 @@ export default function Login({ onLogin }) {
     <div className="fixed inset-0 bg-ground scroll-area">
       <div className="max-w-md mx-auto px-4 pt-safe pb-safe min-h-full flex flex-col justify-center gap-6 py-8">
         <header>
-          <h1 className="brand text-[60px]">Tacita</h1>
+          <h1 className="brand text-[50px]">Opoempollo</h1>
           <p className="label text-ink-soft mt-2">Oposición a Subalterno · Ayuntamiento de Cádiz</p>
         </header>
 
