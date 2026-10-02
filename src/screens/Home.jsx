@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowCounterClockwise, BookOpen, Brain, CaretRight, Check, Flag, DeviceMobile, Fire, Lightning, SpeakerHigh, SpeakerSlash, Sword, X } from "@phosphor-icons/react";
 import { BLOCKS, DAILY_GOALS, MASTERED_AFTER, dateKey, daysUntil, rankInfo, streakView } from "../lib/logic.js";
 import { PAL } from "../lib/palette.js";
-import { Button, Folder, Galones, IconButton, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
+import { Button, Folder, Galones, IconButton, ArtIcon, Illustration, Paper, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { GoalRing } from "./Celebration.jsx";
 import { useCountUp } from "../lib/motion.js";
 import { greeting, missions, nextLesson, recommend } from "../lib/tutor.js";
@@ -71,8 +71,8 @@ function RankContent({ xp, from }) {
             <Galones level={rank.level} />
           </div>
         </div>
-        <div className="w-28 h-28 p-2.5 shrink-0 self-start bg-card blob">
-          <Illustration name={rank.illustration} alt={rank.name} className="w-full" />
+        <div className="w-16 h-16 shrink-0 self-start bg-card blob flex items-center justify-center text-plum">
+          <ArtIcon name={rank.illustration} size="50%" />
         </div>
       </div>
       <div className="px-5 pb-5">
@@ -682,8 +682,8 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
 
       {!install.installed && !install.canInstall && !store.installDismissed && install.browser !== "desktop" && (
         <Paper className="p-4 flex gap-3 anim-pop">
-          <div className="w-16 h-16 p-1.5 shrink-0 self-start bg-mist blob">
-            <Illustration name="instalar" className="w-full" />
+          <div className="w-12 h-12 shrink-0 self-start bg-mist blob flex items-center justify-center">
+            <ArtIcon name="instalar" size="50%" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold leading-tight">Instálala en tu móvil</p>
@@ -706,8 +706,8 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
 
       {install.canInstall && !store.installDismissed && (
         <Paper className="p-3 flex items-center gap-3 anim-pop">
-          <div className="w-14 h-14 p-1 shrink-0 bg-mist blob">
-            <Illustration name="instalar" className="w-full" />
+          <div className="w-12 h-12 shrink-0 bg-mist blob flex items-center justify-center">
+            <ArtIcon name="instalar" size="50%" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold leading-tight">Instala Opoempollo</p>

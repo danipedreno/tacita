@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowCounterClockwise, Books, CaretDoubleUp, CaretDown, Cards, Check, Fire, GraduationCap, Scales, Star, Target, Timer } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Bird, Books, Briefcase, Buildings, CalendarCheck, CaretDoubleUp, CaretDown, Cards, Check, CheckCircle, Crown, DeviceMobile, DoorOpen, Egg, EggCrack, Exam, Fire, GraduationCap, Key, Moon, PaperPlaneTilt, Question, Scales, ShieldCheck, Star, Sun, Target, Timer } from "@phosphor-icons/react";
 import { Drawer } from "vaul";
 import { Toaster, toast } from "sonner";
 import { Mascot, isGroup } from "./mascots.jsx";
@@ -138,15 +138,15 @@ export function Segmented({ label, options, value, onChange, disabledValues = []
  * Baldosa seleccionable con ilustración (sustituye a las casillas). `wide` ocupa las dos columnas.
  * Es un botón conmutable (aria-pressed): el estado se ve con el borde de tinta y el círculo con check.
  */
-export function ChoiceTile({ selected, onClick, color, title, note, illustration, fallback, wide = false, compact = false }) {
-  const art = wide ? (compact ? "w-16 h-16" : "w-24 h-24") : compact ? "w-14 h-14" : "w-20 h-20";
+export function ChoiceTile({ selected, onClick, color, title, note, illustration, wide = false, compact = false }) {
+  const art = wide ? (compact ? "w-12 h-12" : "w-14 h-14") : compact ? "w-11 h-11" : "w-12 h-12";
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={onClick}
       className={`tap press relative text-left rounded-[22px] p-3 transition-shadow duration-150 ${
-        wide ? `col-span-2 flex items-center gap-3 ${compact ? "min-h-[88px]" : "min-h-[116px]"}` : `flex flex-col ${compact ? "min-h-[128px]" : "min-h-[172px]"}`
+        wide ? `col-span-2 flex items-center gap-3 ${compact ? "min-h-[72px]" : "min-h-[88px]"}` : `flex flex-col ${compact ? "min-h-[108px]" : "min-h-[128px]"}`
       } ${selected ? "shadow-[inset_0_0_0_3px_#1e1e1c]" : ""}`}
       style={{ background: color }}
     >
@@ -156,8 +156,8 @@ export function ChoiceTile({ selected, onClick, color, title, note, illustration
       >
         {selected && <Check size={16} weight="bold" />}
       </span>
-      <span className={`${art} shrink-0 bg-card/75 blob p-1.5 ${wide ? "order-2 ml-auto mr-8" : ""}`}>
-        <Illustration name={illustration} fallback={fallback} className="w-full" alt="" />
+      <span className={`${art} shrink-0 bg-card/75 blob flex items-center justify-center ${wide ? "order-2 ml-auto mr-8" : ""}`}>
+        <ArtIcon name={illustration} size="52%" />
       </span>
       <span className={wide ? "order-1 min-w-0 pl-1" : "mt-auto pt-2 pr-1"}>
         <span className="block font-semibold text-[17px] leading-tight">{title}</span>
@@ -299,17 +299,7 @@ export function MedalBadge({ family, level, size = 64 }) {
         className={`w-full h-full blob flex items-center justify-center ${locked ? "bg-ground-2 text-line-strong" : "text-ink"}`}
         style={locked ? undefined : { background: family.color }}
       >
-        {family.illustration ? (
-          // Ilustración de la medalla; mientras no exista, se ve su icono.
-          <Illustration
-            name={family.illustration}
-            alt=""
-            className={`w-[78%] ${locked ? "opacity-30" : ""}`}
-            fallbackNode={<Icon size={size * 0.46} weight={locked ? "regular" : "fill"} />}
-          />
-        ) : (
-          <Icon size={size * 0.46} weight={locked ? "regular" : "fill"} />
-        )}
+        <Icon size={size * 0.46} weight={locked ? "regular" : "fill"} />
       </div>
       {!locked && (
         <span
@@ -321,6 +311,46 @@ export function MedalBadge({ family, level, size = 64 }) {
       )}
     </div>
   );
+}
+
+/* ---------------------------------------------------------------------
+   Iconos en lugar de ilustración: donde el pollito no pinta nada (bloques, medallas, avisos…)
+   --------------------------------------------------------------------- */
+const ART_ICONS = {
+  "bloque-penal": Scales,
+  "bloque-funcion-publica": Buildings,
+  simulacro: Exam,
+  "todo-temario": Books,
+  "caja-las-se": CheckCircle,
+  "caja-no-las-se": Question,
+  entregar: PaperPlaneTilt,
+  abandonar: DoorOpen,
+  reiniciar: ArrowCounterClockwise,
+  instalar: DeviceMobile,
+  "dia-del-examen": CalendarCheck,
+  "rango-1-novato": Egg,
+  "rango-2-practicas": EggCrack,
+  "rango-3-jefe-servicio": Bird,
+  "rango-4-jefe-centro": Briefcase,
+  "rango-5-director": Crown,
+  "medalla-primer-turno": Key,
+  "medalla-madrugador": Sun,
+  "medalla-imbatible": ShieldCheck,
+  "medalla-estudioso-nocturno": Moon,
+  "medalla-especialista": GraduationCap,
+  "medalla-racha": Fire,
+  "medalla-meta": Target,
+  "medalla-respondidas": Books,
+  "medalla-maraton": Timer,
+  "medalla-repaso": ArrowCounterClockwise,
+  "medalla-tarjetero": Cards,
+  "medalla-matricula": Star,
+};
+export const hasArtIcon = (name) => !!ART_ICONS[name];
+/** Icono de una ilustración (ver ART_ICONS). `size` admite porcentaje, p. ej. "52%". */
+export function ArtIcon({ name, size = "50%", weight = "fill", className = "" }) {
+  const Icon = ART_ICONS[name] || Star;
+  return <Icon size={size} weight={weight} className={className} aria-hidden="true" />;
 }
 
 /* ---------------------------------------------------------------------
@@ -346,7 +376,11 @@ export function Sheet({ open, title, illustration, body, actions, onClose }) {
           <Paper className="rounded-t-[28px] rounded-b-none px-5 pt-3 pb-safe">
             <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-line" aria-hidden="true" />
             <div className="flex items-start gap-4">
-              {illustration && <Illustration name={illustration} className="w-24 shrink-0" />}
+              {illustration && (
+                <span className="w-14 h-14 blob bg-ground-2 flex items-center justify-center shrink-0 mt-1">
+                  <ArtIcon name={illustration} size="50%" />
+                </span>
+              )}
               <div className="min-w-0">
                 <Drawer.Title className="display text-[30px]">{title}</Drawer.Title>
                 <Drawer.Description asChild>

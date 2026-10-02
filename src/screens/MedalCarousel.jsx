@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Lock } from "@phosphor-icons/react";
 import { ROMAN } from "../lib/logic.js";
-import { Illustration, MedalBadge, ProgressBar } from "../ui.jsx";
+import { ArtIcon, MedalBadge, ProgressBar } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import { useReducedMotion } from "../lib/motion.js";
 
@@ -107,8 +107,8 @@ export default function MedalCarousel({ items }) {
                   {m.kind === "tier" ? (
                     <MedalBadge family={m.family} level={m.level} size={108} />
                   ) : (
-                    <span className={`w-[120px] h-[120px] blob-2 p-2 ${m.locked ? "bg-ground-2" : ""}`} style={m.locked ? undefined : { background: PAL.lilac }}>
-                      <Illustration name={m.illustration} fallback={m.fallback} alt="" className={`w-full ${m.locked ? "opacity-30" : ""}`} />
+                    <span className={`w-[108px] h-[108px] blob-2 flex items-center justify-center ${m.locked ? "bg-ground-2 text-line-strong" : "text-ink"}`} style={m.locked ? undefined : { background: PAL.lilac }}>
+                      <ArtIcon name={m.illustration} size="46%" weight={m.locked ? "regular" : "fill"} />
                     </span>
                   )}
                   {m.locked && m.kind === "special" && (

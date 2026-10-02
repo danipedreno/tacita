@@ -4,7 +4,7 @@ import { Cards as CardsIcon, Fire, X } from "@phosphor-icons/react";
 import { BLOCKS, BLOCK_IDS, COMBO_BONUS, COMBO_STEP, MASTERED_BOX, XP_PER_CARD, cardPiles, cardsForSession, dateKey, lessonKey, shuffle } from "../lib/logic.js";
 import { bankCards, temaLabel, temasOf } from "../lib/bank.js";
 import { studiedTemas } from "../lib/tutor.js";
-import { Button, ChoiceTile, Folder, IconButton, Illustration, Paper, Picker } from "../ui.jsx";
+import { Button, ChoiceTile, Folder, IconButton, ArtIcon, Illustration, Paper, Picker } from "../ui.jsx";
 import { useReducedMotion } from "../lib/motion.js";
 import { play } from "../lib/sound.js";
 import { PAL } from "../lib/palette.js";
@@ -348,14 +348,14 @@ function Session({ bank, queue: initial, onExit, onFinish }) {
 }
 
 /** Caja de tarjetas («Las sé» / «No las sé») con su ilustración, contador y botón de repaso. */
-function Pile({ title, color, cards, illustration, fallback, onReview }) {
+function Pile({ title, color, cards, illustration, onReview }) {
   return (
     <div className="rounded-[22px] p-3 flex flex-col gap-3 min-w-0" style={{ background: color }}>
-      <div className="w-full aspect-square bg-card/75 blob p-2">
-        <Illustration name={illustration} fallback={fallback} className="w-full" alt="" />
-      </div>
-      <div className="flex items-baseline justify-between gap-2 px-1">
-        <span className="font-semibold text-[17px] leading-tight">{title}</span>
+      <div className="flex items-center gap-2.5 px-1 pt-1">
+        <span className="w-11 h-11 bg-card/75 blob flex items-center justify-center shrink-0">
+          <ArtIcon name={illustration} size="52%" />
+        </span>
+        <span className="font-semibold text-[17px] leading-tight flex-1 min-w-0">{title}</span>
         <span className="brand text-[34px] leading-none">{cards.length}</span>
       </div>
       <button

@@ -12,7 +12,7 @@ import {
   formatClock,
   formatMinutes,
 } from "../lib/logic.js";
-import { Button, ChoiceTile, Folder, IconButton, Illustration, Paper, Picker, ProgressBar, Segmented, Sheet } from "../ui.jsx";
+import { Button, ChoiceTile, Folder, IconButton, ArtIcon, Illustration, Paper, Picker, ProgressBar, Segmented, Sheet } from "../ui.jsx";
 import { RankFolder } from "./Home.jsx";
 import { casoById, temaLabel, temasOf } from "../lib/bank.js";
 import { Rich } from "./Lesson.jsx";
@@ -190,10 +190,10 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
       </Step>
 
       <div className="rounded-folder bg-sky p-5">
-        <div className="bg-card blob p-3 w-2/3 mx-auto">
-          <Illustration name="simulacro" className="w-full" alt="" />
-        </div>
-        <p className="display text-[28px] leading-tight mt-4">
+        <span className="w-12 h-12 bg-card blob flex items-center justify-center">
+          <ArtIcon name="simulacro" size="50%" />
+        </span>
+        <p className="display text-[28px] leading-tight mt-3">
           {count} preguntas {onlyMistakes ? "falladas " : ""}de {scope} · {formatMinutes(count * s.secsPerQ)}
         </p>
         {pool.length < (s.count || 0) && pool.length > 0 && (
@@ -635,8 +635,8 @@ export function ExamResults({ result, xp, pendingMistakes, onNew, onHome, onRevi
               return (
                 <div key={id} className="anim-medal" style={{ animationDelay: `${350 + k * 80}ms` }}>
                   <Paper className="p-3 flex items-center gap-3">
-                    <div className="w-16 h-16 p-1 shrink-0 bg-ground-2 blob">
-                      <Illustration name={a.illustration} fallback={a.fallback} className="w-full" alt="" />
+                    <div className="w-12 h-12 shrink-0 bg-lilac blob flex items-center justify-center">
+                      <ArtIcon name={a.illustration} size="50%" />
                     </div>
                     <div>
                       <p className="font-serif text-lg leading-tight">{a.name}</p>

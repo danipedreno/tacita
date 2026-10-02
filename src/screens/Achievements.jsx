@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, Trophy } from "@phosphor-icons/react";
 import { ACHIEVEMENTS, MEDAL_FAMILIES, RANKS, medalProgress, rankInfo } from "../lib/logic.js";
-import { Button, Illustration, Sheet } from "../ui.jsx";
+import { Button, ArtIcon, Sheet } from "../ui.jsx";
 import { PAL } from "../lib/palette.js";
 import MedalCarousel from "./MedalCarousel.jsx";
 import Liga from "./Liga.jsx";
@@ -47,8 +47,8 @@ export default function Achievements({ store, user, liga, onReset }) {
             const current = r.level === rank.level;
             return (
               <li key={r.level} className={`flex items-center gap-3 rounded-[14px] p-2 ${current ? "bg-lilac text-ink" : ""}`}>
-                <span className="w-12 h-12 blob shrink-0 overflow-hidden bg-card p-0.5">
-                  <Illustration name={r.illustration} alt="" className={`w-full ${reached ? "" : "opacity-35"}`} />
+                <span className={`w-11 h-11 blob shrink-0 flex items-center justify-center ${reached ? "bg-card text-plum" : "bg-card/40 text-ground"}`}>
+                  <ArtIcon name={r.illustration} size="50%" weight={reached ? "fill" : "regular"} />
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-semibold leading-tight">{r.name}</span>
