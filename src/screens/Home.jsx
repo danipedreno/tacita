@@ -12,7 +12,7 @@ import { POINTS } from "../lib/liga.js";
 import { DUEL_SIZE, duelPoints, duelRecord, duelsOf, newDuelId } from "../lib/duelo.js";
 import { learnTemas } from "../lib/bank.js";
 import { Avatar } from "../avatars.jsx";
-import { episodesOf, player, usePodcast } from "../lib/podcast.js";
+import { episodesOf, usePodcast } from "../lib/podcast.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -461,24 +461,12 @@ function Missions({ store, bank, onAction, onQuickTest }) {
   );
 }
 
-/* Pódcast de Inicio: el primer episodio sin escuchar del tema por el que vas (o del siguiente que tenga audio). */
-function nextEpisode(bank, store, heard) {
-  const temas = learnTemas(bank);
-  const from = Math.max(0, temas.findIndex((t) => t.id === nextLesson(bank, store)?.tema.id));
-  for (const t of [...temas.slice(from), ...temas.slice(0, from)]) {
-    const eps = episodesOf(bank, t.id);
-    const k = eps.findIndex((e) => !heard[e.key]);
-    if (k >= 0) return { eps, k };
-  }
-  const eps = episodesOf(bank, temas[from]?.id);
-  return eps.length ? { eps, k: 0 } : null;
-}
-
 /** Accesos directos: lo que no está en la barra de abajo (pódcast, apuntes, liga…) a un toque. */
-function Shortcuts({ bank, store, onQuickTest, onAction, onGoTemario, onGoDominio, onGoLiga }) {
+function Shortcuts({ bank, store, onQuickTest, onAction, onGoTemario, onGoDominio, onGoLiga, onGoPodcast }) {
   const pod = usePodcast();
   const playing = pod.queue[pod.index];
-  const ep = nextEpisode(bank, store, pod.heard);
+  const eps = learnTemas(bank).flatMap((t) => episodesOf(bank, t.id));
+  const heard = eps.filter((e) => pod.heard[e.key]).length;
   const { due, fresh } = reviewState(bank, store);
   const m = masteryOf((bank?.preguntas || []).filter((q) => q.tema !== "casos"), store.srs);
   const items = [
@@ -495,10 +483,10 @@ function Shortcuts({ bank, store, onQuickTest, onAction, onGoTemario, onGoDomini
     {
       id: "podcast",
       label: "Pódcast",
-      sub: playing ? (pod.playing ? "Sonando" : "En pausa") : ep ? `T${ep.eps[ep.k].numero} · ${ep.eps[ep.k].title}` : "Grabando",
+      sub: playing ? (pod.playing ? "Sonando ahora" : "En pausa") : eps.length ? `${heard} de ${eps.length} oídos` : "Grabando",
       Icon: Headphones,
       color: PAL.sun,
-      onClick: () => (playing ? player.toggle() : ep ? player.play(bank, ep.eps, ep.k) : onGoTemario()),
+      onClick: onGoPodcast,
     },
     { id: "apuntes", label: "Apuntes", sub: "Teoría y esquemas", Icon: BookOpen, color: PAL.mint, onClick: onGoTemario },
     { id: "dominio", label: "Dominio", sub: `${m.pct} % memorizado`, Icon: Brain, color: PAL.sky, onClick: onGoDominio },
@@ -768,7 +756,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
   );
 }
 
-export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, onGoLiga, sync, liga, user }) {
+export default function Home({ store, bank, install, onDismissInstall, onGoTemario, onGoDominio, onReview, onPlan, onQuickTest, onToggleSound, onAction, onGoLiga, onGoPodcast, sync, liga, user }) {
   const intro = useRef(!introPlayed).current;
   useEffect(() => {
     introPlayed = true;
@@ -870,7 +858,7 @@ export default function Home({ store, bank, install, onDismissInstall, onGoTemar
         <div className="flex flex-col gap-6 min-w-0">
           {/* Primero, lo que toca ahora; justo debajo, todo lo demás a un toque */}
           <TutorCard bank={bank} store={store} onAction={onAction} />
-          <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} />
+          <Shortcuts bank={bank} store={store} onQuickTest={onQuickTest} onAction={onAction} onGoTemario={onGoTemario} onGoDominio={onGoDominio} onGoLiga={onGoLiga} onGoPodcast={onGoPodcast} />
 
           {pendingMistakes > 0 && (
             <button type="button" onClick={onReview} className="tap press text-left rounded-folder bg-sky text-ink p-4 flex items-center gap-4">

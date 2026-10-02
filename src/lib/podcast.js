@@ -42,18 +42,25 @@ const set = (patch) => {
 const audio = typeof Audio !== "undefined" ? new Audio() : null;
 const ms = typeof navigator !== "undefined" && "mediaSession" in navigator ? navigator.mediaSession : null;
 
+function markHeard(ep) {
+  const heard = { ...state.heard, [ep.key]: true };
+  write(HEARD_KEY, heard);
+  set({ heard });
+}
+
 if (audio) {
   audio.preload = "auto";
-  audio.addEventListener("timeupdate", () => set({ time: audio.currentTime, dur: audio.duration || state.dur }));
+  audio.addEventListener("timeupdate", () => {
+    set({ time: audio.currentTime, dur: audio.duration || state.dur });
+    // Escuchado al pasar del 90 %: el final suele ser la despedida.
+    const ep = state.queue[state.index];
+    if (ep && !state.heard[ep.key] && audio.duration && audio.currentTime / audio.duration > 0.9) markHeard(ep);
+  });
   audio.addEventListener("play", () => set({ playing: true }));
   audio.addEventListener("pause", () => set({ playing: false }));
   audio.addEventListener("ended", () => {
     const ep = state.queue[state.index];
-    if (ep) {
-      const heard = { ...state.heard, [ep.key]: true };
-      write(HEARD_KEY, heard);
-      set({ heard });
-    }
+    if (ep && !state.heard[ep.key]) markHeard(ep);
     if (state.index < state.queue.length - 1) go(state.index + 1);
     else set({ playing: false });
   });
@@ -134,4 +141,4 @@ if (ms) {
   h("nexttrack", () => player.next());
 }
 
-export const usePodcast = () => useSyncExternalStore((f) => (subs.add(f), () => subs.delete(f)), () => state);
+export const usePodcast = () => useSyncExternalStore((f) => (subs.add(f), () => subs.delete(f)), () => state, () => state);

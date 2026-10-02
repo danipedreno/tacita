@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowCounterClockwise, BookOpen, Sword, Brain, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, BookOpen, Headphones, Sword, Brain, Cards, CheckCircle, ClipboardText, GraduationCap, House, Trophy } from "@phosphor-icons/react";
 import { applyCardsResult, applyExamResult, applyLessonResult, createExam, mistakePool, rankInfo } from "./lib/logic.js";
 import { bankQuestions, getAccess, temaById, temaLabel, useBank } from "./lib/bank.js";
 import { useClasificacion, useSync } from "./lib/sync.js";
@@ -12,7 +12,8 @@ import { dailyReviewPool, srsAfterExam, srsAfterLesson, temaReviewPool } from ".
 import { retoQuestions, retoResult } from "./lib/reto.js";
 import { DUEL_SIZE, duelPoints, duelQuestions, duelsOf } from "./lib/duelo.js";
 import Mastery from "./screens/Mastery.jsx";
-import { MiniPlayer } from "./screens/Podcast.jsx";
+import PodcastScreen, { MiniPlayer } from "./screens/Podcast.jsx";
+import { nextLesson } from "./lib/tutor.js";
 import { player, usePodcast } from "./lib/podcast.js";
 import { dateKey } from "./lib/logic.js";
 import CardsScreen from "./screens/Cards.jsx";
@@ -39,7 +40,7 @@ const TABS = [
   { id: "badges", label: "Logros", Icon: Trophy, color: PAL.lilac },
 ];
 // En escritorio, los apuntes tienen su propia entrada en la barra lateral.
-const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon: BookOpen, color: PAL.mint }, { id: "dominio", label: "Dominio", Icon: Brain, color: PAL.sky }, TABS[4]];
+const SIDE_TABS = [...TABS.slice(0, 4), { id: "temario", label: "Apuntes", Icon: BookOpen, color: PAL.mint }, { id: "podcast", label: "Pódcast", Icon: Headphones, color: PAL.sun }, { id: "dominio", label: "Dominio", Icon: Brain, color: PAL.sky }, TABS[4]];
 
 /**
  * Barra de pestañas (móvil). La pestaña activa es una capa de color recortada con clip-path que se desliza
@@ -435,6 +436,7 @@ function UserApp({ user, bank, logout }) {
                       onGoTemario={() => goTab("temario")}
                       onGoDominio={() => goTab("dominio")}
                       onGoLiga={() => goTab("badges")}
+                      onGoPodcast={() => goTab("podcast")}
                       liga={liga}
                       user={user}
                       onReview={onReview}
@@ -486,6 +488,7 @@ function UserApp({ user, bank, logout }) {
                       }}
                     />
                   )}
+                  {tab === "podcast" && <PodcastScreen bank={bank} store={store} initialTema={nextLesson(bank, store)?.tema.id} colorOf={(id) => unitColor(bank, id)} onBack={() => setTab("home")} />}
                   {tab === "dominio" && <Mastery bank={bank} store={store} onReview={onDailyReview} onTemaReview={onTemaReview} onStartLesson={startLesson} />}
                   {tab === "badges" && <Achievements store={store} user={user} liga={liga} onReset={onReset} />}
                 </div>

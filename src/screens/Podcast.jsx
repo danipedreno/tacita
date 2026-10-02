@@ -1,55 +1,152 @@
-import { ArrowArcLeft, ArrowArcRight, CheckCircle, Headphones, Pause, Play, SkipForward, SpinnerGap, X } from "@phosphor-icons/react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowArcLeft, ArrowArcRight, CaretLeft, CheckCircle, Headphones, Pause, Play, SkipForward, SpinnerGap, X } from "@phosphor-icons/react";
+import { learnTemas } from "../lib/bank.js";
 import { episodesOf, fmtTime, player, usePodcast } from "../lib/podcast.js";
+
+/** Portada del episodio: el color y el número del tema, con unos cascos. */
+function Cover({ numero, color, className = "" }) {
+  return (
+    <span className={`relative shrink-0 rounded-[14px] flex items-end p-2 overflow-hidden ${className}`} style={{ background: color }} aria-hidden="true">
+      <Headphones size={30} weight="fill" className="absolute top-2 right-2 opacity-80" />
+      <span className="brand text-[26px] leading-none">{numero}</span>
+    </span>
+  );
+}
+
+/** Un episodio como en las apps de pódcast: portada, título, tema, «Escuchado» y el play con la duración. */
+function EpisodeRow({ bank, ep, eps, k, color, temaTitle, st }) {
+  const on = st.queue[st.index]?.key === ep.key;
+  const heard = !!st.heard[ep.key];
+  const play = () => (on ? player.toggle() : player.play(bank, eps, k));
+  return (
+    <li className="flex items-center gap-3 py-3 border-b border-line last:border-b-0">
+      <Cover numero={ep.numero} color={color} className="w-[72px] h-[72px]" />
+      <button type="button" onClick={play} className="tap flex-1 min-w-0 text-left">
+        <span className="block font-semibold text-[16px] leading-snug">
+          {ep.i + 1}. {ep.title}
+        </span>
+        <span className="block text-[13px] text-ink-soft mt-0.5 truncate">
+          Tema {ep.numero} · {temaTitle}
+        </span>
+        <span className="flex items-center gap-2 mt-1.5 min-h-[22px]">
+          {on ? (
+            <span className="tag !h-[22px] !text-[11px] !bg-ink !text-ground !border-ink">{st.playing ? "Sonando" : "En pausa"}</span>
+          ) : heard ? (
+            <span className="tag !h-[22px] !text-[11px] flex items-center gap-1 !bg-mint/15 text-olive">
+              <CheckCircle size={13} weight="fill" /> Escuchado
+            </span>
+          ) : (
+            <span className="tag !h-[22px] !text-[11px]">Nuevo</span>
+          )}
+        </span>
+      </button>
+      <span className="flex flex-col items-center gap-1 shrink-0 w-16">
+        <button
+          type="button"
+          onClick={play}
+          aria-label={on && st.playing ? `Pausar ${ep.title}` : `Escuchar ${ep.title}`}
+          className={`tap press w-12 h-12 rounded-full flex items-center justify-center ${heard && !on ? "bg-ground-2 text-ink" : "bg-ink text-ground"}`}
+        >
+          {on && st.loading ? <SpinnerGap size={20} className="animate-spin" /> : on && st.playing ? <Pause size={20} weight="fill" /> : <Play size={20} weight="fill" />}
+        </button>
+        <span className="font-mono text-xs text-ink-soft">{on ? fmtTime(st.time) : fmtTime(ep.s)}</span>
+      </span>
+    </li>
+  );
+}
 
 /** Lista de episodios de un tema, con «Escuchar todo». */
 export function EpisodeList({ bank, temaId, color }) {
   const eps = episodesOf(bank, temaId);
   const st = usePodcast();
-  const current = st.queue[st.index];
+  const tema = bank.temas.find((t) => t.id === temaId);
   const total = eps.reduce((a, e) => a + e.s, 0);
-  const lessons = bank.temas.find((t) => t.id === temaId)?.lecciones.length || 0;
+  const lessons = tema?.lecciones.length || 0;
+  const heard = eps.filter((e) => st.heard[e.key]).length;
+  const firstNew = Math.max(0, eps.findIndex((e) => !st.heard[e.key]));
   if (!eps.length)
     return <p className="text-[15px] text-ink-soft">El pódcast de este tema aún se está grabando. Mientras, tienes el resumen y el temario completo.</p>;
   return (
     <section aria-label="Pódcast del tema" className="flex flex-col gap-3">
-      <div className="rounded-folder p-5 paper-shadow" style={{ background: color }}>
-        <p className="label flex items-center gap-1.5">
-          <Headphones size={16} weight="bold" aria-hidden="true" /> Pódcast
-        </p>
-        <h2 className="display text-[28px] mt-1 leading-tight">Carmen te lo explica y Pepe pregunta</h2>
-        <p className="text-sm mt-1">
-          {eps.length} {eps.length === 1 ? "episodio" : "episodios"} · {Math.round(total / 60)} min{eps.length < lessons ? ` · faltan ${lessons - eps.length} por grabar` : ""}. Ideal para el coche o paseando.
-        </p>
-        <button type="button" onClick={() => player.play(bank, eps, 0)} className="tap press mt-4 w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2">
-          <Play size={18} weight="fill" /> Escuchar todo el tema
-        </button>
+      <div className="rounded-folder p-4 flex gap-4 items-center" style={{ background: color }}>
+        <Cover numero={tema.numero} color="rgba(255,255,255,0.55)" className="w-24 h-24" />
+        <div className="min-w-0 flex-1">
+          <p className="label">Carmen explica · Pepe pregunta</p>
+          <h2 className="display text-[22px] mt-1 leading-tight">{tema.titulo}</h2>
+          <p className="text-sm mt-1">
+            {eps.length} {eps.length === 1 ? "episodio" : "episodios"} · {Math.round(total / 60)} min · {heard} {heard === 1 ? "escuchado" : "escuchados"}
+          </p>
+        </div>
       </div>
-      <ol className="flex flex-col gap-1.5">
-        {eps.map((e, k) => {
-          const on = current?.key === e.key;
-          return (
-            <li key={e.key}>
-              <button
-                type="button"
-                onClick={() => (on ? player.toggle() : player.play(bank, eps, k))}
-                className={`tap press w-full text-left rounded-[14px] px-3 py-2.5 flex items-center gap-3 ${on ? "bg-ink text-ground" : "bg-card paper-shadow"}`}
-              >
-                <span className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${on ? "bg-ground text-ink" : "bg-ground-2"}`}>
-                  {on && st.loading ? <SpinnerGap size={18} className="animate-spin" /> : on && st.playing ? <Pause size={18} weight="fill" /> : <Play size={18} weight="fill" />}
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block font-semibold leading-tight truncate">
-                    {e.i + 1}. {e.title}
-                  </span>
-                  <span className={`block text-xs mt-0.5 ${on ? "opacity-80" : "text-ink-soft"}`}>{fmtTime(e.s)}</span>
-                </span>
-                {st.heard[e.key] && <CheckCircle size={20} weight="fill" className={on ? "" : "text-olive"} aria-label="Escuchado" />}
-              </button>
-            </li>
-          );
-        })}
+      <button type="button" onClick={() => player.play(bank, eps, heard === eps.length ? 0 : firstNew)} className="tap press w-full h-12 rounded-full bg-ink text-ground text-sm font-semibold flex items-center justify-center gap-2">
+        <Play size={18} weight="fill" /> {heard === 0 ? "Escuchar desde el principio" : heard === eps.length ? "Volver a escucharlo todo" : `Seguir por el episodio ${eps[firstNew].i + 1}`}
+      </button>
+      <ol className="rounded-folder bg-card paper-shadow px-3">
+        {eps.map((e, k) => (
+          <EpisodeRow key={e.key} bank={bank} ep={e} eps={eps} k={k} color={color} temaTitle={tema.titulo} st={st} />
+        ))}
       </ol>
+      {eps.length < lessons && <p className="text-sm text-ink-soft text-center">Faltan {lessons - eps.length} episodios por grabar; irán apareciendo aquí.</p>}
     </section>
+  );
+}
+
+/** Pantalla de pódcast: eliges el tema arriba y debajo salen sus episodios. */
+export default function PodcastScreen({ bank, store, initialTema, colorOf, onBack }) {
+  const st = usePodcast();
+  const temas = learnTemas(bank);
+  const withEps = temas.filter((t) => episodesOf(bank, t.id).length);
+  const [sel, setSel] = useState(() => {
+    const playing = st.queue[st.index]?.tema;
+    const pick = [playing, initialTema].find((id) => id && withEps.some((t) => t.id === id));
+    return pick || withEps[0]?.id || temas[0]?.id;
+  });
+  const chips = useRef(null);
+  useEffect(() => {
+    chips.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView?.({ inline: "center", block: "nearest" });
+  }, [sel]);
+  const allEps = withEps.flatMap((t) => episodesOf(bank, t.id));
+  const heardAll = allEps.filter((e) => st.heard[e.key]).length;
+  return (
+    <div className="flex flex-col gap-5">
+      <header>
+        <button type="button" onClick={onBack} className="tap press mb-3 h-11 pl-3 pr-4 rounded-full bg-card paper-shadow text-ink flex items-center gap-1 text-sm font-semibold">
+          <CaretLeft size={18} weight="bold" /> Inicio
+        </button>
+        <h1 className="display text-[44px]">Pódcast</h1>
+        <p className="text-[15px] text-ink-soft mt-1">
+          Cada lección, contada en unos minutos. {allEps.length} episodios grabados · {heardAll} escuchados.
+        </p>
+      </header>
+
+      <nav aria-label="Temas" className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 px-4 py-2 bg-ground/95 backdrop-blur border-b border-line">
+        <div ref={chips} className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+          {temas.map((t) => {
+            const eps = episodesOf(bank, t.id);
+            const n = eps.length;
+            const done = n > 0 && eps.every((e) => st.heard[e.key]);
+            const on = t.id === sel;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setSel(t.id)}
+                className={`tap press shrink-0 h-11 pl-1.5 pr-3.5 rounded-full flex items-center gap-2 text-sm font-semibold ${on ? "bg-ink text-ground" : n ? "bg-card paper-shadow" : "bg-card/60 text-ink-soft"}`}
+              >
+                <span className="w-8 h-8 rounded-full flex items-center justify-center text-ink text-[12px] font-bold" style={{ background: colorOf(t.id), opacity: n ? 1 : 0.5 }}>
+                  {done ? <CheckCircle size={16} weight="fill" /> : t.numero}
+                </span>
+                Tema {t.numero}
+                <span className={`font-mono text-xs ${on ? "text-ground/70" : "text-ink-soft"}`}>{n}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <EpisodeList key={sel} bank={bank} temaId={sel} color={colorOf(sel)} />
+    </div>
   );
 }
 
