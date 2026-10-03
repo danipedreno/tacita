@@ -137,6 +137,7 @@ export function Segmented({ label, options, value, onChange, disabledValues = []
 /**
  * Baldosa seleccionable con ilustración (sustituye a las casillas). `wide` ocupa las dos columnas (o las que diga `span`).
  * Es un botón conmutable (aria-pressed): el estado se ve con el borde de tinta y el círculo con check.
+ * Versión clara: en reposo es blanca y el color del bloque solo va en el icono; al elegirla se tiñe suave.
  */
 export function ChoiceTile({ selected, onClick, color, title, note, illustration, wide = false, compact = false, span = "col-span-2" }) {
   const art = wide ? (compact ? "w-12 h-12" : "w-14 h-14") : compact ? "w-11 h-11" : "w-12 h-12";
@@ -145,18 +146,18 @@ export function ChoiceTile({ selected, onClick, color, title, note, illustration
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`tap press relative text-left rounded-[22px] p-3 transition-shadow duration-150 ${
+      className={`tap press relative text-left rounded-[22px] p-3 transition-[box-shadow,background-color] duration-150 ${
         wide ? `${span} flex items-center gap-3 ${compact ? "min-h-[72px]" : "min-h-[88px]"}` : `flex flex-col ${compact ? "min-h-[108px]" : "min-h-[128px]"}`
-      } ${selected ? "shadow-[inset_0_0_0_3px_#000000]" : ""}`}
-      style={{ background: color }}
+      } ${selected ? "shadow-[inset_0_0_0_2px_#000000]" : "shadow-[inset_0_0_0_1px_#e6dfd1]"}`}
+      style={{ background: selected ? `color-mix(in srgb, ${color} 18%, #ffffff)` : "#ffffff" }}
     >
       <span
-        className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-150 ${selected ? "bg-ink text-ground" : "bg-card/70 border-2 border-ink/25"}`}
+        className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-150 ${selected ? "bg-ink text-ground" : "border-2 border-line"}`}
         aria-hidden="true"
       >
-        {selected && <Check size={16} weight="bold" />}
+        {selected && <Check size={14} weight="bold" />}
       </span>
-      <span className={`${art} shrink-0 bg-card/75 blob flex items-center justify-center ${wide ? "order-2 ml-auto mr-8" : ""}`}>
+      <span className={`${art} shrink-0 blob flex items-center justify-center ${wide ? "order-2 ml-auto mr-8" : ""}`} style={{ background: color }}>
         <ArtIcon name={illustration} size="52%" />
       </span>
       <span className={wide ? "order-1 min-w-0 pl-1" : "mt-auto pt-2 pr-1"}>
