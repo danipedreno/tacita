@@ -34,14 +34,14 @@ function TemaSwitcher({ bank, store, groups, current, next, prev, following, onS
           type="button"
           aria-haspopup="dialog"
           onClick={() => setOpen(true)}
-          className="tap press flex-1 min-w-0 h-14 rounded-full bg-ink text-ground pl-2 pr-4 flex items-center gap-3 text-left"
+          className="tap press flex-1 min-w-0 h-14 rounded-full bg-ink text-ground pl-2 pr-3 flex items-center gap-2.5 text-left"
         >
           <span className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-ink font-bold ${numSize(current)}`} style={{ background: unitColor(bank, current.id) }} aria-hidden="true">
             {current.numero}
           </span>
           <span className="flex-1 min-w-0">
-            <span className="block text-[11px] font-bold uppercase tracking-[0.06em] text-ground/70">
-              {BLOCKS[current.bloque].short} · {done} de {total}
+            <span className="block text-[11px] font-bold uppercase tracking-[0.06em] text-ground/70 whitespace-nowrap truncate">
+              {BLOCKS[current.bloque].short} · {done}/{total}
             </span>
             <span className="block font-semibold text-[15px] leading-tight truncate">{current.titulo}</span>
           </span>

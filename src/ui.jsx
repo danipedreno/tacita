@@ -135,10 +135,10 @@ export function Segmented({ label, options, value, onChange, disabledValues = []
 }
 
 /**
- * Baldosa seleccionable con ilustración (sustituye a las casillas). `wide` ocupa las dos columnas.
+ * Baldosa seleccionable con ilustración (sustituye a las casillas). `wide` ocupa las dos columnas (o las que diga `span`).
  * Es un botón conmutable (aria-pressed): el estado se ve con el borde de tinta y el círculo con check.
  */
-export function ChoiceTile({ selected, onClick, color, title, note, illustration, wide = false, compact = false }) {
+export function ChoiceTile({ selected, onClick, color, title, note, illustration, wide = false, compact = false, span = "col-span-2" }) {
   const art = wide ? (compact ? "w-12 h-12" : "w-14 h-14") : compact ? "w-11 h-11" : "w-12 h-12";
   return (
     <button
@@ -146,7 +146,7 @@ export function ChoiceTile({ selected, onClick, color, title, note, illustration
       aria-pressed={selected}
       onClick={onClick}
       className={`tap press relative text-left rounded-[22px] p-3 transition-shadow duration-150 ${
-        wide ? `col-span-2 flex items-center gap-3 ${compact ? "min-h-[72px]" : "min-h-[88px]"}` : `flex flex-col ${compact ? "min-h-[108px]" : "min-h-[128px]"}`
+        wide ? `${span} flex items-center gap-3 ${compact ? "min-h-[72px]" : "min-h-[88px]"}` : `flex flex-col ${compact ? "min-h-[108px]" : "min-h-[128px]"}`
       } ${selected ? "shadow-[inset_0_0_0_3px_#000000]" : ""}`}
       style={{ background: color }}
     >

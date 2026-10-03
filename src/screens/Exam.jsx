@@ -111,6 +111,7 @@ export function ExamSetup({ store, bank, onSettings, onStart }) {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5" role="group" aria-label="Qué quieres repasar">
           <ChoiceTile
             wide
+            span={BLOCK_IDS.length === 3 ? "col-span-2 lg:col-span-3" : "col-span-2"}
             title="Todo el temario"
             note="Común, específica y repasos mezclados"
             color={PAL.sun}

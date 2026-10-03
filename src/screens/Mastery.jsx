@@ -49,7 +49,7 @@ export default function Mastery({ bank, store, onReview, onTemaReview, onStartLe
       <section className="rounded-folder bg-card paper-shadow p-5" aria-labelledby="dom-total">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="label text-ink-soft">Todo el temario</p>
+            <p className="label text-ink-soft whitespace-nowrap">Todo el temario</p>
             <h2 id="dom-total" className="brand text-[56px] leading-none mt-1">
               {all.pct}%
             </h2>
@@ -66,9 +66,9 @@ export default function Mastery({ bank, store, onReview, onTemaReview, onStartLe
           type="button"
           onClick={onReview}
           disabled={!due.length && !fresh.length}
-          className="tap press mt-5 w-full h-14 rounded-full bg-ink text-ground font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
+          className="tap press mt-5 w-full min-h-14 py-2 px-5 rounded-full bg-ink text-ground font-semibold flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-40"
         >
-          <ArrowCounterClockwise size={20} weight="bold" />
+          <ArrowCounterClockwise size={20} weight="bold" className="shrink-0" />
           {due.length ? `Repaso del día · ${due.length} pendientes` : fresh.length ? "Repaso del día · preguntas nuevas" : "Nada que repasar hoy"}
         </button>
         {!due.length && !fresh.length && <p className="text-xs text-ink-soft text-center mt-2">Haz alguna lección o un test y sus preguntas entrarán en el repaso.</p>}
@@ -94,7 +94,7 @@ export default function Mastery({ bank, store, onReview, onTemaReview, onStartLe
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="flex items-baseline justify-between gap-2">
-                          <span className="font-semibold leading-tight truncate">{t.titulo}</span>
+                          <span className="font-semibold leading-tight line-clamp-2">{t.titulo}</span>
                           <span className="font-mono text-sm shrink-0">{m.pct}%</span>
                         </span>
                         <MasteryBar m={m} className="h-2 mt-2" />

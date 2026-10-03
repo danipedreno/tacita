@@ -315,6 +315,8 @@ function HomeCabinet({ bank, store, onPlan, onAction, intro }) {
   };
   return (
     <section className={intro ? "anim-folder" : ""}>
+      {/* Las pestañas ocupan todo el ancho, así que el panel no lleva esquinas de arriba: la activa se funde con
+          él y las demás se apoyan justo encima, sin montarse ni dejar asomar el panel entre ellas. */}
       <div role="tablist" aria-label="Hoy y tu progreso" className="flex items-end gap-1">
         {HOME_FOLDERS.map((f, k) => {
           const on = f.id === current.id;
@@ -331,8 +333,8 @@ function HomeCabinet({ bank, store, onPlan, onAction, intro }) {
               tabIndex={on ? 0 : -1}
               onClick={() => choose(f.id)}
               onKeyDown={(e) => onKey(e, k)}
-              className={`relative min-w-0 flex-1 -mb-px px-2 rounded-t-[16px] text-[14px] leading-none whitespace-nowrap transition-[height,background-color,color] duration-200 ease-out ${
-                on ? `h-[50px] z-10 font-semibold ${f.dark ? "text-ground" : "text-ink"}` : "h-11 z-0 font-medium text-ink-soft hover:text-ink"
+              className={`relative min-w-0 flex-1 px-2 rounded-t-[16px] text-[14px] leading-none whitespace-nowrap transition-[height,background-color,color] duration-200 ease-out ${
+                on ? `h-[50px] -mb-px z-10 font-semibold ${f.dark ? "text-ground" : "text-ink"}` : "h-11 z-0 font-medium text-ink-soft hover:text-ink"
               }`}
               style={{ background: on ? f.color : PAL.ground2 }}
             >
@@ -350,7 +352,7 @@ function HomeCabinet({ bank, store, onPlan, onAction, intro }) {
         id="carpeta-inicio"
         role="tabpanel"
         aria-labelledby={`carpeta-tab-${current.id}`}
-        className={`rounded-folder ${current.id === HOME_FOLDERS[0].id ? "rounded-tl-none" : ""} ${current.dark ? "text-ground" : "text-ink"} transition-colors duration-200 ease-out`}
+        className={`rounded-b-folder ${current.dark ? "text-ground" : "text-ink"} transition-colors duration-200 ease-out`}
         style={{ background: current.color }}
       >
         <div key={current.id} className="anim-fade">
@@ -517,7 +519,7 @@ function Shortcuts({ bank, onGoTemario, onGoLiga, onGoPodcast }) {
           {badge && <span className="absolute top-2.5 right-2.5 min-w-[22px] h-[22px] px-1.5 rounded-full bg-ink text-ground font-mono text-[11px] font-semibold flex items-center justify-center">{typeof badge === "number" && badge > 99 ? "99+" : badge}</span>}
           <span className="w-full min-w-0">
             <span className="block font-semibold text-[15px] leading-tight">{label}</span>
-            <span className="block text-xs text-ink-soft leading-tight mt-0.5 truncate">{sub}</span>
+            <span className="block text-xs text-ink-soft leading-tight mt-0.5 line-clamp-2">{sub}</span>
           </span>
         </button>
       ))}
@@ -771,7 +773,7 @@ function DuelInvite({ bank, store, liga, user, onAction }) {
         duel && (
           <>
             <Avatar user={duel.from} face="happy" className="w-24 h-24 mx-auto mb-3 block anim-hop" />
-            Duelo de {DUEL_SIZE} preguntas en {tema}. Las mismas preguntas para las dos personas: gana quien acierte más.
+            Duelo de {DUEL_SIZE} preguntas en {tema}. Las mismas preguntas para las dos personas: gana quien saque más puntos.
           </>
         )
       }
@@ -829,12 +831,13 @@ function DuelCard({ bank, store, liga, user, onAction }) {
       {pending.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">
           {pending.map((d) => (
-            <li key={d.id} className="rounded-[14px] bg-card px-3 py-2.5 flex items-center gap-3">
-              <Avatar user={d.from} className="w-9 h-9 shrink-0" />
-              <span className="flex-1 min-w-0 text-[15px]">
-                <span className="font-semibold">{pretty(d.from)}</span> te reta en {temaName(d.tema)}
+            <li key={d.id} className="rounded-[14px] bg-card px-2.5 py-2 flex items-center gap-2">
+              <Avatar user={d.from} className="w-8 h-8 shrink-0" />
+              <span className="flex-1 min-w-0 leading-tight">
+                <span className="block text-[14px] font-semibold truncate">{pretty(d.from)} te reta</span>
+                <span className="block text-xs text-ink-soft truncate first-letter:uppercase">{temaName(d.tema)}</span>
               </span>
-              <button type="button" onClick={() => play(d)} className="tap press h-10 px-4 rounded-full bg-ink text-ground text-sm font-semibold shrink-0">
+              <button type="button" onClick={() => play(d)} className="tap press h-9 px-3.5 rounded-full bg-ink text-ground text-sm font-semibold shrink-0">
                 Aceptar
               </button>
             </li>
@@ -954,11 +957,14 @@ function DuelCard({ bank, store, liga, user, onAction }) {
         </ul>
       )}
       {Object.keys(record).length > 0 && (
-        <p className="text-xs mt-2">
-          {Object.entries(record)
-            .map(([u, r]) => `Contra ${pretty(u)}: ${r.win} ${r.win === 1 ? "victoria" : "victorias"}, ${r.loss} ${r.loss === 1 ? "derrota" : "derrotas"}${r.draw ? `, ${r.draw} ${r.draw === 1 ? "empate" : "empates"}` : ""}`)
-            .join(" · ")}
-        </p>
+        <ul className="text-xs mt-2 flex flex-col gap-0.5">
+          {Object.entries(record).map(([u, r]) => (
+            <li key={u}>
+              Contra <span className="font-semibold">{pretty(u)}</span>: {r.win} {r.win === 1 ? "victoria" : "victorias"}, {r.loss} {r.loss === 1 ? "derrota" : "derrotas"}
+              {r.draw ? `, ${r.draw} ${r.draw === 1 ? "empate" : "empates"}` : ""}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

@@ -482,7 +482,7 @@ export default function CardsScreen({ store, bank, onFinish, autoStart, onAutoSt
         <h2 id="cards-que" className="font-semibold text-lg leading-tight">
           ¿Qué quieres repasar?
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5" role="group" aria-labelledby="cards-que">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5" role="group" aria-labelledby="cards-que">
           <ChoiceTile
             wide
             compact
