@@ -827,6 +827,11 @@ function DuelCard({ bank, store, liga, user, onAction }) {
         <span className="tag">{DUEL_SIZE} preguntas</span>
         <span className="tag">Mismas preguntas para ambos</span>
       </p>
+      {rivals.length > 0 && (
+        <p className="mt-2 mb-3 text-[15px] leading-snug">
+          Elige rival y tema: respondéis las mismas preguntas y gana quien saque más puntos (+20 acierto, −5 fallo, −2 en blanco). No cuenta para la liga.
+        </p>
+      )}
 
       {pending.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">

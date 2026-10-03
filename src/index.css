@@ -109,10 +109,20 @@
     min-width: 44px;
   }
   .press {
-    transition: transform 160ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+    transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  }
+  /* Con ratón: el botón se levanta un poco y proyecta sombra; al pulsar, se hunde (en táctil solo se hunde). */
+  @media (hover: hover) and (pointer: fine) {
+    /* Solo los que tienen fondo propio: en un botón transparente la sombra flotaría sola. */
+    .press:is([class*="bg-"], [style*="background"]):hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px -10px rgb(0 0 0 / 0.45);
+    }
   }
   .press:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: translateY(0) scale(0.96);
+    box-shadow: 0 2px 6px -4px rgb(0 0 0 / 0.4);
+    transition-duration: 90ms;
   }
   .scroll-area {
     overflow-y: auto;
@@ -436,7 +446,8 @@
   .xp-float {
     animation: fade 180ms ease both !important;
   }
-  .press:active:not(:disabled) {
+  .press:active:not(:disabled),
+  .press:hover:not(:disabled) {
     transform: none;
   }
   /* Sin giro: la respuesta aparece con un fundido */
