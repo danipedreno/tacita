@@ -106,7 +106,7 @@ export const player = {
     if (audio && state.index >= 0) audio.currentTime = Math.max(0, Math.min((audio.duration || 0) - 0.5, audio.currentTime + delta));
   },
   seekTo(t) {
-    if (audio && state.index >= 0) audio.currentTime = t;
+    if (audio && state.index >= 0) audio.currentTime = Math.max(0, Math.min((audio.duration || 0) - 0.5, t));
   },
   next: () => state.index < state.queue.length - 1 && go(state.index + 1),
   prev: () => (audio && audio.currentTime > 5 ? (audio.currentTime = 0) : state.index > 0 && go(state.index - 1)),

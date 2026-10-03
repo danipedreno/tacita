@@ -154,18 +154,60 @@ export default function PodcastScreen({ bank, store, initialTema, colorOf, onBac
 export function MiniPlayer() {
   const st = usePodcast();
   const ep = st.queue[st.index];
+  const [drag, setDrag] = useState(null);
   if (!ep) return null;
-  const pct = st.dur ? (st.time / st.dur) * 100 : 0;
+  const time = drag ?? st.time;
+  const pct = st.dur ? (time / st.dur) * 100 : 0;
+  // Barra de progreso arrastrable: la zona táctil es más alta que la barra; al soltar se salta a ese punto.
+  const at = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * (st.dur || 0);
+  };
+  const onDown = (e) => {
+    if (!st.dur) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag(at(e));
+  };
+  const onMove = (e) => drag != null && setDrag(at(e));
+  const onUp = (e) => {
+    if (drag == null) return;
+    player.seekTo(at(e));
+    setDrag(null);
+  };
+  const onKey = (e) => {
+    if (e.key === "ArrowLeft") player.seek(-5);
+    else if (e.key === "ArrowRight") player.seek(5);
+    else return;
+    e.preventDefault();
+  };
   return (
     <div className="fixed left-3 right-3 lg:left-auto lg:right-6 lg:w-[380px] miniplayer-pos z-40 rounded-[22px] bg-ink text-ground shadow-xl overflow-hidden" role="region" aria-label="Pódcast">
-      <div className="h-1 bg-ground/20">
-        <div className="h-full bg-sun transition-[width] duration-300" style={{ width: `${pct}%` }} />
+      <div
+        role="slider"
+        tabIndex={0}
+        aria-label="Posición del episodio"
+        aria-valuemin={0}
+        aria-valuemax={Math.round(st.dur || 0)}
+        aria-valuenow={Math.round(time)}
+        aria-valuetext={`${fmtTime(time)} de ${fmtTime(st.dur)}`}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={() => setDrag(null)}
+        onKeyDown={onKey}
+        className="absolute inset-x-0 top-0 h-5 z-10 cursor-pointer touch-none group"
+      >
+        <div className={`bg-ground/20 transition-[height] duration-150 ${drag != null ? "h-2" : "h-1 group-hover:h-1.5"}`}>
+          <div className={`h-full bg-sun ${drag != null ? "" : "transition-[width] duration-300"}`} style={{ width: `${pct}%` }}>
+          </div>
+        </div>
       </div>
+      <div className="h-1" />
       <div className="flex items-center gap-1.5 pl-3 pr-1.5 py-2">
         <span className="flex-1 min-w-0">
           <span className="block text-[13px] font-semibold leading-tight truncate">{ep.title}</span>
           <span className="block text-[11px] opacity-75 whitespace-nowrap truncate">
-            Tema {ep.numero} · {st.error ? "No se pudo cargar" : `${fmtTime(st.time)} / ${fmtTime(st.dur)}`}
+            Tema {ep.numero} · {st.error ? "No se pudo cargar" : `${fmtTime(time)} / ${fmtTime(st.dur)}`}
           </span>
         </span>
         <button type="button" onClick={() => player.seek(-15)} aria-label="Atrás 15 segundos" className="tap w-10 h-10 rounded-full flex items-center justify-center">
