@@ -798,6 +798,9 @@ function DuelInvite({ bank, store, liga, user, onAction }) {
   );
 }
 
+// Puntos de duelo con el signo menos tipográfico, para que «−25» no parezca un guion.
+const fmtPts = (n) => String(n).replace("-", "−");
+
 function DuelCard({ bank, store, liga, user, onAction }) {
   const rivals = (liga?.rows || []).map((r) => r.usuario).filter((u) => u !== user);
   const [rival, setRival] = useState(null);
@@ -820,7 +823,7 @@ function DuelCard({ bank, store, liga, user, onAction }) {
       </h2>
       <p className="mt-2 flex flex-wrap gap-1.5">
         <span className="tag">{DUEL_SIZE} preguntas</span>
-        <span className="tag">Las mismas para las dos personas</span>
+        <span className="tag">Mismas preguntas para ambos</span>
       </p>
 
       {pending.length > 0 && (
@@ -934,17 +937,17 @@ function DuelCard({ bank, store, liga, user, onAction }) {
         <ul className="mt-3 flex flex-col gap-1 text-sm">
           {waiting.map((d) => (
             <li key={d.id} className="flex items-center justify-between gap-2 rounded-[12px] bg-card/70 px-3 py-1.5">
-              <span>Esperando a <span className="font-semibold">{pretty(d.rival)}</span></span>
-              <span className="font-mono">tú: {duelPoints(d.mine)}</span>
+              <span className="min-w-0">Esperando a <span className="font-semibold">{pretty(d.rival)}</span></span>
+              <span className="font-mono whitespace-nowrap shrink-0">tú: {fmtPts(duelPoints(d.mine))}</span>
             </li>
           ))}
           {done.map((d) => (
             <li key={d.id} className="flex items-center justify-between gap-2 rounded-[12px] bg-card/70 px-3 py-1.5">
-              <span>
+              <span className="min-w-0">
                 {d.result === "win" ? "Ganas a" : d.result === "loss" ? "Pierdes con" : "Empate con"} <span className="font-semibold">{pretty(d.rival)}</span>
               </span>
-              <span className="font-mono">
-                {duelPoints(d.mine)} – {duelPoints(d.theirs)}
+              <span className="font-mono whitespace-nowrap shrink-0">
+                {fmtPts(duelPoints(d.mine))} a {fmtPts(duelPoints(d.theirs))}
               </span>
             </li>
           ))}
