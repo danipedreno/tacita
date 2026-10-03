@@ -78,16 +78,19 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35em;
-    height: 26px;
-    padding: 0 10px;
+    padding-inline: 10px;
     border: 1px solid currentColor;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.15;
+    /* En una sola línea; si no cabe en su tarjeta, pasa a dos en vez de salirse. */
+    min-height: 26px;
+    max-width: 100%;
+    padding-block: 4px;
+    text-wrap: balance;
   }
   /* Antetítulo de sección: mayúsculas, negrita, espaciado */
   .eyebrow {

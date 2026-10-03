@@ -666,7 +666,7 @@ function CardRail({ label, children }) {
       </div>
       <div
         ref={rail}
-        className="-mx-4 px-4 flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-px-4 overscroll-x-contain lg:mx-0 lg:px-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible"
+        className="-mx-4 px-4 flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-px-4 overscroll-x-contain lg:mx-0 lg:px-0 lg:flex-col lg:gap-4 lg:overflow-visible"
       >
         {items.map((c, i) => (
           <div key={i} className="snap-center shrink-0 w-[86%] lg:w-auto" aria-roledescription="tarjeta" aria-label={`${i + 1} de ${items.length}`}>
